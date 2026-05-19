@@ -35,6 +35,7 @@ public class AddProductActivity extends AppCompatActivity {
     private ImagePickerAdapter imageAdapter;
     private List<Uri> imageUris = new ArrayList<>();
     private Uri currentCameraUri;
+    private int editProductId = -1;
 
     private final ActivityResultLauncher<String> pickImage = registerForActivityResult(
             new ActivityResultContracts.GetContent(), uri -> {
@@ -77,8 +78,17 @@ public class AddProductActivity extends AppCompatActivity {
         etPrice = findViewById(R.id.etProductPrice);
         rvImages = findViewById(R.id.rvProductImages);
 
+        editProductId = getIntent().getIntExtra("product_id", -1);
+
         findViewById(R.id.tvBack).setOnClickListener(v -> finish());
         findViewById(R.id.btnSubmitProduct).setOnClickListener(v -> submitProduct());
+
+        if (editProductId > 0) {
+            TextView btnSubmit = findViewById(R.id.btnSubmitProduct);
+            if (btnSubmit != null)
+                btnSubmit.setText("保存修改");
+            loadExistingProduct();
+        }
 
         // Setup image picker RecyclerView
         imageAdapter = new ImagePickerAdapter(imageUris, 9, new ImagePickerAdapter.OnImagePickerClickListener() {
@@ -116,6 +126,27 @@ public class AddProductActivity extends AppCompatActivity {
         // Default category
         selectedCategories.add("推荐");
         setupCategoryPicker();
+    }
+
+    private void loadExistingProduct() {
+        DataManager dm = DataManager.getInstance(this);
+        com.example.zhinongbao.model.Product p = dm.getProductById(editProductId);
+        if (p == null)
+            return;
+        etName.setText(p.name);
+        etDesc.setText(p.desc);
+        etPrice.setText(String.valueOf(p.price));
+        selectedCategories.clear();
+        if (p.category != null) {
+            for (String c : p.category.split(",")) {
+                String t = c.trim();
+                if (!t.isEmpty())
+                    selectedCategories.add(t);
+            }
+        }
+        if (selectedCategories.isEmpty())
+            selectedCategories.add("推荐");
+        refreshCategoryChips();
     }
 
     private void setupCategoryPicker() {
@@ -231,15 +262,20 @@ public class AddProductActivity extends AppCompatActivity {
         }
 
         DataManager dm = DataManager.getInstance(this);
-        dm.addProduct(name, desc, price, uriBuilder.toString(), catBuilder.toString());
+        String coverUri = uriBuilder.length() > 0 ? uriBuilder.toString() : null;
 
-        // 买家首次发货品 → 升级为买卖双身份
-        String user = dm.getLoggedUser();
-        if (user != null && dm.getUserRole(user) == com.example.zhinongbao.model.User.ROLE_BUYER) {
-            dm.updateUserRole(user, com.example.zhinongbao.model.User.ROLE_BOTH);
-            Toast.makeText(this, "商品发布成功！您已获得卖家身份，下次登录可选择身份", Toast.LENGTH_LONG).show();
+        if (editProductId > 0) {
+            dm.updateProduct(editProductId, name, desc, price, coverUri, catBuilder.toString());
+            Toast.makeText(this, "货品信息已更新", Toast.LENGTH_SHORT).show();
         } else {
-            Toast.makeText(this, "商品发布成功", Toast.LENGTH_SHORT).show();
+            dm.addProduct(name, desc, price, coverUri != null ? coverUri : "", catBuilder.toString());
+            String user = dm.getLoggedUser();
+            if (user != null && dm.getUserRole(user) == com.example.zhinongbao.model.User.ROLE_BUYER) {
+                dm.updateUserRole(user, com.example.zhinongbao.model.User.ROLE_BOTH);
+                Toast.makeText(this, "商品发布成功！您已获得卖家身份，下次登录可选择身份", Toast.LENGTH_LONG).show();
+            } else {
+                Toast.makeText(this, "商品发布成功", Toast.LENGTH_SHORT).show();
+            }
         }
         finish();
     }

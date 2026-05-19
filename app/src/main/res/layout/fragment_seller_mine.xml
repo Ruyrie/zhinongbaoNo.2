@@ -46,7 +46,7 @@
                     android:id="@+id/btnGoShopping"
                     android:layout_width="wrap_content"
                     android:layout_height="32dp"
-                    android:text="去买货"
+                    android:text="切换到买家"
                     android:textSize="13sp"
                     android:textColor="#2E7D32"
                     android:textStyle="bold"

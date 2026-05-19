@@ -20,84 +20,108 @@
             android:background="@color/white"
             android:layout_marginBottom="12dp">
 
-            <!-- Avatar + username + bio -->
-            <LinearLayout
-                android:id="@+id/layoutProfile"
+            <!-- Avatar + username + bio + switch button -->
+            <FrameLayout
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:paddingHorizontal="24dp"
-                android:paddingTop="32dp"
-                android:paddingBottom="16dp"
-                android:foreground="?attr/selectableItemBackground">
-
+                android:layout_height="wrap_content">
+                
                 <LinearLayout
-                    android:layout_width="wrap_content"
+                    android:id="@+id/layoutProfile"
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:orientation="horizontal"
-                    android:gravity="center_vertical">
+                    android:orientation="vertical"
+                    android:paddingHorizontal="24dp"
+                    android:paddingTop="32dp"
+                    android:paddingBottom="16dp"
+                    android:foreground="?attr/selectableItemBackground">
 
-                    <com.google.android.material.card.MaterialCardView
-                        android:layout_width="80dp"
-                        android:layout_height="80dp"
-                        app:cardCornerRadius="40dp"
-                        app:cardElevation="0dp"
-                        app:strokeWidth="0dp">
-
-                        <FrameLayout
-                            android:layout_width="match_parent"
-                            android:layout_height="match_parent">
-
-                            <ImageView
-                                android:id="@+id/ivMineAvatar"
-                                android:layout_width="match_parent"
-                                android:layout_height="match_parent"
-                                android:scaleType="centerCrop"
-                                android:background="@drawable/bg_auth_logo"
-                                android:visibility="gone" />
-
-                            <TextView
-                                android:id="@+id/tvAvatarInitial"
-                                android:layout_width="match_parent"
-                                android:layout_height="match_parent"
-                                android:background="@drawable/bg_auth_logo"
-                                android:gravity="center"
-                                android:textSize="30sp"
-                                android:textColor="@color/white"
-                                android:textStyle="bold"
-                                android:text="我" />
-                        </FrameLayout>
-                    </com.google.android.material.card.MaterialCardView>
-
-                    <TextView
-                        android:id="@+id/tvMineNickname"
+                    <LinearLayout
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:layout_marginStart="16dp"
-                        android:textSize="20sp"
-                        android:textStyle="bold"
-                        android:textColor="#1F1F1F"
-                        android:text="昵称" />
+                        android:orientation="horizontal"
+                        android:gravity="center_vertical">
+
+                        <com.google.android.material.card.MaterialCardView
+                            android:layout_width="80dp"
+                            android:layout_height="80dp"
+                            app:cardCornerRadius="40dp"
+                            app:cardElevation="0dp"
+                            app:strokeWidth="0dp">
+
+                            <FrameLayout
+                                android:layout_width="match_parent"
+                                android:layout_height="match_parent">
+
+                                <ImageView
+                                    android:id="@+id/ivMineAvatar"
+                                    android:layout_width="match_parent"
+                                    android:layout_height="match_parent"
+                                    android:scaleType="centerCrop"
+                                    android:background="@drawable/bg_auth_logo"
+                                    android:visibility="gone" />
+
+                                <TextView
+                                    android:id="@+id/tvAvatarInitial"
+                                    android:layout_width="match_parent"
+                                    android:layout_height="match_parent"
+                                    android:background="@drawable/bg_auth_logo"
+                                    android:gravity="center"
+                                    android:textSize="30sp"
+                                    android:textColor="@color/white"
+                                    android:textStyle="bold"
+                                    android:text="我" />
+                            </FrameLayout>
+                        </com.google.android.material.card.MaterialCardView>
+
+                        <TextView
+                            android:id="@+id/tvMineNickname"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="16dp"
+                            android:textSize="20sp"
+                            android:textStyle="bold"
+                            android:textColor="#1F1F1F"
+                            android:text="昵称" />
+                    </LinearLayout>
+
+                    <TextView
+                        android:id="@+id/tvMineUsername"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:textSize="14sp"
+                        android:textColor="#8A8A8A"
+                        android:layout_marginTop="14dp"
+                        android:text="用户名： " />
+
+                    <TextView
+                        android:id="@+id/tvMineSignature"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:textSize="13sp"
+                        android:textColor="#8A8A8A"
+                        android:layout_marginTop="4dp"
+                        android:text="点击编辑资料" />
                 </LinearLayout>
 
                 <TextView
-                    android:id="@+id/tvMineUsername"
+                    android:id="@+id/btnSwitchToSeller"
                     android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:textSize="14sp"
-                    android:textColor="#8A8A8A"
-                    android:layout_marginTop="14dp"
-                    android:text="用户名： " />
-
-                <TextView
-                    android:id="@+id/tvMineSignature"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
+                    android:layout_height="32dp"
+                    android:text="切换到卖家"
                     android:textSize="13sp"
-                    android:textColor="#8A8A8A"
-                    android:layout_marginTop="4dp"
-                    android:text="点击编辑资料" />
-            </LinearLayout>
+                    android:textColor="#FFFFFF"
+                    android:textStyle="bold"
+                    android:background="@drawable/bg_btn_outline_green"
+                    android:backgroundTint="#4CAF50"
+                    android:gravity="center"
+                    android:paddingHorizontal="16dp"
+                    android:layout_gravity="end|top"
+                    android:layout_marginTop="32dp"
+                    android:layout_marginEnd="20dp"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:visibility="gone" />
+            </FrameLayout>
 
             <!-- Divider -->
             <View

@@ -126,6 +126,15 @@
         <!-- 采购市场 -->
         <activity android:name=".PurchaseMarketActivity" />
 
+        <!-- 卖家：我的货品 -->
+        <activity android:name=".SellerMyProductsActivity" />
+
+        <!-- 卖家：采购管理 -->
+        <activity android:name=".SellerPurchaseMgmtActivity" />
+
+        <!-- 卖家：订单管理 -->
+        <activity android:name=".SellerOrdersActivity" />
+
         <!-- uCrop 裁剪 Activity（子类，用于正确处理 Android 16 edge-to-edge insets） -->
         <activity
             android:name=".UCropCompatActivity"

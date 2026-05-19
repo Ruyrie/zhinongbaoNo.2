@@ -19,11 +19,12 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.example.zhinongbao.AddProductActivity;
 import com.example.zhinongbao.ArticleDetailActivity;
 import com.example.zhinongbao.MainActivity;
-import com.example.zhinongbao.SellerStoreActivity;
-import com.example.zhinongbao.MyOrdersActivity;
 import com.example.zhinongbao.ProfileEditActivity;
-import com.example.zhinongbao.PurchaseMarketActivity;
 import com.example.zhinongbao.R;
+import com.example.zhinongbao.SellerMyProductsActivity;
+import com.example.zhinongbao.SellerOrdersActivity;
+import com.example.zhinongbao.SellerPurchaseMgmtActivity;
+import com.example.zhinongbao.SellerStoreActivity;
 import com.example.zhinongbao.SettingsActivity;
 import com.example.zhinongbao.adapter.ArticleAdapter;
 import com.example.zhinongbao.data.DataManager;
@@ -125,34 +126,34 @@ public class SellerMineFragment extends Fragment {
 
         // 快捷功能
         view.findViewById(R.id.quickMyProducts).setOnClickListener(
-                v -> startActivity(new Intent(getContext(), AddProductActivity.class)));
+                v -> startActivity(new Intent(getContext(), SellerMyProductsActivity.class)));
         view.findViewById(R.id.quickPurchaseMgmt).setOnClickListener(
-                v -> startActivity(new Intent(getContext(), PurchaseMarketActivity.class)));
+                v -> startActivity(new Intent(getContext(), SellerPurchaseMgmtActivity.class)));
         view.findViewById(R.id.quickOrderMgmt).setOnClickListener(
-                v -> startActivity(new Intent(getContext(), MyOrdersActivity.class)));
+                v -> startActivity(new Intent(getContext(), SellerOrdersActivity.class)));
         view.findViewById(R.id.quickShopMgmt).setOnClickListener(
                 v -> startActivity(new Intent(getContext(), SellerStoreActivity.class)));
 
         // 订单按钮
         view.findViewById(R.id.tvSellerAllOrders).setOnClickListener(
-                v -> startActivity(new Intent(getContext(), MyOrdersActivity.class)));
+                v -> startActivity(new Intent(getContext(), SellerOrdersActivity.class)));
         view.findViewById(R.id.sellerOrderPending).setOnClickListener(v -> {
-            Intent i = new Intent(getContext(), MyOrdersActivity.class);
+            Intent i = new Intent(getContext(), SellerOrdersActivity.class);
             i.putExtra("filter", "pending");
             startActivity(i);
         });
         view.findViewById(R.id.sellerOrderShipping).setOnClickListener(v -> {
-            Intent i = new Intent(getContext(), MyOrdersActivity.class);
-            i.putExtra("filter", "shipping");
+            Intent i = new Intent(getContext(), SellerOrdersActivity.class);
+            i.putExtra("filter", "paid");
             startActivity(i);
         });
         view.findViewById(R.id.sellerOrderSent).setOnClickListener(v -> {
-            Intent i = new Intent(getContext(), MyOrdersActivity.class);
-            i.putExtra("filter", "receiving");
+            Intent i = new Intent(getContext(), SellerOrdersActivity.class);
+            i.putExtra("filter", "shipped");
             startActivity(i);
         });
         view.findViewById(R.id.sellerOrderAfterSale).setOnClickListener(v -> {
-            Intent i = new Intent(getContext(), MyOrdersActivity.class);
+            Intent i = new Intent(getContext(), SellerOrdersActivity.class);
             i.putExtra("filter", "refund");
             startActivity(i);
         });

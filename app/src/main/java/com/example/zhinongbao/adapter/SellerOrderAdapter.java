@@ -1,0 +1,157 @@
+package com.example.zhinongbao.adapter;
+
+import android.text.TextUtils;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.ImageView;
+import android.widget.LinearLayout;
+import android.widget.TextView;
+import androidx.annotation.NonNull;
+import androidx.recyclerview.widget.RecyclerView;
+import com.example.zhinongbao.R;
+import com.example.zhinongbao.data.DataManager;
+import com.example.zhinongbao.model.Order;
+import com.example.zhinongbao.model.Product;
+import java.util.List;
+
+public class SellerOrderAdapter extends RecyclerView.Adapter<SellerOrderAdapter.VH> {
+
+    private final List<Order> list;
+    private final OnOrderActionListener listener;
+
+    public interface OnOrderActionListener {
+        void onShip(Order o);
+
+        void onModifyPrice(Order o);
+
+        void onRefund(Order o);
+
+        void onContactBuyer(Order o);
+    }
+
+    public SellerOrderAdapter(List<Order> list, OnOrderActionListener listener) {
+        this.list = list;
+        this.listener = listener;
+    }
+
+    @NonNull
+    @Override
+    public VH onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
+        View v = LayoutInflater.from(parent.getContext()).inflate(R.layout.item_seller_order, parent, false);
+        return new VH(v);
+    }
+
+    @Override
+    public void onBindViewHolder(@NonNull VH holder, int position) {
+        Order o = list.get(position);
+        holder.tvOrderId.setText("订单号: " + o.orderId);
+
+        if (Order.ORDER_TYPE_PROCUREMENT.equals(o.orderType)) {
+            holder.tvOrderType.setText("供货订单");
+            holder.tvOrderType.setTextColor(0xFFFF9800);
+        } else {
+            holder.tvOrderType.setText("零售订单");
+            holder.tvOrderType.setTextColor(0xFF007AFF);
+        }
+
+        DataManager dm = DataManager.getInstance(holder.itemView.getContext());
+        Product p = dm.getProductById(o.productId);
+        if (p != null && p.coverUri != null && !p.coverUri.isEmpty()) {
+            holder.ivCover.setImageURI(android.net.Uri.parse(p.coverUri.split(",")[0]));
+        } else {
+            holder.ivCover.setImageResource(R.drawable.ic_product_placeholder);
+        }
+
+        holder.tvProductName.setText(o.name);
+        holder.tvProductQuantity.setText("x" + o.quantity);
+
+        double currentUnitPrice = o.unitPrice > 0 ? o.unitPrice : o.price;
+        holder.tvProductPrice.setText(String.format("¥%.2f", currentUnitPrice));
+
+        double total = currentUnitPrice * o.quantity - o.discount;
+        holder.tvTotalPrice.setText(String.format("实付: ¥%.2f", total));
+
+        holder.tvBuyerInfo.setText("买家: " + o.buyerNickname);
+        holder.tvOrderTime.setText("下单时间: " + o.time);
+
+        holder.btnAction1.setVisibility(View.GONE);
+        holder.btnAction2.setVisibility(View.GONE);
+
+        switch (o.status) {
+            case Order.STATUS_PENDING:
+                holder.tvOrderStatus.setText("待付款");
+                holder.tvOrderStatus.setTextColor(0xFFFF9800);
+                holder.btnAction1.setVisibility(View.VISIBLE);
+                holder.btnAction1.setText("修改价格");
+                holder.btnAction1.setOnClickListener(v -> listener.onModifyPrice(o));
+                holder.btnAction2.setVisibility(View.VISIBLE);
+                holder.btnAction2.setText("联系买家");
+                holder.btnAction2.setOnClickListener(v -> listener.onContactBuyer(o));
+                break;
+            case Order.STATUS_PAID:
+                holder.tvOrderStatus.setText("待发货");
+                holder.tvOrderStatus.setTextColor(0xFF007AFF);
+                holder.btnAction2.setVisibility(View.VISIBLE);
+                holder.btnAction2.setText("去发货");
+                holder.btnAction2.setOnClickListener(v -> listener.onShip(o));
+                break;
+            case Order.STATUS_SHIPPED:
+                holder.tvOrderStatus.setText("已发货");
+                holder.tvOrderStatus.setTextColor(0xFF4CAF50);
+                if (!TextUtils.isEmpty(o.shipName)) {
+                    holder.tvOrderTime.append("\n物流: " + o.shipName + " " + o.shipNo);
+                }
+                holder.btnAction2.setVisibility(View.VISIBLE);
+                holder.btnAction2.setText("联系买家");
+                holder.btnAction2.setOnClickListener(v -> listener.onContactBuyer(o));
+                break;
+            case Order.STATUS_COMPLETED:
+                holder.tvOrderStatus.setText("已完成");
+                holder.tvOrderStatus.setTextColor(0xFF4CAF50);
+                break;
+            case Order.STATUS_REFUND:
+                holder.tvOrderStatus.setText("待处理售后");
+                holder.tvOrderStatus.setTextColor(0xFFF44336);
+                if (o.refundAmount > 0) {
+                    holder.tvOrderTime.append(String.format("\n申请退款: ¥%.2f\n原因: %s", o.refundAmount, o.refundReason));
+                }
+                holder.btnAction2.setVisibility(View.VISIBLE);
+                holder.btnAction2.setText("处理售后");
+                holder.btnAction2.setOnClickListener(v -> listener.onRefund(o));
+                break;
+            case Order.STATUS_CANCELLED:
+                holder.tvOrderStatus.setText("已取消");
+                holder.tvOrderStatus.setTextColor(0xFF999999);
+                break;
+        }
+    }
+
+    @Override
+    public int getItemCount() {
+        return list.size();
+    }
+
+    static class VH extends RecyclerView.ViewHolder {
+        TextView tvOrderType, tvOrderId, tvOrderStatus, tvProductName, tvProductPrice, tvProductQuantity;
+        TextView tvBuyerInfo, tvTotalPrice, tvOrderTime;
+        ImageView ivCover;
+        TextView btnAction1, btnAction2;
+
+        public VH(@NonNull View itemView) {
+            super(itemView);
+            tvOrderType = itemView.findViewById(R.id.tvOrderType);
+            tvOrderId = itemView.findViewById(R.id.tvOrderId);
+            tvOrderStatus = itemView.findViewById(R.id.tvOrderStatus);
+            ivCover = itemView.findViewById(R.id.ivProductCover);
+            tvProductName = itemView.findViewById(R.id.tvProductName);
+            tvProductPrice = itemView.findViewById(R.id.tvProductPrice);
+            tvProductQuantity = itemView.findViewById(R.id.tvProductQuantity);
+            tvBuyerInfo = itemView.findViewById(R.id.tvBuyerInfo);
+            tvTotalPrice = itemView.findViewById(R.id.tvTotalPrice);
+            tvOrderTime = itemView.findViewById(R.id.tvOrderTime);
+            btnAction1 = itemView.findViewById(R.id.btnAction1);
+            btnAction2 = itemView.findViewById(R.id.btnAction2);
+        }
+    }
+}

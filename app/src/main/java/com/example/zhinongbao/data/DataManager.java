@@ -646,7 +646,8 @@ public class DataManager {
         }
         cv.put("category", category != null ? category : "推荐");
         String seller = getLoggedUser();
-        if (seller != null) cv.put("seller", seller);
+        if (seller != null)
+            cv.put("seller", seller);
         wdb().insert("products", null, cv);
     }
 
@@ -659,7 +660,7 @@ public class DataManager {
         List<Product> list = new ArrayList<>();
         try (Cursor c = rdb().rawQuery(
                 "SELECT id,name,`desc`,price,cover_uri,category FROM products WHERE seller=?",
-                new String[]{seller})) {
+                new String[] { seller })) {
             while (c.moveToNext()) {
                 int catIdx = c.getColumnIndex("category");
                 String cat = (catIdx >= 0 && c.getString(catIdx) != null) ? c.getString(catIdx) : "推荐";
@@ -671,7 +672,31 @@ public class DataManager {
     }
 
     public void deleteProduct(int productId) {
-        wdb().delete("products", "id=?", new String[]{String.valueOf(productId)});
+        wdb().delete("products", "id=?", new String[] { String.valueOf(productId) });
+    }
+
+    public boolean updateProduct(int productId, String name, String desc, double price,
+            String coverUri, String category) {
+        ContentValues cv = new ContentValues();
+        cv.put("name", name);
+        cv.put("desc", desc);
+        cv.put("price", price);
+        cv.put("category", category != null ? category : "推荐");
+        if (coverUri != null && !coverUri.isEmpty())
+            cv.put("cover_uri", coverUri);
+        return wdb().update("products", cv, "id=?", new String[] { String.valueOf(productId) }) > 0;
+    }
+
+    public Product getProductById(int productId) {
+        try (Cursor c = rdb().rawQuery(
+                "SELECT id,name,`desc`,price,cover_uri,category FROM products WHERE id=?",
+                new String[] { String.valueOf(productId) })) {
+            if (c.moveToFirst()) {
+                return new Product(c.getInt(0), c.getString(1), c.getString(2),
+                        c.getDouble(3), c.getString(4), c.getString(5));
+            }
+        }
+        return null;
     }
 
     public int getProductOrderCount(int productId) {
@@ -682,7 +707,7 @@ public class DataManager {
     public double getProductSalesRevenue(int productId) {
         try (Cursor c = rdb().rawQuery(
                 "SELECT COALESCE(SUM(price * quantity), 0.0) FROM orders WHERE product_id=?",
-                new String[]{String.valueOf(productId)})) {
+                new String[] { String.valueOf(productId) })) {
             return c.moveToFirst() ? c.getDouble(0) : 0.0;
         }
     }
@@ -690,8 +715,8 @@ public class DataManager {
     public double getTotalRevenueForSeller(String seller) {
         try (Cursor c = rdb().rawQuery(
                 "SELECT COALESCE(SUM(o.price * o.quantity), 0.0) FROM orders o " +
-                "INNER JOIN products p ON o.product_id=p.id WHERE p.seller=?",
-                new String[]{seller})) {
+                        "INNER JOIN products p ON o.product_id=p.id WHERE p.seller=?",
+                new String[] { seller })) {
             return c.moveToFirst() ? c.getDouble(0) : 0.0;
         }
     }
@@ -699,8 +724,8 @@ public class DataManager {
     public int getTotalOrderCountForSeller(String seller) {
         try (Cursor c = rdb().rawQuery(
                 "SELECT COALESCE(COUNT(*), 0) FROM orders o " +
-                "INNER JOIN products p ON o.product_id=p.id WHERE p.seller=?",
-                new String[]{seller})) {
+                        "INNER JOIN products p ON o.product_id=p.id WHERE p.seller=?",
+                new String[] { seller })) {
             return c.moveToFirst() ? c.getInt(0) : 0;
         }
     }
@@ -708,7 +733,7 @@ public class DataManager {
     public void deleteConversation(String currentUser, String otherUser) {
         wdb().delete("chat_messages",
                 "(from_user=? AND to_user=?) OR (from_user=? AND to_user=?)",
-                new String[]{currentUser, otherUser, otherUser, currentUser});
+                new String[] { currentUser, otherUser, otherUser, currentUser });
     }
 
     // ─── 购物车 ───────────────────────────────────────────────────────────────
@@ -774,6 +799,12 @@ public class DataManager {
     }
 
     public void addOrder(String username, int productId, String name, double price, int quantity) {
+        String seller = null;
+        try (Cursor c = rdb().rawQuery("SELECT seller FROM products WHERE id=?",
+                new String[] { String.valueOf(productId) })) {
+            if (c.moveToFirst())
+                seller = c.getString(0);
+        }
         ContentValues cv = new ContentValues();
         cv.put("order_id", "JN" + System.currentTimeMillis());
         cv.put("username", username);
@@ -783,6 +814,9 @@ public class DataManager {
         cv.put("quantity", quantity);
         cv.put("time", now("yyyy-MM-dd HH:mm"));
         cv.put("status", Order.STATUS_PENDING);
+        cv.put("order_type", Order.ORDER_TYPE_RETAIL);
+        if (seller != null)
+            cv.put("seller", seller);
         wdb().insert("orders", null, cv);
     }
 
@@ -791,6 +825,123 @@ public class DataManager {
         cv.put("status", status);
         wdb().update("orders", cv, "username=? AND order_id=?",
                 new String[] { username, orderId });
+    }
+
+    public Order getOrderById(String orderId) {
+        try (Cursor c = rdb().rawQuery(
+                "SELECT o.order_id,o.product_id,o.name,o.price,o.quantity,o.time,o.status," +
+                        "o.seller,o.username,o.order_type,o.purchase_request_id," +
+                        "o.ship_type,o.ship_name,o.ship_no,o.ship_phone,o.proof_images," +
+                        "o.unit_price,o.discount,o.refund_amount,o.refund_reason," +
+                        "u.nickname FROM orders o LEFT JOIN users u ON o.username=u.username " +
+                        "WHERE o.order_id=?",
+                new String[] { orderId })) {
+            if (c.moveToFirst())
+                return cursorToFullOrder(c);
+        }
+        return null;
+    }
+
+    private Order cursorToFullOrder(Cursor c) {
+        Order o = new Order(c.getString(0), c.getInt(1), c.getString(2),
+                c.getDouble(3), c.getInt(4), c.getString(5), c.getString(6));
+        o.seller = c.getString(7);
+        o.buyerUser = c.getString(8);
+        o.orderType = c.getString(9);
+        o.purchaseRequestId = c.getLong(10);
+        o.shipType = c.getString(11);
+        o.shipName = c.getString(12);
+        o.shipNo = c.getString(13);
+        o.shipPhone = c.getString(14);
+        o.proofImages = c.getString(15);
+        o.unitPrice = c.getDouble(16);
+        o.discount = c.getDouble(17);
+        o.refundAmount = c.getDouble(18);
+        o.refundReason = c.getString(19);
+        o.buyerNickname = c.getColumnCount() > 20 ? c.getString(20) : o.buyerUser;
+        if (o.buyerNickname == null || o.buyerNickname.isEmpty())
+            o.buyerNickname = o.buyerUser;
+        if (o.orderType == null)
+            o.orderType = Order.ORDER_TYPE_RETAIL;
+        return o;
+    }
+
+    public List<Order> getSellerSoldOrders(String seller) {
+        List<Order> list = new ArrayList<>();
+        try (Cursor c = rdb().rawQuery(
+                "SELECT o.order_id,o.product_id,o.name,o.price,o.quantity,o.time,o.status," +
+                        "o.seller,o.username,o.order_type,o.purchase_request_id," +
+                        "o.ship_type,o.ship_name,o.ship_no,o.ship_phone,o.proof_images," +
+                        "o.unit_price,o.discount,o.refund_amount,o.refund_reason," +
+                        "u.nickname FROM orders o LEFT JOIN users u ON o.username=u.username " +
+                        "WHERE o.seller=? ORDER BY o.id DESC",
+                new String[] { seller })) {
+            while (c.moveToNext())
+                list.add(cursorToFullOrder(c));
+        }
+        return list;
+    }
+
+    public List<Order> getSellerSoldOrdersByStatus(String seller, String status) {
+        List<Order> list = new ArrayList<>();
+        try (Cursor c = rdb().rawQuery(
+                "SELECT o.order_id,o.product_id,o.name,o.price,o.quantity,o.time,o.status," +
+                        "o.seller,o.username,o.order_type,o.purchase_request_id," +
+                        "o.ship_type,o.ship_name,o.ship_no,o.ship_phone,o.proof_images," +
+                        "o.unit_price,o.discount,o.refund_amount,o.refund_reason," +
+                        "u.nickname FROM orders o LEFT JOIN users u ON o.username=u.username " +
+                        "WHERE o.seller=? AND o.status=? ORDER BY o.id DESC",
+                new String[] { seller, status })) {
+            while (c.moveToNext())
+                list.add(cursorToFullOrder(c));
+        }
+        return list;
+    }
+
+    public boolean shipOrder(String orderId, String shipType, String shipName,
+            String shipNo, String shipPhone) {
+        ContentValues cv = new ContentValues();
+        cv.put("status", Order.STATUS_SHIPPED);
+        cv.put("ship_type", shipType);
+        cv.put("ship_name", shipName);
+        cv.put("ship_no", shipNo);
+        cv.put("ship_phone", shipPhone);
+        return wdb().update("orders", cv, "order_id=?", new String[] { orderId }) > 0;
+    }
+
+    public boolean updateOrderPrice(String orderId, double unitPrice, double discount) {
+        ContentValues cv = new ContentValues();
+        cv.put("unit_price", unitPrice);
+        cv.put("discount", discount);
+        return wdb().update("orders", cv, "order_id=?", new String[] { orderId }) > 0;
+    }
+
+    public boolean initiatePartialRefund(String orderId, double amount, String reason) {
+        ContentValues cv = new ContentValues();
+        cv.put("refund_amount", amount);
+        cv.put("refund_reason", reason);
+        cv.put("status", Order.STATUS_REFUND);
+        return wdb().update("orders", cv, "order_id=?", new String[] { orderId }) > 0;
+    }
+
+    public boolean processRefund(String orderId, double amount, String reason, boolean approve) {
+        ContentValues cv = new ContentValues();
+        cv.put("refund_amount", amount);
+        cv.put("refund_reason", reason);
+        cv.put("status", approve ? Order.STATUS_COMPLETED : Order.STATUS_SHIPPED);
+        return wdb().update("orders", cv, "order_id=?", new String[] { orderId }) > 0;
+    }
+
+    public boolean updateOrderProofImages(String orderId, String images) {
+        ContentValues cv = new ContentValues();
+        cv.put("proof_images", images);
+        return wdb().update("orders", cv, "order_id=?", new String[] { orderId }) > 0;
+    }
+
+    public void updateOrderStatusByOrderId(String orderId, String status) {
+        ContentValues cv = new ContentValues();
+        cv.put("status", status);
+        wdb().update("orders", cv, "order_id=?", new String[] { orderId });
     }
 
     // ─── 工具方法 ─────────────────────────────────────────────────────────────
@@ -919,8 +1070,8 @@ public class DataManager {
 
     // ─── 农友圈 ──────────────────────────────────────────────────────────────
 
-    private static final String CIRCLE_SQL =
-            "SELECT a.id,a.title,a.content,a.author,a.time,a.read_count,a.cover_uri,a.category," +
+    private static final String CIRCLE_SQL = "SELECT a.id,a.title,a.content,a.author,a.time,a.read_count,a.cover_uri,a.category,"
+            +
             "u.nickname,u.avatar_uri FROM articles a LEFT JOIN users u ON a.author=u.username ";
 
     /** 全部农友圈动态（最新优先） */
@@ -932,14 +1083,14 @@ public class DataManager {
     public List<Article> getCirclePostsByFollowing(String username) {
         return queryArticles(CIRCLE_SQL +
                 "WHERE a.author IN (SELECT `following` FROM follows WHERE follower=?) " +
-                "AND a.category='农友圈' ORDER BY a.id DESC", new String[]{username});
+                "AND a.category='农友圈' ORDER BY a.id DESC", new String[] { username });
     }
 
     /** 指定用户的农友圈动态 */
     public List<Article> getCirclePostsByAuthor(String username) {
         return queryArticles(CIRCLE_SQL +
                 "WHERE a.author=? AND a.category='农友圈' ORDER BY a.id DESC",
-                new String[]{username});
+                new String[] { username });
     }
 
     /** 发布农友圈动态（无标题，内容即正文） */
@@ -964,9 +1115,9 @@ public class DataManager {
         List<com.example.zhinongbao.model.ChatMessage> list = new ArrayList<>();
         try (Cursor c = rdb().rawQuery(
                 "SELECT id,from_user,to_user,content,timestamp,is_read FROM chat_messages " +
-                "WHERE (from_user=? AND to_user=?) OR (from_user=? AND to_user=?) " +
-                "ORDER BY timestamp ASC",
-                new String[]{user1, user2, user2, user1})) {
+                        "WHERE (from_user=? AND to_user=?) OR (from_user=? AND to_user=?) " +
+                        "ORDER BY timestamp ASC",
+                new String[] { user1, user2, user2, user1 })) {
             while (c.moveToNext()) {
                 com.example.zhinongbao.model.ChatMessage m = new com.example.zhinongbao.model.ChatMessage();
                 m.id = c.getLong(0);
@@ -986,8 +1137,8 @@ public class DataManager {
         java.util.LinkedHashMap<String, com.example.zhinongbao.model.ConversationItem> map = new java.util.LinkedHashMap<>();
         try (Cursor c = rdb().rawQuery(
                 "SELECT from_user,to_user,content,timestamp FROM chat_messages " +
-                "WHERE from_user=? OR to_user=? ORDER BY timestamp DESC",
-                new String[]{username, username})) {
+                        "WHERE from_user=? OR to_user=? ORDER BY timestamp DESC",
+                new String[] { username, username })) {
             while (c.moveToNext()) {
                 String from = c.getString(0);
                 String to = c.getString(1);
@@ -1010,14 +1161,15 @@ public class DataManager {
     public void markMessagesRead(String fromUser, String toUser) {
         ContentValues cv = new ContentValues();
         cv.put("is_read", 1);
-        wdb().update("chat_messages", cv, "from_user=? AND to_user=?", new String[]{fromUser, toUser});
+        wdb().update("chat_messages", cv, "from_user=? AND to_user=?", new String[] { fromUser, toUser });
     }
 
     public int getUnreadCount(String toUser, String fromUser) {
         try (Cursor c = rdb().rawQuery(
                 "SELECT COUNT(*) FROM chat_messages WHERE to_user=? AND from_user=? AND is_read=0",
-                new String[]{toUser, fromUser})) {
-            if (c.moveToFirst()) return c.getInt(0);
+                new String[] { toUser, fromUser })) {
+            if (c.moveToFirst())
+                return c.getInt(0);
         }
         return 0;
     }
@@ -1025,8 +1177,9 @@ public class DataManager {
     public int getTotalUnreadMessageCount(String username) {
         try (Cursor c = rdb().rawQuery(
                 "SELECT COUNT(*) FROM chat_messages WHERE to_user=? AND is_read=0",
-                new String[]{username})) {
-            if (c.moveToFirst()) return c.getInt(0);
+                new String[] { username })) {
+            if (c.moveToFirst())
+                return c.getInt(0);
         }
         return 0;
     }
@@ -1036,7 +1189,8 @@ public class DataManager {
     public boolean addPurchaseRequest(String productName, String category, double quantity,
             String unit, double targetPrice, String description) {
         String buyer = getLoggedUser();
-        if (buyer == null) return false;
+        if (buyer == null)
+            return false;
         ContentValues cv = new ContentValues();
         cv.put("buyer_user", buyer);
         cv.put("product_name", productName);
@@ -1053,10 +1207,11 @@ public class DataManager {
         List<com.example.zhinongbao.model.PurchaseRequest> list = new ArrayList<>();
         try (Cursor c = rdb().rawQuery(
                 "SELECT r.id, r.buyer_user, r.product_name, r.category, r.quantity, r.unit," +
-                " r.target_price, r.description, r.timestamp, u.nickname," +
-                " (SELECT COUNT(*) FROM purchase_quotes WHERE request_id=r.id) AS quote_count" +
-                " FROM purchase_requests r LEFT JOIN users u ON r.buyer_user=u.username" +
-                " ORDER BY r.timestamp DESC", null)) {
+                        " r.target_price, r.description, r.timestamp, u.nickname," +
+                        " (SELECT COUNT(*) FROM purchase_quotes WHERE request_id=r.id) AS quote_count" +
+                        " FROM purchase_requests r LEFT JOIN users u ON r.buyer_user=u.username" +
+                        " ORDER BY r.timestamp DESC",
+                null)) {
             while (c.moveToNext()) {
                 com.example.zhinongbao.model.PurchaseRequest req = new com.example.zhinongbao.model.PurchaseRequest();
                 req.id = c.getLong(0);
@@ -1069,7 +1224,8 @@ public class DataManager {
                 req.description = c.getString(7);
                 req.timestamp = c.getLong(8);
                 req.buyerNickname = c.getString(9);
-                if (req.buyerNickname == null || req.buyerNickname.isEmpty()) req.buyerNickname = req.buyerUser;
+                if (req.buyerNickname == null || req.buyerNickname.isEmpty())
+                    req.buyerNickname = req.buyerUser;
                 req.quoteCount = c.getInt(10);
                 list.add(req);
             }
@@ -1081,10 +1237,11 @@ public class DataManager {
         List<com.example.zhinongbao.model.PurchaseRequest> list = new ArrayList<>();
         try (Cursor c = rdb().rawQuery(
                 "SELECT r.id, r.buyer_user, r.product_name, r.category, r.quantity, r.unit," +
-                " r.target_price, r.description, r.timestamp, u.nickname," +
-                " (SELECT COUNT(*) FROM purchase_quotes WHERE request_id=r.id) AS quote_count" +
-                " FROM purchase_requests r LEFT JOIN users u ON r.buyer_user=u.username" +
-                " WHERE r.buyer_user=? ORDER BY r.timestamp DESC", new String[]{username})) {
+                        " r.target_price, r.description, r.timestamp, u.nickname," +
+                        " (SELECT COUNT(*) FROM purchase_quotes WHERE request_id=r.id) AS quote_count" +
+                        " FROM purchase_requests r LEFT JOIN users u ON r.buyer_user=u.username" +
+                        " WHERE r.buyer_user=? ORDER BY r.timestamp DESC",
+                new String[] { username })) {
             while (c.moveToNext()) {
                 com.example.zhinongbao.model.PurchaseRequest req = new com.example.zhinongbao.model.PurchaseRequest();
                 req.id = c.getLong(0);
@@ -1097,7 +1254,8 @@ public class DataManager {
                 req.description = c.getString(7);
                 req.timestamp = c.getLong(8);
                 req.buyerNickname = c.getString(9);
-                if (req.buyerNickname == null || req.buyerNickname.isEmpty()) req.buyerNickname = req.buyerUser;
+                if (req.buyerNickname == null || req.buyerNickname.isEmpty())
+                    req.buyerNickname = req.buyerUser;
                 req.quoteCount = c.getInt(10);
                 list.add(req);
             }
@@ -1119,9 +1277,9 @@ public class DataManager {
         List<com.example.zhinongbao.model.PurchaseQuote> list = new ArrayList<>();
         try (Cursor c = rdb().rawQuery(
                 "SELECT q.id, q.request_id, q.seller_user, q.price, q.description, q.timestamp, u.nickname" +
-                " FROM purchase_quotes q LEFT JOIN users u ON q.seller_user=u.username" +
-                " WHERE q.request_id=? ORDER BY q.timestamp ASC",
-                new String[]{String.valueOf(requestId)})) {
+                        " FROM purchase_quotes q LEFT JOIN users u ON q.seller_user=u.username" +
+                        " WHERE q.request_id=? ORDER BY q.timestamp ASC",
+                new String[] { String.valueOf(requestId) })) {
             while (c.moveToNext()) {
                 com.example.zhinongbao.model.PurchaseQuote quote = new com.example.zhinongbao.model.PurchaseQuote();
                 quote.id = c.getLong(0);
@@ -1131,7 +1289,8 @@ public class DataManager {
                 quote.description = c.getString(4);
                 quote.timestamp = c.getLong(5);
                 quote.sellerNickname = c.getString(6);
-                if (quote.sellerNickname == null || quote.sellerNickname.isEmpty()) quote.sellerNickname = quote.sellerUser;
+                if (quote.sellerNickname == null || quote.sellerNickname.isEmpty())
+                    quote.sellerNickname = quote.sellerUser;
                 list.add(quote);
             }
         }
@@ -1141,8 +1300,122 @@ public class DataManager {
     public boolean hasQuoted(long requestId, String sellerUser) {
         try (Cursor c = rdb().rawQuery(
                 "SELECT 1 FROM purchase_quotes WHERE request_id=? AND seller_user=?",
-                new String[]{String.valueOf(requestId), sellerUser})) {
+                new String[] { String.valueOf(requestId), sellerUser })) {
             return c.moveToFirst();
         }
+    }
+
+    /** 卖家查看自己提交的所有报价（含状态和买家回复） */
+    public List<com.example.zhinongbao.model.PurchaseQuote> getQuotesBySellerUser(String sellerUser) {
+        List<com.example.zhinongbao.model.PurchaseQuote> list = new ArrayList<>();
+        try (Cursor c = rdb().rawQuery(
+                "SELECT q.id, q.request_id, q.seller_user, q.price, q.description, q.timestamp," +
+                        " u.nickname, q.status, q.reply_desc, r.product_name" +
+                        " FROM purchase_quotes q" +
+                        " LEFT JOIN users u ON q.seller_user=u.username" +
+                        " LEFT JOIN purchase_requests r ON q.request_id=r.id" +
+                        " WHERE q.seller_user=? ORDER BY q.timestamp DESC",
+                new String[] { sellerUser })) {
+            while (c.moveToNext()) {
+                com.example.zhinongbao.model.PurchaseQuote quote = new com.example.zhinongbao.model.PurchaseQuote();
+                quote.id = c.getLong(0);
+                quote.requestId = c.getLong(1);
+                quote.sellerUser = c.getString(2);
+                quote.price = c.getDouble(3);
+                quote.description = c.getString(4);
+                quote.timestamp = c.getLong(5);
+                quote.sellerNickname = c.getString(6);
+                quote.status = c.getString(7);
+                quote.replyDesc = c.getString(8);
+                quote.requestProductName = c.getString(9);
+                if (quote.sellerNickname == null || quote.sellerNickname.isEmpty())
+                    quote.sellerNickname = quote.sellerUser;
+                if (quote.status == null)
+                    quote.status = "pending";
+                list.add(quote);
+            }
+        }
+        return list;
+    }
+
+    /** 接受报价：更新状态并创建 procurement 订单 */
+    public boolean acceptQuote(long quoteId, String replyDesc) {
+        ContentValues cv = new ContentValues();
+        cv.put("status", "accepted");
+        cv.put("reply_desc", replyDesc);
+        boolean ok = wdb().update("purchase_quotes", cv, "id=?",
+                new String[] { String.valueOf(quoteId) }) > 0;
+        if (!ok)
+            return false;
+
+        // 查询报价详情以创建订单
+        try (Cursor c = rdb().rawQuery(
+                "SELECT q.request_id, q.seller_user, q.price, r.buyer_user, r.product_name, r.quantity" +
+                        " FROM purchase_quotes q LEFT JOIN purchase_requests r ON q.request_id=r.id" +
+                        " WHERE q.id=?",
+                new String[] { String.valueOf(quoteId) })) {
+            if (c.moveToFirst()) {
+                long reqId = c.getLong(0);
+                String sellerUser = c.getString(1);
+                double price = c.getDouble(2);
+                String buyerUser = c.getString(3);
+                String productName = c.getString(4);
+                int qty = (int) c.getDouble(5);
+
+                ContentValues ocv = new ContentValues();
+                ocv.put("order_id", "JN" + System.currentTimeMillis());
+                ocv.put("username", buyerUser);
+                ocv.put("product_id", 0);
+                ocv.put("name", productName);
+                ocv.put("price", price);
+                ocv.put("quantity", qty);
+                ocv.put("time", now("yyyy-MM-dd HH:mm"));
+                ocv.put("status", Order.STATUS_PENDING);
+                ocv.put("order_type", Order.ORDER_TYPE_PROCUREMENT);
+                ocv.put("purchase_request_id", reqId);
+                ocv.put("seller", sellerUser);
+                wdb().insert("orders", null, ocv);
+            }
+        }
+        return true;
+    }
+
+    /** 拒绝报价 */
+    public boolean rejectQuote(long quoteId, String replyDesc) {
+        ContentValues cv = new ContentValues();
+        cv.put("status", "rejected");
+        cv.put("reply_desc", replyDesc);
+        return wdb().update("purchase_quotes", cv, "id=?",
+                new String[] { String.valueOf(quoteId) }) > 0;
+    }
+
+    /** 获取某采购需求的报价列表（含状态） */
+    public List<com.example.zhinongbao.model.PurchaseQuote> getQuotesForRequestWithStatus(long requestId) {
+        List<com.example.zhinongbao.model.PurchaseQuote> list = new ArrayList<>();
+        try (Cursor c = rdb().rawQuery(
+                "SELECT q.id, q.request_id, q.seller_user, q.price, q.description, q.timestamp," +
+                        " u.nickname, q.status, q.reply_desc" +
+                        " FROM purchase_quotes q LEFT JOIN users u ON q.seller_user=u.username" +
+                        " WHERE q.request_id=? ORDER BY q.timestamp ASC",
+                new String[] { String.valueOf(requestId) })) {
+            while (c.moveToNext()) {
+                com.example.zhinongbao.model.PurchaseQuote quote = new com.example.zhinongbao.model.PurchaseQuote();
+                quote.id = c.getLong(0);
+                quote.requestId = c.getLong(1);
+                quote.sellerUser = c.getString(2);
+                quote.price = c.getDouble(3);
+                quote.description = c.getString(4);
+                quote.timestamp = c.getLong(5);
+                quote.sellerNickname = c.getString(6);
+                quote.status = c.getString(7);
+                quote.replyDesc = c.getString(8);
+                if (quote.sellerNickname == null || quote.sellerNickname.isEmpty())
+                    quote.sellerNickname = quote.sellerUser;
+                if (quote.status == null)
+                    quote.status = "pending";
+                list.add(quote);
+            }
+        }
+        return list;
     }
 }

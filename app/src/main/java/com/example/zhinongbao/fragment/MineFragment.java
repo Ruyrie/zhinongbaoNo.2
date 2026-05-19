@@ -64,7 +64,8 @@ public class MineFragment extends Fragment {
                 if (avatarUri != null) {
                         try {
                                 if (avatarUri.startsWith("data:image")) {
-                                        com.example.zhinongbao.utils.ImageUtils.setAvatarFromBase64(ivAvatar, avatarUri);
+                                        com.example.zhinongbao.utils.ImageUtils.setAvatarFromBase64(ivAvatar,
+                                                        avatarUri);
                                 } else {
                                         ivAvatar.setImageURI(Uri.parse(avatarUri));
                                 }
@@ -100,6 +101,19 @@ public class MineFragment extends Fragment {
 
                 // Load footprint icon from assets
                 loadAssetImage(view.findViewById(R.id.ivFootprintIcon), "zuji.png");
+
+                // Role switch button
+                View btnSwitch = view.findViewById(R.id.btnSwitchToSeller);
+                if (dm.getUserRole(username) == com.example.zhinongbao.model.User.ROLE_BOTH) {
+                        btnSwitch.setVisibility(View.VISIBLE);
+                        btnSwitch.setOnClickListener(v -> {
+                                dm.setActiveRole(com.example.zhinongbao.model.User.ROLE_SELLER);
+                                startActivity(new Intent(getContext(), MainActivity.class));
+                                getActivity().finish();
+                        });
+                } else {
+                        btnSwitch.setVisibility(View.GONE);
+                }
 
                 // Profile click
                 view.findViewById(R.id.layoutProfile).setOnClickListener(
@@ -177,6 +191,7 @@ public class MineFragment extends Fragment {
                         Bitmap bmp = BitmapFactory.decodeStream(is);
                         iv.setImageBitmap(bmp);
                         is.close();
-                } catch (IOException ignored) {}
+                } catch (IOException ignored) {
+                }
         }
 }

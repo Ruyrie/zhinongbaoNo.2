@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:padding="20dp">
+
+    <TextView
+        android:id="@+id/tvQuoteReplyInfo"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:textColor="#333333"
+        android:textSize="15sp"
+        android:text="确定操作该报价吗？"/>
+
+    <EditText
+        android:id="@+id/etReplyDesc"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="15dp"
+        android:hint="填写回复备注（可选）"
+        android:textColor="#333333"
+        android:textSize="14sp"
+        android:background="@drawable/bg_input_field"
+        android:padding="10dp"
+        android:lines="3"
+        android:gravity="top"/>
+
+</LinearLayout>
