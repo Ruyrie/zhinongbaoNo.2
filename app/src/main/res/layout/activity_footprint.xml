@@ -24,10 +24,11 @@
             android:layout_marginEnd="8dp" />
 
         <TextView
+            android:id="@+id/tvFootprintTitle"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:text="我的足迹"
+            android:text="我的足迹 (0)"
             android:textSize="17sp"
             android:textStyle="bold"
             android:textColor="#1F1F1F"
@@ -35,12 +36,52 @@
             android:layout_marginEnd="36dp" />
     </LinearLayout>
 
-    <TextView
+    <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
+        android:layout_height="48dp"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:background="#FFFFFF"
+        android:paddingHorizontal="24dp">
+
+        <TextView
+            android:id="@+id/tabFootprintProducts"
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:gravity="center"
+            android:text="商品"
+            android:textColor="#1F1F1F"
+            android:textSize="17sp"
+            android:textStyle="bold"
+            android:layout_marginEnd="36dp" />
+
+        <TextView
+            android:id="@+id/tabFootprintStores"
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:gravity="center"
+            android:text="店铺"
+            android:textColor="#8A8A8A"
+            android:textSize="17sp" />
+    </LinearLayout>
+
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/rvFootprints"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:clipToPadding="false"
+        android:padding="8dp" />
+
+    <TextView
+        android:id="@+id/tvFootprintEmpty"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
         android:gravity="center"
         android:text="暂无浏览记录"
         android:textSize="15sp"
-        android:textColor="#8A8A8A" />
+        android:textColor="#8A8A8A"
+        android:visibility="gone" />
 
 </LinearLayout>

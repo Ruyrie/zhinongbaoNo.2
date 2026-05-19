@@ -9,13 +9,11 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.TextView;
-import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
-import androidx.recyclerview.widget.LinearLayoutManager;
-import androidx.recyclerview.widget.RecyclerView;
 import com.example.zhinongbao.AddProductActivity;
 import com.example.zhinongbao.ArticleDetailActivity;
 import com.example.zhinongbao.MainActivity;
@@ -26,10 +24,8 @@ import com.example.zhinongbao.SellerOrdersActivity;
 import com.example.zhinongbao.SellerPurchaseMgmtActivity;
 import com.example.zhinongbao.SellerStoreActivity;
 import com.example.zhinongbao.SettingsActivity;
-import com.example.zhinongbao.adapter.ArticleAdapter;
 import com.example.zhinongbao.data.DataManager;
 import com.example.zhinongbao.model.Article;
-import com.example.zhinongbao.model.User;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.List;
@@ -62,7 +58,7 @@ public class SellerMineFragment extends Fragment {
 
         // 店铺名称（用昵称代替）
         ((TextView) view.findViewById(R.id.tvSellerShopName))
-                .setText(nickname + "的店铺 ›");
+                .setText(dm.getStoreName(username) + " ›");
 
         // 昵称
         ((TextView) view.findViewById(R.id.tvSellerNickname)).setText(nickname);
@@ -108,16 +104,10 @@ public class SellerMineFragment extends Fragment {
 
         // 去买货：切换为买家身份
         view.findViewById(R.id.btnGoShopping).setOnClickListener(v -> {
-            int role = dm.getUserRole(username);
-            if (role == User.ROLE_BOTH) {
-                dm.setActiveRole(User.ROLE_BUYER);
-                // 重启 MainActivity 以刷新身份
-                Intent intent = new Intent(requireContext(), MainActivity.class);
-                intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK);
-                startActivity(intent);
-            } else {
-                Toast.makeText(requireContext(), "您目前没有买家身份", Toast.LENGTH_SHORT).show();
-            }
+            dm.setActiveRole(com.example.zhinongbao.model.User.ROLE_BUYER);
+            Intent intent = new Intent(requireContext(), MainActivity.class);
+            intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK | Intent.FLAG_ACTIVITY_NEW_TASK);
+            startActivity(intent);
         });
 
         // 编辑资料
@@ -158,18 +148,89 @@ public class SellerMineFragment extends Fragment {
             startActivity(i);
         });
 
-        // 初始化新闻资讯
-        RecyclerView rvNews = view.findViewById(R.id.rvNews);
-        if (rvNews != null) {
-            rvNews.setLayoutManager(new LinearLayoutManager(getContext()));
-            List<Article> articles = dm.getArticles();
-            ArticleAdapter articleAdapter = new ArticleAdapter(articles, article -> {
-                Intent intent = new Intent(getContext(), ArticleDetailActivity.class);
-                intent.putExtra("article_id", article.id);
-                startActivity(intent);
-            }, dm, username);
-            articleAdapter.setHideCategory(true);
-            rvNews.setAdapter(articleAdapter);
+        bindNewsList(view, dm, username);
+    }
+
+    private void bindNewsList(View root, DataManager dm, String username) {
+        LinearLayout container = root.findViewById(R.id.llNewsContainer);
+        if (container == null)
+            return;
+        container.removeAllViews();
+        LayoutInflater inflater = LayoutInflater.from(requireContext());
+        List<Article> articles = dm.getArticles();
+        for (Article article : articles) {
+            if ("农友圈".equals(article.category))
+                continue;
+            View item = inflater.inflate(R.layout.item_article, container, false);
+            bindNewsItem(item, article, dm, username);
+            container.addView(item);
+        }
+    }
+
+    private void bindNewsItem(View item, Article article, DataManager dm, String username) {
+        ((TextView) item.findViewById(R.id.tvArticleTitle)).setText(article.title);
+        ((TextView) item.findViewById(R.id.tvArticleTime)).setText(article.time);
+        TextView category = item.findViewById(R.id.tvArticleCategory);
+        if (category != null)
+            category.setVisibility(View.GONE);
+
+        ImageView likeIcon = item.findViewById(R.id.ivArticleLike);
+        TextView likeCount = item.findViewById(R.id.tvArticleLikeCount);
+        TextView commentCount = item.findViewById(R.id.tvArticleCommentCount);
+        boolean liked = username != null && dm.isArticleLiked(username, article.id);
+        likeIcon.setImageResource(liked ? R.mipmap.dianzan : R.mipmap.weidianzan);
+        likeCount.setText(String.valueOf(dm.getArticleLikeCount(article.id)));
+        commentCount.setText(String.valueOf(dm.getCommentCount(article.id)));
+
+        View.OnClickListener likeClick = v -> {
+            if (dm.isArticleLiked(username, article.id)) {
+                dm.unlikeArticle(username, article.id);
+            } else {
+                dm.likeArticle(username, article.id);
+            }
+            boolean nowLiked = dm.isArticleLiked(username, article.id);
+            likeIcon.setImageResource(nowLiked ? R.mipmap.dianzan : R.mipmap.weidianzan);
+            likeCount.setText(String.valueOf(dm.getArticleLikeCount(article.id)));
+        };
+        likeIcon.setOnClickListener(likeClick);
+        likeCount.setOnClickListener(likeClick);
+
+        ImageView thumb = item.findViewById(R.id.ivArticleThumb);
+        bindArticleThumb(thumb, article);
+
+        item.setOnClickListener(v -> {
+            Intent intent = new Intent(getContext(), ArticleDetailActivity.class);
+            intent.putExtra("article_id", article.id);
+            startActivity(intent);
+        });
+    }
+
+    private void bindArticleThumb(ImageView thumb, Article article) {
+        if (article.coverUri != null && !article.coverUri.isEmpty()) {
+            try {
+                thumb.setImageURI(Uri.parse(article.coverUri.split(",")[0]));
+                return;
+            } catch (Exception ignored) {
+            }
+        }
+        switch (article.id) {
+            case 5:
+                thumb.setImageResource(R.mipmap.text1);
+                break;
+            case 4:
+                thumb.setImageResource(R.mipmap.text2);
+                break;
+            case 3:
+                thumb.setImageResource(R.mipmap.text3);
+                break;
+            case 2:
+                thumb.setImageResource(R.mipmap.text4);
+                break;
+            case 1:
+                thumb.setImageResource(R.mipmap.text5);
+                break;
+            default:
+                thumb.setImageResource(R.drawable.ic_launcher_background);
         }
     }
 

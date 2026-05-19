@@ -378,8 +378,14 @@ public class ArticleDetailActivity extends AppCompatActivity {
     @Override
     protected void onResume() {
         super.onResume();
-        // Refresh like count in case user navigated away and back
-        if (ivLikeBtn != null)
+        if (ivLikeBtn != null) {
             refreshLikeUI();
+        }
+        if (comments != null && commentAdapter != null) {
+            comments.clear();
+            comments.addAll(dm.getComments(articleId, currentUser != null ? currentUser : ""));
+            commentAdapter.notifyDataSetChanged();
+            updateCommentCountUI();
+        }
     }
 }

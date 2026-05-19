@@ -167,6 +167,24 @@
                 android:background="#EEEEEE"
                 android:layout_marginHorizontal="16dp" />
 
+            <EditText
+                android:id="@+id/etStorePhone"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="商铺电话号码（买家可拨打联系）"
+                android:textSize="16sp"
+                android:textColor="#333333"
+                android:textColorHint="#BBBBBB"
+                android:background="@null"
+                android:inputType="phone"
+                android:padding="16dp" />
+
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="1dp"
+                android:background="#EEEEEE"
+                android:layout_marginHorizontal="16dp" />
+
             <!-- Category picker -->
             <LinearLayout
                 android:layout_width="match_parent"

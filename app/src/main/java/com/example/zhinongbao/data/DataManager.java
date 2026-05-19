@@ -33,6 +33,14 @@ public class DataManager {
     private final Context ctx;
     private final AppDatabase appDb;
 
+    public static class StoreFootprint {
+        public String seller;
+        public String storeName;
+        public String storePhone;
+        public long viewedAt;
+        public int productCount;
+    }
+
     private DataManager(Context ctx) {
         this.ctx = ctx.getApplicationContext();
         this.appDb = AppDatabase.getInstance(this.ctx);
@@ -269,6 +277,41 @@ public class DataManager {
     public boolean setAvatarUri(String username, String uri) {
         ContentValues cv = new ContentValues();
         cv.put("avatar_uri", uri);
+        return wdb().update("users", cv, "username=?", new String[] { username }) > 0;
+    }
+
+    public String getStoreName(String username) {
+        try (Cursor c = rdb().rawQuery("SELECT store_name,nickname FROM users WHERE username=?",
+                new String[] { username })) {
+            if (c.moveToFirst()) {
+                String name = c.getString(0);
+                if (name != null && !name.trim().isEmpty())
+                    return name;
+                String nick = c.getString(1);
+                return ((nick != null && !nick.isEmpty()) ? nick : username) + "的店铺";
+            }
+        }
+        return "店铺";
+    }
+
+    public String getStorePhone(String username) {
+        try (Cursor c = rdb().rawQuery("SELECT store_phone,phone FROM users WHERE username=?",
+                new String[] { username })) {
+            if (c.moveToFirst()) {
+                String storePhone = c.getString(0);
+                if (storePhone != null && !storePhone.trim().isEmpty())
+                    return storePhone;
+                String phone = c.getString(1);
+                return phone != null ? phone : "";
+            }
+        }
+        return "";
+    }
+
+    public boolean updateStoreInfo(String username, String storeName, String storePhone) {
+        ContentValues cv = new ContentValues();
+        cv.put("store_name", storeName);
+        cv.put("store_phone", storePhone);
         return wdb().update("users", cv, "username=?", new String[] { username }) > 0;
     }
 
@@ -624,11 +667,12 @@ public class DataManager {
     public List<Product> getProducts() {
         List<Product> list = new ArrayList<>();
         try (Cursor c = rdb().rawQuery(
-                "SELECT id,name,`desc`,price,cover_uri,category FROM products", null)) {
+                "SELECT id,name,`desc`,price,cover_uri,category,seller,view_count FROM products", null)) {
             while (c.moveToNext()) {
                 int catIdx = c.getColumnIndex("category");
                 String cat = (catIdx >= 0 && c.getString(catIdx) != null) ? c.getString(catIdx) : "推荐";
-                list.add(new Product(c.getInt(0), c.getString(1), c.getString(2), c.getDouble(3), c.getString(4), cat));
+                list.add(new Product(c.getInt(0), c.getString(1), c.getString(2), c.getDouble(3),
+                        c.getString(4), cat, c.getString(6), c.getInt(7)));
             }
         }
         return list;
@@ -659,13 +703,13 @@ public class DataManager {
     public List<Product> getProductsBySeller(String seller) {
         List<Product> list = new ArrayList<>();
         try (Cursor c = rdb().rawQuery(
-                "SELECT id,name,`desc`,price,cover_uri,category FROM products WHERE seller=?",
+                "SELECT id,name,`desc`,price,cover_uri,category,seller,view_count FROM products WHERE seller=?",
                 new String[] { seller })) {
             while (c.moveToNext()) {
                 int catIdx = c.getColumnIndex("category");
                 String cat = (catIdx >= 0 && c.getString(catIdx) != null) ? c.getString(catIdx) : "推荐";
                 list.add(new Product(c.getInt(0), c.getString(1), c.getString(2),
-                        c.getDouble(3), c.getString(4), cat));
+                        c.getDouble(3), c.getString(4), cat, c.getString(6), c.getInt(7)));
             }
         }
         return list;
@@ -689,14 +733,96 @@ public class DataManager {
 
     public Product getProductById(int productId) {
         try (Cursor c = rdb().rawQuery(
-                "SELECT id,name,`desc`,price,cover_uri,category FROM products WHERE id=?",
+                "SELECT id,name,`desc`,price,cover_uri,category,seller,view_count FROM products WHERE id=?",
                 new String[] { String.valueOf(productId) })) {
             if (c.moveToFirst()) {
                 return new Product(c.getInt(0), c.getString(1), c.getString(2),
-                        c.getDouble(3), c.getString(4), c.getString(5));
+                        c.getDouble(3), c.getString(4), c.getString(5), c.getString(6), c.getInt(7));
             }
         }
         return null;
+    }
+
+    public void recordProductView(String username, int productId) {
+        wdb().execSQL("UPDATE products SET view_count = COALESCE(view_count, 0) + 1 WHERE id=?",
+                new Object[] { productId });
+        if (username == null || username.isEmpty())
+            return;
+        ContentValues cv = new ContentValues();
+        cv.put("username", username);
+        cv.put("product_id", productId);
+        cv.put("viewed_at", System.currentTimeMillis());
+        wdb().insertWithOnConflict("product_footprints", null, cv, SQLiteDatabase.CONFLICT_REPLACE);
+    }
+
+    public int getProductViewCount(int productId) {
+        return queryCount("SELECT COALESCE(view_count, 0) FROM products WHERE id=?", String.valueOf(productId));
+    }
+
+    public List<Product> getProductFootprints(String username) {
+        List<Product> list = new ArrayList<>();
+        String sql = "SELECT p.id,p.name,p.`desc`,p.price,p.cover_uri,p.category,p.seller,p.view_count,f.viewed_at " +
+                "FROM product_footprints f INNER JOIN products p ON f.product_id=p.id " +
+                "WHERE f.username=? ORDER BY f.viewed_at DESC";
+        try (Cursor c = rdb().rawQuery(sql, new String[] { username })) {
+            while (c.moveToNext()) {
+                Product p = new Product(c.getInt(0), c.getString(1), c.getString(2),
+                        c.getDouble(3), c.getString(4), c.getString(5), c.getString(6), c.getInt(7));
+                p.viewedAt = c.getLong(8);
+                list.add(p);
+            }
+        }
+        return list;
+    }
+
+    public void recordStoreView(String username, String seller) {
+        if (username == null || username.isEmpty() || seller == null || seller.isEmpty())
+            return;
+        ContentValues cv = new ContentValues();
+        cv.put("username", username);
+        cv.put("seller", seller);
+        cv.put("viewed_at", System.currentTimeMillis());
+        wdb().insertWithOnConflict("store_footprints", null, cv, SQLiteDatabase.CONFLICT_REPLACE);
+    }
+
+    public List<StoreFootprint> getStoreFootprints(String username) {
+        List<StoreFootprint> list = new ArrayList<>();
+        String sql = "SELECT f.seller,f.viewed_at,u.store_name,u.nickname,u.store_phone,u.phone," +
+                "(SELECT COUNT(*) FROM products p WHERE p.seller=f.seller) AS product_count " +
+                "FROM store_footprints f LEFT JOIN users u ON f.seller=u.username " +
+                "WHERE f.username=? ORDER BY f.viewed_at DESC";
+        try (Cursor c = rdb().rawQuery(sql, new String[] { username })) {
+            while (c.moveToNext()) {
+                StoreFootprint item = new StoreFootprint();
+                item.seller = c.getString(0);
+                item.viewedAt = c.getLong(1);
+                String storeName = c.getString(2);
+                String nick = c.getString(3);
+                item.storeName = (storeName != null && !storeName.isEmpty())
+                        ? storeName
+                        : (((nick != null && !nick.isEmpty()) ? nick : item.seller) + "的店铺");
+                String storePhone = c.getString(4);
+                String phone = c.getString(5);
+                item.storePhone = (storePhone != null && !storePhone.isEmpty()) ? storePhone : (phone != null ? phone : "");
+                item.productCount = c.getInt(6);
+                list.add(item);
+            }
+        }
+        return list;
+    }
+
+    public List<Product> getFavoriteProducts(String username) {
+        List<Product> list = new ArrayList<>();
+        String sql = "SELECT p.id,p.name,p.`desc`,p.price,p.cover_uri,p.category,p.seller,p.view_count " +
+                "FROM product_favorites f INNER JOIN products p ON f.product_id=p.id " +
+                "WHERE f.username=? ORDER BY f.id DESC";
+        try (Cursor c = rdb().rawQuery(sql, new String[] { username })) {
+            while (c.moveToNext()) {
+                list.add(new Product(c.getInt(0), c.getString(1), c.getString(2),
+                        c.getDouble(3), c.getString(4), c.getString(5), c.getString(6), c.getInt(7)));
+            }
+        }
+        return list;
     }
 
     public int getProductOrderCount(int productId) {

@@ -5,6 +5,8 @@
     android:layout_height="match_parent"
     android:background="#F0F2F5"
     android:clipToPadding="false"
+    android:fillViewport="true"
+    android:descendantFocusability="blocksDescendants"
     android:paddingBottom="90dp">
 
     <LinearLayout
@@ -46,7 +48,7 @@
                     android:id="@+id/btnGoShopping"
                     android:layout_width="wrap_content"
                     android:layout_height="32dp"
-                    android:text="切换到买家"
+                    android:text="去买货"
                     android:textSize="13sp"
                     android:textColor="#2E7D32"
                     android:textStyle="bold"
@@ -267,8 +269,8 @@
 
                     <ImageView
                         android:id="@+id/ivMyProducts"
-                        android:layout_width="48dp"
-                        android:layout_height="48dp"
+                        android:layout_width="38dp"
+                        android:layout_height="38dp"
                         android:scaleType="fitCenter" />
 
                     <TextView
@@ -294,8 +296,8 @@
 
                     <ImageView
                         android:id="@+id/ivPurchaseMgmt"
-                        android:layout_width="48dp"
-                        android:layout_height="48dp"
+                        android:layout_width="38dp"
+                        android:layout_height="38dp"
                         android:scaleType="fitCenter" />
 
                     <TextView
@@ -321,8 +323,8 @@
 
                     <ImageView
                         android:id="@+id/ivOrderMgmt"
-                        android:layout_width="48dp"
-                        android:layout_height="48dp"
+                        android:layout_width="38dp"
+                        android:layout_height="38dp"
                         android:scaleType="fitCenter" />
 
                     <TextView
@@ -348,8 +350,8 @@
 
                     <ImageView
                         android:id="@+id/ivShopMgmt"
-                        android:layout_width="48dp"
-                        android:layout_height="48dp"
+                        android:layout_width="38dp"
+                        android:layout_height="38dp"
                         android:scaleType="fitCenter" />
 
                     <TextView
@@ -568,11 +570,11 @@
                     android:background="#F0F0F0" />
 
                 <!-- 资讯列表 -->
-                <androidx.recyclerview.widget.RecyclerView
-                    android:id="@+id/rvNews"
+                <LinearLayout
+                    android:id="@+id/llNewsContainer"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:nestedScrollingEnabled="false" />
+                    android:orientation="vertical" />
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
 

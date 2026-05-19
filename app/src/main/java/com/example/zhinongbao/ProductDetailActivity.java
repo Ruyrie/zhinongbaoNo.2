@@ -3,6 +3,7 @@ package com.example.zhinongbao;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.net.Uri;
 import android.os.Bundle;
 import android.widget.Button;
 import android.widget.ImageView;
@@ -30,14 +31,7 @@ public class ProductDetailActivity extends AppCompatActivity {
         productId = getIntent().getIntExtra("product_id", -1);
         dm = DataManager.getInstance(this);
 
-        // 查找商品
-        Product target = null;
-        for (Product p : dm.getProducts()) {
-            if (p.id == productId) {
-                target = p;
-                break;
-            }
-        }
+        Product target = dm.getProductById(productId);
         if (target == null) {
             finish();
             return;
@@ -45,6 +39,8 @@ public class ProductDetailActivity extends AppCompatActivity {
 
         final Product product = target;
         String username = dm.getLoggedUser();
+        dm.recordProductView(username, product.id);
+        product.viewCount = dm.getProductViewCount(product.id);
 
         androidx.viewpager2.widget.ViewPager2 vpProductImage = findViewById(R.id.vpProductImage);
         TextView tvImageIndicator = findViewById(R.id.tvImageIndicator);
@@ -206,22 +202,31 @@ public class ProductDetailActivity extends AppCompatActivity {
             startActivity(new Intent(this, MyOrdersActivity.class));
         });
 
-        // 购物车图标
-        findViewById(R.id.ivCartIcon).setOnClickListener(v -> startActivity(new Intent(this, CartActivity.class)));
-
-        // 联系客服图标（从 assets 加载）
-        ImageView ivContactService = findViewById(R.id.ivContactService);
-        try {
-            InputStream is = getAssets().open("pic/lianxikefu.png");
-            Bitmap bmp = BitmapFactory.decodeStream(is);
-            ivContactService.setImageBitmap(bmp);
-            is.close();
-        } catch (IOException ignored) {}
         final String productNameFinal = product.name;
-        ivContactService.setOnClickListener(v -> {
+        final String seller = product.seller != null && !product.seller.isEmpty()
+                ? product.seller : ChatActivity.SHOP_USERNAME;
+
+        findViewById(R.id.btnOpenStore).setOnClickListener(v -> {
+            Intent intent = new Intent(this, SellerStoreActivity.class);
+            intent.putExtra("seller", seller);
+            startActivity(intent);
+        });
+
+        findViewById(R.id.btnContactService).setOnClickListener(v -> {
             Intent intent = new Intent(this, ChatActivity.class);
-            intent.putExtra("other_user", ChatActivity.SHOP_USERNAME);
+            intent.putExtra("other_user", seller);
             intent.putExtra("product_name", productNameFinal);
+            startActivity(intent);
+        });
+
+        findViewById(R.id.btnCallShop).setOnClickListener(v -> {
+            String phone = dm.getStorePhone(seller);
+            if (phone == null || phone.trim().isEmpty()) {
+                Toast.makeText(this, "商铺暂未填写电话", Toast.LENGTH_SHORT).show();
+                return;
+            }
+            Intent intent = new Intent(Intent.ACTION_DIAL);
+            intent.setData(Uri.parse("tel:" + phone));
             startActivity(intent);
         });
     }

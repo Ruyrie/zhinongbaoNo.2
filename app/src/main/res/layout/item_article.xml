@@ -62,19 +62,35 @@
                 android:text="2024-05-19" />
 
             <ImageView
+                android:id="@+id/ivArticleLike"
                 android:layout_width="14dp"
                 android:layout_height="14dp"
-                android:src="@drawable/ic_nav_headline"
-                android:tint="#999999"
+                android:src="@mipmap/weidianzan"
                 android:layout_marginEnd="4dp" />
 
             <TextView
-                android:id="@+id/tvArticleReadCount"
+                android:id="@+id/tvArticleLikeCount"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:textSize="12sp"
                 android:textColor="#999999"
-                android:text="21794" />
+                android:text="0" />
+
+            <ImageView
+                android:id="@+id/ivArticleComment"
+                android:layout_width="14dp"
+                android:layout_height="14dp"
+                android:src="@mipmap/pinglun"
+                android:layout_marginStart="12dp"
+                android:layout_marginEnd="4dp" />
+
+            <TextView
+                android:id="@+id/tvArticleCommentCount"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textSize="12sp"
+                android:textColor="#999999"
+                android:text="0" />
         </LinearLayout>
     </LinearLayout>
 

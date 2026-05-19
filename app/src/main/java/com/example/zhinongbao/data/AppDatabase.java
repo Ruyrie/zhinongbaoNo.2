@@ -11,7 +11,7 @@ import android.database.sqlite.SQLiteOpenHelper;
 public class AppDatabase extends SQLiteOpenHelper {
 
         private static final String DB_NAME = "zhinongbao.db";
-        private static final int DB_VERSION = 11;
+        private static final int DB_VERSION = 13;
 
         private static AppDatabase instance;
 
@@ -36,6 +36,8 @@ public class AppDatabase extends SQLiteOpenHelper {
                                 "avatar_uri TEXT," +
                                 "signature TEXT," +
                                 "phone TEXT UNIQUE," +
+                                "store_name TEXT," +
+                                "store_phone TEXT," +
                                 "role INTEGER DEFAULT 0)");
 
                 // 文章表
@@ -57,6 +59,7 @@ public class AppDatabase extends SQLiteOpenHelper {
                                 "cover_uri TEXT," +
                                 "price REAL NOT NULL," +
                                 "category TEXT DEFAULT '推荐'," +
+                                "view_count INTEGER DEFAULT 0," +
                                 "seller TEXT)");
 
                 // 购物车（每用户独立）
@@ -99,6 +102,26 @@ public class AppDatabase extends SQLiteOpenHelper {
                                 "username TEXT NOT NULL," +
                                 "article_id INTEGER NOT NULL," +
                                 "UNIQUE(username, article_id))");
+
+                db.execSQL("CREATE TABLE product_favorites (" +
+                                "id INTEGER PRIMARY KEY AUTOINCREMENT," +
+                                "username TEXT NOT NULL," +
+                                "product_id INTEGER NOT NULL," +
+                                "UNIQUE(username, product_id))");
+
+                db.execSQL("CREATE TABLE product_footprints (" +
+                                "id INTEGER PRIMARY KEY AUTOINCREMENT," +
+                                "username TEXT NOT NULL," +
+                                "product_id INTEGER NOT NULL," +
+                                "viewed_at INTEGER NOT NULL," +
+                                "UNIQUE(username, product_id))");
+
+                db.execSQL("CREATE TABLE store_footprints (" +
+                                "id INTEGER PRIMARY KEY AUTOINCREMENT," +
+                                "username TEXT NOT NULL," +
+                                "seller TEXT NOT NULL," +
+                                "viewed_at INTEGER NOT NULL," +
+                                "UNIQUE(username, seller))");
 
                 // 评论表
                 db.execSQL("CREATE TABLE comments (" +
@@ -171,6 +194,8 @@ public class AppDatabase extends SQLiteOpenHelper {
                 db.execSQL("CREATE INDEX idx_article_likes_article ON article_likes(article_id)");
                 db.execSQL("CREATE INDEX idx_follows_following ON follows(`following`)");
                 db.execSQL("CREATE INDEX idx_product_comments_product ON product_comments(product_id)");
+                db.execSQL("CREATE INDEX idx_product_footprints_user ON product_footprints(username, viewed_at)");
+                db.execSQL("CREATE INDEX idx_store_footprints_user ON store_footprints(username, viewed_at)");
         }
 
         @Override
@@ -250,6 +275,32 @@ public class AppDatabase extends SQLiteOpenHelper {
                         db.execSQL("ALTER TABLE orders ADD COLUMN refund_reason TEXT");
                         db.execSQL("ALTER TABLE purchase_quotes ADD COLUMN status TEXT DEFAULT 'pending'");
                         db.execSQL("ALTER TABLE purchase_quotes ADD COLUMN reply_desc TEXT");
+                }
+                if (oldVersion < 12) {
+                        db.execSQL("ALTER TABLE users ADD COLUMN store_name TEXT");
+                        db.execSQL("ALTER TABLE users ADD COLUMN store_phone TEXT");
+                        db.execSQL("ALTER TABLE products ADD COLUMN view_count INTEGER DEFAULT 0");
+                        db.execSQL("CREATE TABLE IF NOT EXISTS product_favorites (" +
+                                        "id INTEGER PRIMARY KEY AUTOINCREMENT," +
+                                        "username TEXT NOT NULL," +
+                                        "product_id INTEGER NOT NULL," +
+                                        "UNIQUE(username, product_id))");
+                        db.execSQL("CREATE TABLE IF NOT EXISTS product_footprints (" +
+                                        "id INTEGER PRIMARY KEY AUTOINCREMENT," +
+                                        "username TEXT NOT NULL," +
+                                        "product_id INTEGER NOT NULL," +
+                                        "viewed_at INTEGER NOT NULL," +
+                                        "UNIQUE(username, product_id))");
+                        db.execSQL("CREATE INDEX IF NOT EXISTS idx_product_footprints_user ON product_footprints(username, viewed_at)");
+                }
+                if (oldVersion < 13) {
+                        db.execSQL("CREATE TABLE IF NOT EXISTS store_footprints (" +
+                                        "id INTEGER PRIMARY KEY AUTOINCREMENT," +
+                                        "username TEXT NOT NULL," +
+                                        "seller TEXT NOT NULL," +
+                                        "viewed_at INTEGER NOT NULL," +
+                                        "UNIQUE(username, seller))");
+                        db.execSQL("CREATE INDEX IF NOT EXISTS idx_store_footprints_user ON store_footprints(username, viewed_at)");
                 }
         }
 }

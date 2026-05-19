@@ -107,14 +107,14 @@
                     android:id="@+id/btnSwitchToSeller"
                     android:layout_width="wrap_content"
                     android:layout_height="32dp"
+                    android:minWidth="104dp"
                     android:text="切换到卖家"
                     android:textSize="13sp"
-                    android:textColor="#FFFFFF"
+                    android:textColor="#2E7D32"
                     android:textStyle="bold"
-                    android:background="@drawable/bg_btn_outline_green"
-                    android:backgroundTint="#4CAF50"
+                    android:background="@drawable/bg_role_switch_outline"
                     android:gravity="center"
-                    android:paddingHorizontal="16dp"
+                    android:paddingHorizontal="14dp"
                     android:layout_gravity="end|top"
                     android:layout_marginTop="32dp"
                     android:layout_marginEnd="20dp"
@@ -130,7 +130,7 @@
                 android:background="#EBEBEB"
                 android:layout_marginHorizontal="24dp" />
 
-            <!-- Quick action row: 购物车 | 收藏 | 足迹 -->
+            <!-- Quick action row: 购物车 | 商品收藏 | 足迹 -->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -181,7 +181,7 @@
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="收藏"
+                        android:text="商品收藏"
                         android:textSize="12sp"
                         android:textColor="#1F1F1F"
                         android:layout_marginTop="4dp" />
@@ -535,7 +535,7 @@
                     <ImageView android:layout_width="18dp" android:layout_height="18dp"
                         android:src="@mipmap/shoucang" android:layout_marginEnd="14dp" />
                     <TextView android:layout_width="0dp" android:layout_height="wrap_content"
-                        android:layout_weight="1" android:text="我的收藏" android:textSize="16sp" android:textColor="#1F1F1F" />
+                        android:layout_weight="1" android:text="文章收藏" android:textSize="16sp" android:textColor="#1F1F1F" />
                     <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
                         android:text="›" android:textSize="22sp" android:textColor="#C7C7CC" />
                 </LinearLayout>

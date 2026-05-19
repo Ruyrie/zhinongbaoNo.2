@@ -30,6 +30,7 @@ public class MainActivity extends AppCompatActivity {
     private TextView[] labels;
     private int currentIndex = 0;
     private ValueAnimator pillAnimator;
+    private int lastRole = Integer.MIN_VALUE;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -68,16 +69,7 @@ public class MainActivity extends AppCompatActivity {
         };
 
         // 根据角色设置 tab 文字
-        int activeRole = com.example.zhinongbao.data.DataManager.getInstance(this).getActiveRole();
-        boolean sellerMode = activeRole == com.example.zhinongbao.model.User.ROLE_SELLER
-                || activeRole == com.example.zhinongbao.model.User.ROLE_BOTH;
-        if (sellerMode) {
-            labels[0].setText("我的店铺");
-            labels[1].setText("农友圈");
-        } else {
-            labels[0].setText("首页");
-            labels[1].setText("农技学堂");
-        }
+        refreshRoleTabs();
 
         for (int i = 0; i < tabs.length; i++) {
             final int idx = i;
@@ -104,15 +96,35 @@ public class MainActivity extends AppCompatActivity {
 
         // 卖家身份首页显示店铺仪表盘，买家显示商城
         if (savedInstanceState == null) {
-            int initRole = com.example.zhinongbao.data.DataManager.getInstance(this).getActiveRole();
-            if (initRole == com.example.zhinongbao.model.User.ROLE_SELLER
-                    || initRole == com.example.zhinongbao.model.User.ROLE_BOTH) {
-                switchFragment(new com.example.zhinongbao.fragment.SellerMineFragment(), true);
-                labels[0].setText("我的店铺");
-            } else {
-                switchFragment(new MallFragment(), true);
-            }
+            switchFragment(isSellerMode()
+                    ? new com.example.zhinongbao.fragment.SellerMineFragment()
+                    : new MallFragment(), true);
         }
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        int role = com.example.zhinongbao.data.DataManager.getInstance(this).getActiveRole();
+        if (role != lastRole) {
+            refreshRoleTabs();
+            currentIndex = 0;
+            switchFragment(isSellerMode()
+                    ? new com.example.zhinongbao.fragment.SellerMineFragment()
+                    : new MallFragment(), false);
+        }
+    }
+
+    private boolean isSellerMode() {
+        return com.example.zhinongbao.data.DataManager.getInstance(this).getActiveRole()
+                == com.example.zhinongbao.model.User.ROLE_SELLER;
+    }
+
+    private void refreshRoleTabs() {
+        boolean sellerMode = isSellerMode();
+        labels[0].setText(sellerMode ? "我的店铺" : "首页");
+        labels[1].setText(sellerMode ? "农友圈" : "农技学堂");
+        lastRole = com.example.zhinongbao.data.DataManager.getInstance(this).getActiveRole();
     }
 
     private void selectTab(int idx, boolean animate) {
@@ -187,8 +199,7 @@ public class MainActivity extends AppCompatActivity {
 
         currentIndex = idx;
         int activeRole = com.example.zhinongbao.data.DataManager.getInstance(this).getActiveRole();
-        boolean isSeller = activeRole == com.example.zhinongbao.model.User.ROLE_SELLER
-                || activeRole == com.example.zhinongbao.model.User.ROLE_BOTH;
+        boolean isSeller = activeRole == com.example.zhinongbao.model.User.ROLE_SELLER;
         Fragment f;
         if (idx == 0) {
             // 卖家首页 = 店铺仪表盘；买家首页 = 商城

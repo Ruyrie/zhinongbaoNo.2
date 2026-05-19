@@ -7,6 +7,8 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
+import android.widget.EditText;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 import androidx.annotation.NonNull;
@@ -39,11 +41,13 @@ public class SellerStoreActivity extends AppCompatActivity {
         seller = getIntent().getStringExtra("seller");
         if (seller == null || seller.isEmpty()) seller = currentUser;
         isOwnStore = seller.equals(currentUser);
+        dm.recordStoreView(currentUser, seller);
 
         // 标题
         String nick = dm.getNickname(seller);
         TextView tvStoreName = findViewById(R.id.tvStoreName);
-        tvStoreName.setText(isOwnStore ? "我的店铺" : nick + "的店铺");
+        tvStoreName.setText(isOwnStore ? "我的店铺" : dm.getStoreName(seller));
+        bindStoreInfo();
 
         // 返回
         findViewById(R.id.ivBack).setOnClickListener(v -> finish());
@@ -54,6 +58,12 @@ public class SellerStoreActivity extends AppCompatActivity {
             tvAddProduct.setVisibility(View.VISIBLE);
             tvAddProduct.setOnClickListener(v ->
                     startActivity(new Intent(this, AddProductActivity.class)));
+        }
+
+        TextView tvEditStoreInfo = findViewById(R.id.tvEditStoreInfo);
+        if (isOwnStore) {
+            tvEditStoreInfo.setVisibility(View.VISIBLE);
+            tvEditStoreInfo.setOnClickListener(v -> showEditStoreDialog());
         }
 
         // 销售统计（仅自己）
@@ -93,6 +103,51 @@ public class SellerStoreActivity extends AppCompatActivity {
         super.onResume();
         loadProducts();
         if (isOwnStore) refreshStats();
+        bindStoreInfo();
+    }
+
+    private void bindStoreInfo() {
+        if (dm == null || seller == null) return;
+        ((TextView) findViewById(R.id.tvStoreDisplayName)).setText(dm.getStoreName(seller));
+        String phone = dm.getStorePhone(seller);
+        ((TextView) findViewById(R.id.tvStorePhone)).setText(
+                phone == null || phone.isEmpty() ? "电话：未填写" : "电话：" + phone);
+    }
+
+    private void showEditStoreDialog() {
+        LinearLayout box = new LinearLayout(this);
+        box.setOrientation(LinearLayout.VERTICAL);
+        int pad = (int) (20 * getResources().getDisplayMetrics().density);
+        box.setPadding(pad, pad / 2, pad, 0);
+
+        EditText etName = new EditText(this);
+        etName.setHint("店铺名称");
+        etName.setText(dm.getStoreName(seller));
+        box.addView(etName);
+
+        EditText etPhone = new EditText(this);
+        etPhone.setHint("商铺电话");
+        etPhone.setInputType(android.text.InputType.TYPE_CLASS_PHONE);
+        etPhone.setText(dm.getStorePhone(seller));
+        box.addView(etPhone);
+
+        new AlertDialog.Builder(this)
+                .setTitle("修改店铺信息")
+                .setView(box)
+                .setPositiveButton("保存", (dialog, which) -> {
+                    String name = etName.getText().toString().trim();
+                    String phone = etPhone.getText().toString().trim();
+                    if (name.isEmpty() || phone.isEmpty()) {
+                        Toast.makeText(this, "店铺名称和电话不能为空", Toast.LENGTH_SHORT).show();
+                        return;
+                    }
+                    dm.updateStoreInfo(seller, name, phone);
+                    ((TextView) findViewById(R.id.tvStoreName)).setText("我的店铺");
+                    bindStoreInfo();
+                    Toast.makeText(this, "店铺信息已更新", Toast.LENGTH_SHORT).show();
+                })
+                .setNegativeButton("取消", null)
+                .show();
     }
 
     private void loadProducts() {

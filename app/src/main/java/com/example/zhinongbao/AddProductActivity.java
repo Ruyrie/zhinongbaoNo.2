@@ -30,7 +30,7 @@ public class AddProductActivity extends AppCompatActivity {
     private Set<String> selectedCategories = new HashSet<>();
     private TextView[] categoryChips;
 
-    private EditText etName, etDesc, etPrice;
+    private EditText etName, etDesc, etPrice, etStorePhone;
     private RecyclerView rvImages;
     private ImagePickerAdapter imageAdapter;
     private List<Uri> imageUris = new ArrayList<>();
@@ -76,7 +76,12 @@ public class AddProductActivity extends AppCompatActivity {
         etName = findViewById(R.id.etProductName);
         etDesc = findViewById(R.id.etProductDesc);
         etPrice = findViewById(R.id.etProductPrice);
+        etStorePhone = findViewById(R.id.etStorePhone);
         rvImages = findViewById(R.id.rvProductImages);
+        String user = DataManager.getInstance(this).getLoggedUser();
+        if (user != null) {
+            etStorePhone.setText(DataManager.getInstance(this).getStorePhone(user));
+        }
 
         editProductId = getIntent().getIntExtra("product_id", -1);
 
@@ -224,8 +229,9 @@ public class AddProductActivity extends AppCompatActivity {
         String name = etName.getText().toString().trim();
         String desc = etDesc.getText().toString().trim();
         String priceStr = etPrice.getText().toString().trim();
+        String storePhone = etStorePhone.getText().toString().trim();
 
-        if (name.isEmpty() || desc.isEmpty() || priceStr.isEmpty()) {
+        if (name.isEmpty() || desc.isEmpty() || priceStr.isEmpty() || storePhone.isEmpty()) {
             Toast.makeText(this, "请完整填写商品信息", Toast.LENGTH_SHORT).show();
             return;
         }
@@ -263,13 +269,16 @@ public class AddProductActivity extends AppCompatActivity {
 
         DataManager dm = DataManager.getInstance(this);
         String coverUri = uriBuilder.length() > 0 ? uriBuilder.toString() : null;
+        String user = dm.getLoggedUser();
+        if (user != null) {
+            dm.updateStoreInfo(user, dm.getStoreName(user), storePhone);
+        }
 
         if (editProductId > 0) {
             dm.updateProduct(editProductId, name, desc, price, coverUri, catBuilder.toString());
             Toast.makeText(this, "货品信息已更新", Toast.LENGTH_SHORT).show();
         } else {
             dm.addProduct(name, desc, price, coverUri != null ? coverUri : "", catBuilder.toString());
-            String user = dm.getLoggedUser();
             if (user != null && dm.getUserRole(user) == com.example.zhinongbao.model.User.ROLE_BUYER) {
                 dm.updateUserRole(user, com.example.zhinongbao.model.User.ROLE_BOTH);
                 Toast.makeText(this, "商品发布成功！您已获得卖家身份，下次登录可选择身份", Toast.LENGTH_LONG).show();

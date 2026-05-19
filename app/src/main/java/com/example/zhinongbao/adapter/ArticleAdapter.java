@@ -54,7 +54,34 @@ public class ArticleAdapter extends RecyclerView.Adapter<ArticleAdapter.VH> {
 
         holder.tvArticleTitle.setText(a.title);
         holder.tvTime.setText(a.time);
-        holder.tvReadCount.setText(String.valueOf(a.readCount));
+        if (dm != null) {
+            int likeCount = dm.getArticleLikeCount(a.id);
+            int commentCount = dm.getCommentCount(a.id);
+            boolean liked = currentUser != null && dm.isArticleLiked(currentUser, a.id);
+            holder.ivLike.setImageResource(liked ? R.mipmap.dianzan : R.mipmap.weidianzan);
+            holder.tvLikeCount.setText(String.valueOf(likeCount));
+            holder.tvCommentCount.setText(String.valueOf(commentCount));
+            View.OnClickListener likeClick = v -> {
+                if (currentUser == null || currentUser.isEmpty())
+                    return;
+                if (dm.isArticleLiked(currentUser, a.id)) {
+                    dm.unlikeArticle(currentUser, a.id);
+                } else {
+                    dm.likeArticle(currentUser, a.id);
+                }
+                int pos = holder.getBindingAdapterPosition();
+                if (pos != RecyclerView.NO_POSITION)
+                    notifyItemChanged(pos);
+            };
+            holder.ivLike.setOnClickListener(likeClick);
+            holder.tvLikeCount.setOnClickListener(likeClick);
+        } else {
+            holder.ivLike.setImageResource(R.mipmap.weidianzan);
+            holder.tvLikeCount.setText(String.valueOf(a.readCount));
+            holder.tvCommentCount.setText("0");
+            holder.ivLike.setOnClickListener(null);
+            holder.tvLikeCount.setOnClickListener(null);
+        }
         if (holder.tvArticleCategory != null) {
             if (hideCategory) {
                 holder.tvArticleCategory.setVisibility(View.GONE);
@@ -120,15 +147,18 @@ public class ArticleAdapter extends RecyclerView.Adapter<ArticleAdapter.VH> {
     }
 
     static class VH extends RecyclerView.ViewHolder {
-        ImageView ivArticleThumb;
-        TextView tvTime, tvReadCount, tvArticleTitle, tvArticleCategory;
+        ImageView ivArticleThumb, ivLike, ivComment;
+        TextView tvTime, tvLikeCount, tvCommentCount, tvArticleTitle, tvArticleCategory;
         View flDeletedOverlay;
 
         VH(View v) {
             super(v);
             tvArticleTitle = v.findViewById(R.id.tvArticleTitle);
             tvTime = v.findViewById(R.id.tvArticleTime);
-            tvReadCount = v.findViewById(R.id.tvArticleReadCount);
+            tvLikeCount = v.findViewById(R.id.tvArticleLikeCount);
+            tvCommentCount = v.findViewById(R.id.tvArticleCommentCount);
+            ivLike = v.findViewById(R.id.ivArticleLike);
+            ivComment = v.findViewById(R.id.ivArticleComment);
             ivArticleThumb = v.findViewById(R.id.ivArticleThumb);
             flDeletedOverlay = v.findViewById(R.id.flDeletedOverlay);
             tvArticleCategory = v.findViewById(R.id.tvArticleCategory);

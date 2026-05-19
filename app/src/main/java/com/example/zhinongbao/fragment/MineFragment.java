@@ -16,6 +16,7 @@ import androidx.fragment.app.Fragment;
 import com.example.zhinongbao.CartActivity;
 import com.example.zhinongbao.FollowListActivity;
 import com.example.zhinongbao.FootprintActivity;
+import com.example.zhinongbao.MainActivity;
 import com.example.zhinongbao.MyArticlesActivity;
 import com.example.zhinongbao.MyFavoritesActivity;
 import com.example.zhinongbao.MyOrdersActivity;
@@ -103,17 +104,19 @@ public class MineFragment extends Fragment {
                 loadAssetImage(view.findViewById(R.id.ivFootprintIcon), "zuji.png");
 
                 // Role switch button
-                View btnSwitch = view.findViewById(R.id.btnSwitchToSeller);
-                if (dm.getUserRole(username) == com.example.zhinongbao.model.User.ROLE_BOTH) {
-                        btnSwitch.setVisibility(View.VISIBLE);
-                        btnSwitch.setOnClickListener(v -> {
-                                dm.setActiveRole(com.example.zhinongbao.model.User.ROLE_SELLER);
-                                startActivity(new Intent(getContext(), MainActivity.class));
-                                getActivity().finish();
-                        });
-                } else {
-                        btnSwitch.setVisibility(View.GONE);
-                }
+                TextView btnSwitch = view.findViewById(R.id.btnSwitchToSeller);
+                boolean sellerActive = dm.getActiveRole() == com.example.zhinongbao.model.User.ROLE_SELLER;
+                btnSwitch.setText(sellerActive ? "切换到买家" : "切换到卖家");
+                btnSwitch.setVisibility(View.VISIBLE);
+                btnSwitch.setOnClickListener(v -> {
+                        boolean activeSellerNow = dm.getActiveRole() == com.example.zhinongbao.model.User.ROLE_SELLER;
+                        dm.setActiveRole(activeSellerNow
+                                        ? com.example.zhinongbao.model.User.ROLE_BUYER
+                                        : com.example.zhinongbao.model.User.ROLE_SELLER);
+                        Intent intent = new Intent(requireContext(), MainActivity.class);
+                        intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK | Intent.FLAG_ACTIVITY_NEW_TASK);
+                        startActivity(intent);
+                });
 
                 // Profile click
                 view.findViewById(R.id.layoutProfile).setOnClickListener(

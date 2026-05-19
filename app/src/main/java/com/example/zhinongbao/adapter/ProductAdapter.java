@@ -24,6 +24,7 @@ public class ProductAdapter extends RecyclerView.Adapter<ProductAdapter.VH> {
     private final List<Product> data;
     private final OnItemClickListener clickListener;
     private OnAddCartListener addCartListener;
+    private boolean compactMode = false;
 
     public ProductAdapter(List<Product> data, OnItemClickListener listener) {
         this.data = data;
@@ -32,6 +33,10 @@ public class ProductAdapter extends RecyclerView.Adapter<ProductAdapter.VH> {
 
     public void setOnAddCartListener(OnAddCartListener l) {
         this.addCartListener = l;
+    }
+
+    public void setCompactMode(boolean compactMode) {
+        this.compactMode = compactMode;
     }
 
     @NonNull
@@ -47,7 +52,9 @@ public class ProductAdapter extends RecyclerView.Adapter<ProductAdapter.VH> {
         Product p = data.get(position);
 
         // 动态设置图片高度，产生瀑布流错落效果
-        int[] heights = { 200, 260, 180, 240, 220, 280 };
+        int[] heights = compactMode
+                ? new int[] { 130, 150, 120, 145, 135, 155 }
+                : new int[] { 200, 260, 180, 240, 220, 280 };
         int heightDp = heights[p.id % heights.length];
         int heightPx = (int) (heightDp * holder.itemView.getContext().getResources().getDisplayMetrics().density);
         ViewGroup.LayoutParams lp = holder.ivProduct.getLayoutParams();
@@ -102,6 +109,7 @@ public class ProductAdapter extends RecyclerView.Adapter<ProductAdapter.VH> {
         holder.tvPrice.setText(String.valueOf((long) p.price % 1 == 0
                 ? String.format("%d", (long) p.price)
                 : String.format("%.2f", p.price)));
+        holder.tvViews.setText(String.valueOf(Math.max(0, p.viewCount)));
         holder.itemView.setOnClickListener(v -> clickListener.onItemClick(p));
     }
 
@@ -112,13 +120,14 @@ public class ProductAdapter extends RecyclerView.Adapter<ProductAdapter.VH> {
 
     static class VH extends RecyclerView.ViewHolder {
         ImageView ivProduct;
-        TextView tvName, tvPrice;
+        TextView tvName, tvPrice, tvViews;
 
         VH(View v) {
             super(v);
             ivProduct = v.findViewById(R.id.ivProductImage);
             tvName = v.findViewById(R.id.tvProductName);
             tvPrice = v.findViewById(R.id.tvProductPrice);
+            tvViews = v.findViewById(R.id.tvProductViews);
         }
     }
 }
