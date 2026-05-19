@@ -1,0 +1,23 @@
+<resources>
+    <string name="app_name">智农宝</string>
+
+    <!-- article_detail -->
+    <string name="action_delete">删除</string>
+    <string name="hint_title">标题</string>
+    <string name="hint_author">作者</string>
+    <string name="hint_time">时间</string>
+    <string name="action_follow">+ 关注</string>
+    <string name="hint_body">正文内容</string>
+    <string name="hint_read_count">阅读 0</string>
+    <string name="label_comment">评论</string>
+    <string name="hint_comment_count">0 条</string>
+    <string name="msg_no_comments">还没有评论，快来说点什么吧 ～</string>
+    <string name="hint_input_comment">说点什么…</string>
+    <string name="default_count">0</string>
+
+    <!-- content descriptions -->
+    <string name="cd_back">返回</string>
+    <string name="cd_like">点赞</string>
+    <string name="cd_comment_icon">评论</string>
+    <string name="cd_author_avatar">作者头像</string>
+</resources>

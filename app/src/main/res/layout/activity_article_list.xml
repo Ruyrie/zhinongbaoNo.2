@@ -1,0 +1,102 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="#FAFAFA"
+    android:fitsSystemWindows="true">
+
+    <!-- 顶部工具栏 -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="56dp"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:paddingEnd="12dp"
+        android:background="#FFFFFF"
+        android:elevation="4dp">
+
+        <ImageView
+            android:id="@+id/tvBack"
+            android:layout_width="20dp"
+            android:layout_height="20dp"
+            android:src="@mipmap/fanhui"
+            android:scaleType="fitCenter"
+            android:layout_marginStart="8dp"
+            android:layout_marginEnd="8dp" />
+
+        <TextView
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="我的文章"
+            android:textSize="18sp"
+            android:textStyle="bold"
+            android:textColor="#333333"
+            android:gravity="center"
+            android:layout_marginStart="24dp" />
+
+        <TextView
+            android:id="@+id/ivAddArticleIcon"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:text="＋"
+            android:textSize="26sp"
+            android:textColor="#1F1F1F"
+            android:gravity="center"
+            android:background="?attr/selectableItemBackgroundBorderless" />
+    </LinearLayout>
+
+    <!-- 主体区域：有文章时显示列表，无文章时显示提示 -->
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/rvArticles"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:clipToPadding="false"
+            android:paddingBottom="24dp" />
+
+        <!-- 无文章空状态 -->
+        <LinearLayout
+            android:id="@+id/llEmptyState"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:orientation="vertical"
+            android:gravity="center"
+            android:visibility="gone">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="📰"
+                android:textSize="64sp" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="您还未上传过文章"
+                android:textSize="16sp"
+                android:textColor="#888888"
+                android:layout_marginTop="16dp" />
+
+            <TextView
+                android:id="@+id/btnAddArticle"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="上传文章"
+                android:textSize="15sp"
+                android:textStyle="bold"
+                android:textColor="#FFFFFF"
+                android:background="@drawable/bg_auth_button"
+                android:backgroundTint="#E53935"
+                android:paddingHorizontal="32dp"
+                android:paddingVertical="12dp"
+                android:layout_marginTop="24dp" />
+        </LinearLayout>
+    </FrameLayout>
+</LinearLayout>
+

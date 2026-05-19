@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- 气泡底色 (浅灰/浅蓝) -->
+    <item>
+        <shape android:shape="rectangle">
+            <solid android:color="#E8E8ED" />
+            <corners android:radius="28dp" />
+        </shape>
+    </item>
+    
+    <!-- 顶部高光 -->
+    <item android:bottom="48dp">
+        <shape android:shape="rectangle">
+            <gradient
+                android:startColor="#80FFFFFF"
+                android:endColor="#00FFFFFF"
+                android:angle="270" />
+            <corners android:radius="28dp" />
+        </shape>
+    </item>
+    
+    <!-- 底部高光 -->
+    <item android:top="48dp">
+        <shape android:shape="rectangle">
+            <gradient
+                android:startColor="#00FFFFFF"
+                android:endColor="#60FFFFFF"
+                android:angle="270" />
+            <corners android:radius="28dp" />
+        </shape>
+    </item>
+</layer-list>

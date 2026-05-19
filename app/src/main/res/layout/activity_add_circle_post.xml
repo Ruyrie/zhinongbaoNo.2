@@ -1,0 +1,135 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="#FFFFFF"
+    android:fitsSystemWindows="true">
+
+    <!-- iOS 风格顶栏 -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="56dp"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:paddingHorizontal="8dp"
+        android:background="#FFFFFF">
+
+        <TextView
+            android:id="@+id/tvCirclePostCancel"
+            android:layout_width="64dp"
+            android:layout_height="match_parent"
+            android:text="取消"
+            android:textSize="16sp"
+            android:textColor="#007AFF"
+            android:gravity="center_vertical"
+            android:paddingStart="8dp"
+            android:clickable="true"
+            android:focusable="true" />
+
+        <TextView
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="发农友圈"
+            android:textSize="17sp"
+            android:textStyle="bold"
+            android:textColor="#000000"
+            android:gravity="center" />
+
+        <TextView
+            android:id="@+id/tvCirclePostSubmit"
+            android:layout_width="64dp"
+            android:layout_height="match_parent"
+            android:text="发布"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            android:textColor="#007AFF"
+            android:gravity="center_vertical|end"
+            android:paddingEnd="8dp"
+            android:clickable="true"
+            android:focusable="true" />
+    </LinearLayout>
+
+    <View android:layout_width="match_parent" android:layout_height="0.5dp" android:background="#C6C6C8" />
+
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:fillViewport="true">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
+
+            <!-- 正文输入 -->
+            <EditText
+                android:id="@+id/etCircleContent"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:minHeight="200dp"
+                android:background="@null"
+                android:hint="有什么想和农友们分享的？"
+                android:textSize="16sp"
+                android:textColor="#1C1C1E"
+                android:textColorHint="#C7C7CC"
+                android:inputType="textMultiLine"
+                android:gravity="top"
+                android:padding="16dp" />
+
+            <!-- 已选图片预览 -->
+            <ImageView
+                android:id="@+id/ivCircleSelectedImage"
+                android:layout_width="120dp"
+                android:layout_height="120dp"
+                android:scaleType="centerCrop"
+                android:layout_marginStart="16dp"
+                android:layout_marginBottom="12dp"
+                android:background="#F5F5F5"
+                android:visibility="gone" />
+
+            <View android:layout_width="match_parent" android:layout_height="0.5dp" android:background="#EEEEEE" />
+
+            <!-- 添加图片 -->
+            <LinearLayout
+                android:id="@+id/llAddImage"
+                android:layout_width="match_parent"
+                android:layout_height="52dp"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:paddingHorizontal="16dp"
+                android:clickable="true"
+                android:focusable="true"
+                android:foreground="?attr/selectableItemBackground">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="🖼"
+                    android:textSize="20sp"
+                    android:layout_marginEnd="12dp" />
+
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="添加图片"
+                    android:textSize="15sp"
+                    android:textColor="#1C1C1E" />
+
+                <TextView
+                    android:id="@+id/tvImageHint"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="未选择"
+                    android:textSize="13sp"
+                    android:textColor="#C7C7CC" />
+            </LinearLayout>
+
+            <View android:layout_width="match_parent" android:layout_height="0.5dp" android:background="#EEEEEE" />
+
+        </LinearLayout>
+    </ScrollView>
+</LinearLayout>

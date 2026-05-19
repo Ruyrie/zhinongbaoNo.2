@@ -1,0 +1,152 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <application
+        android:allowBackup="true"
+        android:dataExtractionRules="@xml/data_extraction_rules"
+        android:fullBackupContent="@xml/backup_rules"
+        android:icon="@mipmap/ic_launcher"
+        android:label="@string/app_name"
+        android:roundIcon="@mipmap/ic_launcher_round"
+        android:supportsRtl="true"
+        android:theme="@style/Theme.ZhiNongBao">
+
+        <!-- 登录（启动页） -->
+        <activity
+            android:name=".LoginActivity"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+
+        <!-- 注册 / 添加账号 -->
+        <activity android:name=".RegisterActivity" />
+
+        <!-- 主界面 -->
+        <activity
+            android:name=".MainActivity"
+            android:windowSoftInputMode="adjustPan" />
+
+        <!-- 文章详情（adjustResize 让底部评论栏随键盘上移） -->
+        <activity
+            android:name=".ArticleDetailActivity"
+            android:windowSoftInputMode="adjustResize" />
+
+        <!-- 我的收藏（文章） -->
+        <activity android:name=".MyFavoritesActivity" />
+
+        <!-- 商品收藏 -->
+        <activity android:name=".ProductFavoritesActivity" />
+
+        <!-- 聊天 -->
+        <activity
+            android:name=".ChatActivity"
+            android:windowSoftInputMode="adjustResize" />
+
+        <!-- 我的足迹 -->
+        <activity android:name=".FootprintActivity" />
+
+        <!-- 粉丝 / 关注列表 -->
+        <activity android:name=".FollowListActivity" />
+
+        <!-- 搜索 -->
+        <activity
+            android:name=".SearchActivity"
+            android:windowSoftInputMode="adjustResize" />
+
+        <!-- 商品搜索 -->
+        <activity
+            android:name=".ProductSearchActivity"
+            android:windowSoftInputMode="adjustResize" />
+
+        <!-- 商品详情 -->
+        <activity android:name=".ProductDetailActivity" />
+
+        <!-- 购物车 -->
+        <activity android:name=".CartActivity" />
+
+        <!-- 我的文章 -->
+        <activity android:name=".MyArticlesActivity" />
+
+        <!-- 我的订单 -->
+        <activity android:name=".MyOrdersActivity" />
+
+        <!-- 设置 -->
+        <activity android:name=".SettingsActivity" />
+
+        <!-- 账号管理 -->
+        <activity android:name=".AccountManagerActivity" />
+
+        <!-- 修改密码 -->
+        <activity android:name=".ChangePasswordActivity" />
+
+        <!-- 忘记密码 -->
+        <activity android:name=".ForgotPasswordActivity" />
+
+        <!-- 重置密码 -->
+        <activity android:name=".ResetPasswordActivity" />
+
+        <!-- 添加文章（管理员） -->
+        <activity android:name=".AddArticleActivity" />
+
+        <!-- 添加商品（管理员） -->
+        <activity android:name=".AddProductActivity" />
+
+        <!-- 订单详情 -->
+        <activity android:name=".OrderDetailActivity" />
+
+        <!-- 编辑资料 -->
+        <activity android:name=".ProfileEditActivity" />
+
+        <!-- 商品评价列表 -->
+        <activity android:name=".ProductCommentsActivity" />
+
+        <!-- 发表商品评价 -->
+        <activity android:name=".AddProductCommentActivity" />
+
+        <!-- 发农友圈动态 -->
+        <activity
+            android:name=".AddCirclePostActivity"
+            android:windowSoftInputMode="adjustResize" />
+
+        <!-- 我的动态 -->
+        <activity android:name=".MyCirclePostsActivity" />
+
+        <!-- 卖家店铺 -->
+        <activity android:name=".SellerStoreActivity" />
+
+        <!-- 发布采购需求 -->
+        <activity
+            android:name=".PostPurchaseActivity"
+            android:windowSoftInputMode="adjustResize" />
+
+        <!-- 采购市场 -->
+        <activity android:name=".PurchaseMarketActivity" />
+
+        <!-- uCrop 裁剪 Activity（子类，用于正确处理 Android 16 edge-to-edge insets） -->
+        <activity
+            android:name=".UCropCompatActivity"
+            android:screenOrientation="portrait"
+            android:theme="@style/Theme.UCrop"/>
+
+        <provider
+            android:name="androidx.core.content.FileProvider"
+            android:authorities="${applicationId}.fileprovider"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/file_paths" />
+        </provider>
+
+        <provider
+            android:name=".provider.ZhiNongBaoProvider"
+            android:authorities="com.example.zhinongbao.provider"
+            android:exported="false" />
+
+    </application>
+
+</manifest>

@@ -1,0 +1,188 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="#F5F5F5"
+    android:fitsSystemWindows="true">
+
+    <!-- ── Header: Back, Search Input, Search Button ── -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="56dp"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:background="@color/white"
+        android:paddingHorizontal="12dp">
+
+        <ImageView
+            android:id="@+id/ivBack"
+            android:layout_width="32dp"
+            android:layout_height="32dp"
+            android:src="@mipmap/fanhui"
+            android:padding="6dp"
+            android:background="?attr/selectableItemBackgroundBorderless" />
+
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="36dp"
+            android:layout_weight="1"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:background="@drawable/bg_search_input_green"
+            android:layout_marginStart="8dp"
+            android:layout_marginEnd="12dp"
+            android:paddingHorizontal="12dp">
+
+            <ImageView
+                android:layout_width="16dp"
+                android:layout_height="16dp"
+                android:src="@mipmap/sousuo"
+                app:tint="#999999" />
+
+            <EditText
+                android:id="@+id/etSearchInput"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
+                android:layout_marginStart="8dp"
+                android:background="@null"
+                android:hint="搜索"
+                android:textColorHint="#999999"
+                android:textSize="14sp"
+                android:textColor="#333333"
+                android:imeOptions="actionSearch"
+                android:inputType="text"
+                android:singleLine="true" />
+                
+            <!-- Clear ✕ button -->
+            <TextView
+                android:id="@+id/tvClearSearch"
+                android:layout_width="18dp"
+                android:layout_height="18dp"
+                android:text="✕"
+                android:textSize="10sp"
+                android:textColor="@color/white"
+                android:gravity="center"
+                android:background="@drawable/bg_auth_logo"
+                android:visibility="gone" />
+        </LinearLayout>
+
+        <TextView
+            android:id="@+id/btnSearch"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="搜索"
+            android:textSize="14sp"
+            android:textColor="@color/white"
+            android:background="@drawable/bg_search_btn_green"
+            android:paddingHorizontal="16dp"
+            android:paddingVertical="6dp" />
+    </LinearLayout>
+
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+        <!-- Initial state: hot-topic chips -->
+        <LinearLayout
+            android:id="@+id/llSearchInitial"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:orientation="vertical"
+            android:padding="20dp"
+            android:background="@color/white"
+            android:visibility="visible">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="热销产品"
+                android:textSize="13sp"
+                android:textStyle="bold"
+                android:textColor="#8E8E93"
+                android:letterSpacing="0.05"
+                android:layout_marginBottom="14dp" />
+
+            <!-- Chip row 1 -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:layout_marginBottom="10dp">
+
+                <TextView android:id="@+id/tagRice"   style="@style/SearchTagChip" android:text="东北大米" />
+                <TextView android:id="@+id/tagSmart"  style="@style/SearchTagChip" android:text="有机黑木耳" />
+                <TextView android:id="@+id/tagRural"  style="@style/SearchTagChip" android:text="农家蜂蜜" />
+            </LinearLayout>
+
+            <!-- Chip row 2 -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal">
+
+                <TextView android:id="@+id/tagEco"     style="@style/SearchTagChip" android:text="绿色蔬菜" />
+                <TextView android:id="@+id/tagTech"    style="@style/SearchTagChip" android:text="铁棍山药" />
+                <TextView android:id="@+id/tagOrganic" style="@style/SearchTagChip" android:text="冬虫夏草" />
+            </LinearLayout>
+        </LinearLayout>
+
+        <!-- Search results state -->
+        <LinearLayout
+            android:id="@+id/llSearchResults"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:orientation="vertical"
+            android:visibility="gone">
+
+            <!-- ── Tabs ── -->
+            <com.google.android.material.tabs.TabLayout
+                android:id="@+id/tabLayout"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:background="@color/white"
+                app:tabMode="fixed"
+                app:tabGravity="fill"
+                app:tabTextColor="#666666"
+                app:tabSelectedTextColor="#00C070"
+                app:tabIndicatorColor="#00C070"
+                app:tabIndicatorHeight="3dp"
+                app:tabIndicatorFullWidth="false" />
+
+            <!-- ── Results ── -->
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/rvSearchResults"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:clipToPadding="false"
+                android:paddingTop="8dp" />
+        </LinearLayout>
+
+        <!-- No results state -->
+        <LinearLayout
+            android:id="@+id/llNoResults"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:orientation="vertical"
+            android:gravity="center"
+            android:visibility="gone">
+
+            <ImageView
+                android:layout_width="64dp"
+                android:layout_height="64dp"
+                android:src="@mipmap/sousuo"
+                android:layout_marginBottom="16dp" />
+
+            <TextView
+                android:id="@+id/tvNoResultsHint"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textSize="15sp"
+                android:textColor="#8E8E93"
+                android:text="未找到相关内容" />
+        </LinearLayout>
+        
+    </FrameLayout>
+</LinearLayout>

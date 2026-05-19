@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="horizontal"
+    android:gravity="center_vertical"
+    android:background="@color/white"
+    android:layout_marginHorizontal="12dp"
+    android:layout_marginTop="8dp"
+    android:padding="12dp">
+
+    <!-- 选择框 -->
+    <CheckBox
+        android:id="@+id/cbCartItem"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginEnd="10dp"
+        android:background="@null"
+        android:buttonTint="#F04142" />
+
+    <!-- 商品图片占位 -->
+    <ImageView
+        android:id="@+id/ivCartImage"
+        android:layout_width="72dp"
+        android:layout_height="72dp"
+        android:scaleType="centerCrop"
+        android:src="@drawable/ic_product_placeholder"
+        android:background="#F5F5F5"
+        android:layout_marginEnd="12dp" />
+
+    <!-- 名称 + 价格 + 数量控制 -->
+    <LinearLayout
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:orientation="vertical">
+
+        <TextView
+            android:id="@+id/tvCartName"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textSize="14sp"
+            android:textColor="#1F1F1F"
+            android:maxLines="2"
+            android:ellipsize="end"
+            android:text="商品名" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:layout_marginTop="8dp">
+
+            <TextView
+                android:id="@+id/tvCartPrice"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:textSize="16sp"
+                android:textStyle="bold"
+                android:textColor="#F04142"
+                android:text="¥0.00" />
+
+            <!-- 数量控制 +/- -->
+            <TextView
+                android:id="@+id/btnMinus"
+                android:layout_width="28dp"
+                android:layout_height="28dp"
+                android:gravity="center"
+                android:text="−"
+                android:textSize="18sp"
+                android:textColor="#1F1F1F"
+                android:background="#F0F0F0" />
+
+            <TextView
+                android:id="@+id/tvCartQty"
+                android:layout_width="36dp"
+                android:layout_height="28dp"
+                android:gravity="center"
+                android:textSize="14sp"
+                android:textStyle="bold"
+                android:textColor="#1F1F1F"
+                android:text="1" />
+
+            <TextView
+                android:id="@+id/btnPlus"
+                android:layout_width="28dp"
+                android:layout_height="28dp"
+                android:gravity="center"
+                android:text="+"
+                android:textSize="18sp"
+                android:textColor="#1F1F1F"
+                android:background="#F0F0F0" />
+        </LinearLayout>
+    </LinearLayout>
+</LinearLayout>

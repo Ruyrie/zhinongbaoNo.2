@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:background="@drawable/bg_glass_pill"
+    android:padding="24dp"
+    android:gravity="center_horizontal">
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="绑定手机号"
+        android:textSize="20sp"
+        android:textStyle="bold"
+        android:textColor="#1F1F1F"
+        android:layout_marginBottom="8dp" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="绑定手机号可用于快捷登录及找回账号"
+        android:textSize="13sp"
+        android:textColor="#8A8A8A"
+        android:layout_marginBottom="24dp" />
+
+    <EditText
+        android:id="@+id/etBindPhoneInput"
+        android:layout_width="match_parent"
+        android:layout_height="52dp"
+        android:background="@drawable/bg_auth_input"
+        android:hint="请输入11位手机号"
+        android:textColorHint="#B5B5B5"
+        android:textColor="#1F1F1F"
+        android:textSize="16sp"
+        android:inputType="phone"
+        android:maxLength="11"
+        android:paddingHorizontal="20dp"
+        android:layout_marginBottom="32dp" />
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal">
+
+        <TextView
+            android:id="@+id/btnBindCancel"
+            android:layout_width="0dp"
+            android:layout_height="48dp"
+            android:layout_weight="1"
+            android:text="取消"
+            android:gravity="center"
+            android:textSize="16sp"
+            android:textColor="#8A8A8A"
+            android:background="?attr/selectableItemBackground"
+            android:layout_marginEnd="8dp" />
+
+        <TextView
+            android:id="@+id/btnBindConfirm"
+            android:layout_width="0dp"
+            android:layout_height="48dp"
+            android:layout_weight="1"
+            android:text="确定绑定"
+            android:gravity="center"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            android:textColor="@color/white"
+            android:background="@drawable/bg_auth_button"
+            android:layout_marginStart="8dp" />
+
+    </LinearLayout>
+</LinearLayout>

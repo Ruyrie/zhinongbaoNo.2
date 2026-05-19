@@ -1,0 +1,135 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:background="@color/white"
+    android:layout_marginHorizontal="0dp"
+    android:layout_marginBottom="1dp">
+
+    <!-- 订单头：商品名 + 状态标签 -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:paddingHorizontal="16dp"
+        android:paddingTop="14dp"
+        android:paddingBottom="6dp">
+
+        <TextView
+            android:id="@+id/tvOrderName"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:textSize="15sp"
+            android:textStyle="bold"
+            android:textColor="#1F1F1F"
+            android:maxLines="2"
+            android:ellipsize="end"
+            android:text="商品名" />
+
+        <TextView
+            android:id="@+id/tvOrderStatus"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textSize="12sp"
+            android:textStyle="bold"
+            android:paddingHorizontal="10dp"
+            android:paddingVertical="3dp"
+            android:text="待支付" />
+    </LinearLayout>
+
+    <!-- 价格 + 数量 -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:paddingHorizontal="16dp"
+        android:paddingBottom="8dp">
+
+        <TextView
+            android:id="@+id/tvOrderPrice"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:textSize="18sp"
+            android:textStyle="bold"
+            android:textColor="#F04142"
+            android:text="¥0.00" />
+
+        <TextView
+            android:id="@+id/tvOrderQty"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textSize="13sp"
+            android:textColor="#8A8A8A"
+            android:text="x1" />
+    </LinearLayout>
+
+    <!-- 下单时间 + 倒计时/状态说明 -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:paddingHorizontal="16dp"
+        android:paddingBottom="12dp">
+
+        <TextView
+            android:id="@+id/tvOrderTime"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:textSize="12sp"
+            android:textColor="#AAAAAA"
+            android:text="下单时间" />
+
+        <TextView
+            android:id="@+id/tvOrderCountdown"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textSize="12sp"
+            android:textColor="#FF9500"
+            android:text="" />
+    </LinearLayout>
+
+    <!-- 操作按钮行（待支付才显示） -->
+    <LinearLayout
+        android:id="@+id/layoutOrderActions"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="end"
+        android:paddingHorizontal="16dp"
+        android:paddingBottom="14dp"
+        android:visibility="gone">
+
+        <TextView
+            android:id="@+id/btnCancelOrder"
+            android:layout_width="wrap_content"
+            android:layout_height="34dp"
+            android:gravity="center"
+            android:text="取消订单"
+            android:textSize="13sp"
+            android:textColor="#8A8A8A"
+            android:paddingHorizontal="14dp"
+            android:background="@drawable/bg_auth_input"
+            android:layout_marginEnd="10dp" />
+
+        <TextView
+            android:id="@+id/btnPayOrder"
+            android:layout_width="wrap_content"
+            android:layout_height="34dp"
+            android:gravity="center"
+            android:text="立即支付"
+            android:textSize="13sp"
+            android:textColor="@color/white"
+            android:paddingHorizontal="14dp"
+            android:background="@drawable/bg_auth_button" />
+    </LinearLayout>
+
+    <View android:layout_width="match_parent" android:layout_height="1dp"
+        android:background="#F0F0F0" />
+</LinearLayout>

@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>农技学堂</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: sans-serif;
+            background-color: #f5f5f5;
+        }
+        .header {
+            background: linear-gradient(to right, #ff8a00, #ff5722);
+            color: white;
+            padding: 15px;
+            text-align: center;
+            position: relative;
+            font-size: 18px;
+            font-weight: bold;
+        }
+        .header .back {
+            position: absolute;
+            left: 15px;
+            top: 15px;
+            font-size: 20px;
+        }
+        .tabs {
+            display: flex;
+            background: linear-gradient(to right, #ff8a00, #ff5722);
+            color: rgba(255,255,255,0.8);
+            padding: 10px 15px 0;
+            overflow-x: auto;
+            white-space: nowrap;
+        }
+        .tab {
+            padding: 10px 15px;
+            font-size: 15px;
+        }
+        .tab.active {
+            color: white;
+            font-weight: bold;
+            border-bottom: 3px solid white;
+        }
+        .content {
+            background: white;
+            border-top-left-radius: 15px;
+            border-top-right-radius: 15px;
+            margin-top: -10px;
+            padding: 15px;
+            min-height: 100vh;
+        }
+        .news-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 15px 0;
+            border-bottom: 1px solid #eee;
+        }
+        .news-info {
+            flex: 1;
+            padding-right: 15px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+        .news-title {
+            font-size: 16px;
+            color: #333;
+            line-height: 1.4;
+        }
+        .news-meta {
+            font-size: 12px;
+            color: #999;
+            display: flex;
+            justify-content: space-between;
+            margin-top: 10px;
+        }
+        .news-image {
+            width: 100px;
+            height: 70px;
+            background-color: #ddd;
+            border-radius: 5px;
+            object-fit: cover;
+        }
+        .fab {
+            position: fixed;
+            bottom: 80px;
+            right: 20px;
+            width: 50px;
+            height: 50px;
+            background-color: #00d28a;
+            color: white;
+            border-radius: 25px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 30px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <span class="back"><</span>
+        农技学堂
+    </div>
+
+    <div class="tabs">
+        <div class="tab active">热点新闻</div>
+        <div class="tab">专家咨询</div>
+        <div class="tab">支农宝新闻</div>
+        <div class="tab">创业项...</div>
+    </div>
+
+    <div class="content">
+        <div class="news-item">
+            <div class="news-info">
+                <div class="news-title">农为体 融为用</div>
+                <div class="news-meta">
+                    <span>2024-05-19</span>
+                    <span>👁 21794</span>
+                </div>
+            </div>
+            <div class="news-image" style="background-color: #c00; color: white; display: flex; align-items: center; justify-content: center; font-weight: bold;">评论员文章</div>
+        </div>
+
+        <div class="news-item">
+            <div class="news-info">
+                <div class="news-title">山为仓 海为廪</div>
+                <div class="news-meta">
+                    <span>2024-05-18</span>
+                    <span>👁 28045</span>
+                </div>
+            </div>
+            <div class="news-image" style="background-color: #c00; color: white; display: flex; align-items: center; justify-content: center; font-weight: bold;">评论员文章</div>
+        </div>
+
+        <div class="news-item">
+            <div class="news-info">
+                <div class="news-title">全国乡村人才工作会议在陕西咸阳召开</div>
+                <div class="news-meta">
+                    <span>2024-05-17</span>
+                    <span>👁 24712</span>
+                </div>
+            </div>
+            <div class="news-image" style="background-color: #003399; color: white; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 20px;">要闻</div>
+        </div>
+        
+        <div class="news-item">
+            <div class="news-info">
+                <div class="news-title">食为天 民为大</div>
+                <div class="news-meta">
+                    <span>2024-05-17</span>
+                    <span>👁 12381</span>
+                </div>
+            </div>
+            <div class="news-image" style="background-color: #c00; color: white; display: flex; align-items: center; justify-content: center; font-weight: bold;">评论员文章</div>
+        </div>
+    </div>
+
+    <div class="fab">+</div>
+
+</body>
+</html>

@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <item>
+        <shape android:shape="rectangle">
+            <!-- 纯白底色，与截图一致的一体化设计 -->
+            <solid android:color="#FFFFFF" />
+            <corners android:radius="34dp" />
+        </shape>
+    </item>
+</layer-list>

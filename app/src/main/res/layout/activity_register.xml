@@ -1,0 +1,151 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/white"
+    android:fillViewport="true">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:paddingHorizontal="28dp"
+        android:paddingTop="72dp"
+        android:paddingBottom="32dp">
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:layout_marginBottom="16dp">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:background="@drawable/bg_auth_logo"
+                android:text="头条"
+                android:textColor="@color/white"
+                android:textSize="16sp"
+                android:textStyle="bold"
+                android:paddingHorizontal="10dp"
+                android:paddingVertical="4dp" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="吉农头条"
+                android:textSize="22sp"
+                android:textStyle="bold"
+                android:textColor="#1F1F1F"
+                android:layout_marginStart="10dp" />
+        </LinearLayout>
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="创建账号"
+            android:textSize="30sp"
+            android:textStyle="bold"
+            android:textColor="#1F1F1F"
+            android:layout_marginBottom="8dp" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="加入吉农头条，开启你的资讯之旅"
+            android:textSize="14sp"
+            android:textColor="#8A8A8A"
+            android:layout_marginBottom="40dp" />
+
+        <EditText
+            android:id="@+id/etRegUsername"
+            android:layout_width="match_parent"
+            android:layout_height="52dp"
+            android:background="@drawable/bg_auth_input"
+            android:hint="设置用户名"
+            android:textColorHint="#B5B5B5"
+            android:textColor="#1F1F1F"
+            android:textSize="15sp"
+            android:inputType="text"
+            android:paddingHorizontal="20dp"
+            android:layout_marginBottom="14dp" />
+
+        <EditText
+            android:id="@+id/etRegPhone"
+            android:layout_width="match_parent"
+            android:layout_height="52dp"
+            android:background="@drawable/bg_auth_input"
+            android:hint="手机号（可选）"
+            android:textColorHint="#B5B5B5"
+            android:textColor="#1F1F1F"
+            android:textSize="15sp"
+            android:inputType="phone"
+            android:paddingHorizontal="20dp"
+            android:layout_marginBottom="14dp" />
+
+        <EditText
+            android:id="@+id/etRegPassword"
+            android:layout_width="match_parent"
+            android:layout_height="52dp"
+            android:background="@drawable/bg_auth_input"
+            android:hint="设置密码（至少6位）"
+            android:textColorHint="#B5B5B5"
+            android:textColor="#1F1F1F"
+            android:textSize="15sp"
+            android:inputType="textPassword"
+            android:paddingHorizontal="20dp"
+            android:layout_marginBottom="20dp" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="选择注册角色"
+            android:textColor="#1F1F1F"
+            android:textSize="14sp"
+            android:layout_marginBottom="8dp" />
+
+        <RadioGroup
+            android:id="@+id/rgRole"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_marginBottom="28dp">
+            
+            <RadioButton
+                android:id="@+id/rbBuyer"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="买家"
+                android:checked="true"
+                android:layout_marginEnd="32dp" />
+                
+            <RadioButton
+                android:id="@+id/rbSeller"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="卖家" />
+        </RadioGroup>
+
+        <Button
+            android:id="@+id/btnRegister"
+            android:layout_width="match_parent"
+            android:layout_height="52dp"
+            android:background="@drawable/bg_auth_button"
+            android:text="注 册"
+            android:textColor="@color/white"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            android:stateListAnimator="@null"
+            android:layout_marginBottom="24dp" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="注册即表示同意《用户协议》和《隐私政策》"
+            android:textSize="11sp"
+            android:textColor="#B5B5B5"
+            android:gravity="center" />
+
+    </LinearLayout>
+</ScrollView>

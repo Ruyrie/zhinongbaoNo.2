@@ -1,0 +1,307 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="#F2F2F7"
+    android:fitsSystemWindows="true">
+
+    <!-- iOS 风格顶栏：文字按钮，无背景色差 -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="56dp"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:paddingHorizontal="8dp"
+        android:background="#FFFFFF">
+
+        <TextView
+            android:id="@+id/ivPostPurchaseBack"
+            android:layout_width="64dp"
+            android:layout_height="match_parent"
+            android:text="取消"
+            android:textSize="16sp"
+            android:textColor="#007AFF"
+            android:gravity="center_vertical"
+            android:paddingStart="8dp"
+            android:clickable="true"
+            android:focusable="true" />
+
+        <TextView
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="发布采购需求"
+            android:textSize="17sp"
+            android:textStyle="bold"
+            android:textColor="#000000"
+            android:gravity="center" />
+
+        <TextView
+            android:id="@+id/btnSubmitPurchase"
+            android:layout_width="64dp"
+            android:layout_height="match_parent"
+            android:text="发布"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            android:textColor="#007AFF"
+            android:gravity="center_vertical|end"
+            android:paddingEnd="8dp"
+            android:clickable="true"
+            android:focusable="true" />
+    </LinearLayout>
+
+    <!-- 1dp 分割线 -->
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="0.5dp"
+        android:background="#C6C6C8" />
+
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:fillViewport="true">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="16dp">
+
+            <!-- ── 货品信息 ── -->
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="货品信息"
+                android:textSize="13sp"
+                android:textColor="#6D6D72"
+                android:textAllCaps="false"
+                android:paddingHorizontal="4dp"
+                android:paddingBottom="6dp" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:background="@drawable/bg_ios_card"
+                android:layout_marginBottom="24dp">
+
+                <!-- 货品名称 -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="52dp"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical"
+                    android:paddingHorizontal="16dp">
+
+                    <TextView
+                        android:layout_width="88dp"
+                        android:layout_height="wrap_content"
+                        android:text="货品名称"
+                        android:textSize="16sp"
+                        android:textColor="#1C1C1E" />
+
+                    <EditText
+                        android:id="@+id/etPurchaseProductName"
+                        android:layout_width="0dp"
+                        android:layout_height="match_parent"
+                        android:layout_weight="1"
+                        android:background="@null"
+                        android:hint="必填"
+                        android:textSize="16sp"
+                        android:textColor="#1C1C1E"
+                        android:textColorHint="#C7C7CC"
+                        android:gravity="center_vertical|end"
+                        android:singleLine="true" />
+                </LinearLayout>
+
+                <View
+                    android:layout_width="match_parent"
+                    android:layout_height="0.5dp"
+                    android:background="#C6C6C8"
+                    android:layout_marginStart="16dp" />
+
+                <!-- 品类 -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="52dp"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical"
+                    android:paddingHorizontal="16dp">
+
+                    <TextView
+                        android:layout_width="88dp"
+                        android:layout_height="wrap_content"
+                        android:text="品类"
+                        android:textSize="16sp"
+                        android:textColor="#1C1C1E" />
+
+                    <EditText
+                        android:id="@+id/etPurchaseCategory"
+                        android:layout_width="0dp"
+                        android:layout_height="match_parent"
+                        android:layout_weight="1"
+                        android:background="@null"
+                        android:hint="如：米面粮油、水果蔬菜"
+                        android:textSize="16sp"
+                        android:textColor="#1C1C1E"
+                        android:textColorHint="#C7C7CC"
+                        android:gravity="center_vertical|end"
+                        android:singleLine="true" />
+                </LinearLayout>
+            </LinearLayout>
+
+            <!-- ── 需求详情 ── -->
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="需求详情"
+                android:textSize="13sp"
+                android:textColor="#6D6D72"
+                android:paddingHorizontal="4dp"
+                android:paddingBottom="6dp" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:background="@drawable/bg_ios_card"
+                android:layout_marginBottom="24dp">
+
+                <!-- 需求数量 + 单位 -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="52dp"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical"
+                    android:paddingHorizontal="16dp">
+
+                    <TextView
+                        android:layout_width="88dp"
+                        android:layout_height="wrap_content"
+                        android:text="需求数量"
+                        android:textSize="16sp"
+                        android:textColor="#1C1C1E" />
+
+                    <EditText
+                        android:id="@+id/etPurchaseQuantity"
+                        android:layout_width="0dp"
+                        android:layout_height="match_parent"
+                        android:layout_weight="1"
+                        android:background="@null"
+                        android:hint="数量（必填）"
+                        android:textSize="16sp"
+                        android:textColor="#1C1C1E"
+                        android:textColorHint="#C7C7CC"
+                        android:gravity="center_vertical|end"
+                        android:inputType="numberDecimal"
+                        android:singleLine="true" />
+
+                    <View
+                        android:layout_width="0.5dp"
+                        android:layout_height="24dp"
+                        android:background="#C6C6C8"
+                        android:layout_marginHorizontal="10dp" />
+
+                    <EditText
+                        android:id="@+id/etPurchaseUnit"
+                        android:layout_width="60dp"
+                        android:layout_height="match_parent"
+                        android:background="@null"
+                        android:hint="单位"
+                        android:textSize="16sp"
+                        android:textColor="#1C1C1E"
+                        android:textColorHint="#C7C7CC"
+                        android:gravity="center_vertical|center"
+                        android:singleLine="true" />
+                </LinearLayout>
+
+                <View
+                    android:layout_width="match_parent"
+                    android:layout_height="0.5dp"
+                    android:background="#C6C6C8"
+                    android:layout_marginStart="16dp" />
+
+                <!-- 目标价格 -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="52dp"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical"
+                    android:paddingHorizontal="16dp">
+
+                    <TextView
+                        android:layout_width="88dp"
+                        android:layout_height="wrap_content"
+                        android:text="目标价格"
+                        android:textSize="16sp"
+                        android:textColor="#1C1C1E" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="¥"
+                        android:textSize="16sp"
+                        android:textColor="#FF3B30"
+                        android:layout_marginEnd="2dp" />
+
+                    <EditText
+                        android:id="@+id/etPurchaseTargetPrice"
+                        android:layout_width="0dp"
+                        android:layout_height="match_parent"
+                        android:layout_weight="1"
+                        android:background="@null"
+                        android:hint="必填"
+                        android:textSize="16sp"
+                        android:textColor="#FF3B30"
+                        android:textColorHint="#C7C7CC"
+                        android:gravity="center_vertical"
+                        android:inputType="numberDecimal"
+                        android:singleLine="true" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="元/单位"
+                        android:textSize="13sp"
+                        android:textColor="#8E8E93" />
+                </LinearLayout>
+            </LinearLayout>
+
+            <!-- ── 备注说明 ── -->
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="备注说明（选填）"
+                android:textSize="13sp"
+                android:textColor="#6D6D72"
+                android:paddingHorizontal="4dp"
+                android:paddingBottom="6dp" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:background="@drawable/bg_ios_card"
+                android:layout_marginBottom="32dp">
+
+                <EditText
+                    android:id="@+id/etPurchaseDesc"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:minHeight="110dp"
+                    android:background="@null"
+                    android:hint="质量要求、交货地点、付款方式等"
+                    android:textSize="15sp"
+                    android:textColor="#1C1C1E"
+                    android:textColorHint="#C7C7CC"
+                    android:inputType="textMultiLine"
+                    android:gravity="top"
+                    android:padding="16dp" />
+            </LinearLayout>
+
+        </LinearLayout>
+    </ScrollView>
+
+</LinearLayout>

@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:padding="20dp">
+
+    <!-- 需求信息摘要 -->
+    <TextView
+        android:id="@+id/tvQuoteReqInfo"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@drawable/bg_category_tag"
+        android:paddingHorizontal="12dp"
+        android:paddingVertical="8dp"
+        android:textSize="13sp"
+        android:textColor="#1976D2"
+        android:layout_marginBottom="16dp" />
+
+    <!-- 报价金额 -->
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="报价金额（元/单位）*"
+        android:textSize="14sp"
+        android:textColor="#333333"
+        android:textStyle="bold"
+        android:layout_marginBottom="6dp" />
+
+    <EditText
+        android:id="@+id/etQuotePrice"
+        android:layout_width="match_parent"
+        android:layout_height="48dp"
+        android:background="@drawable/bg_auth_input"
+        android:paddingHorizontal="12dp"
+        android:textSize="14sp"
+        android:hint="请输入您的报价"
+        android:inputType="numberDecimal"
+        android:singleLine="true"
+        android:layout_marginBottom="14dp" />
+
+    <!-- 说明 -->
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="备注说明"
+        android:textSize="14sp"
+        android:textColor="#333333"
+        android:textStyle="bold"
+        android:layout_marginBottom="6dp" />
+
+    <EditText
+        android:id="@+id/etQuoteDesc"
+        android:layout_width="match_parent"
+        android:layout_height="80dp"
+        android:background="@drawable/bg_auth_input"
+        android:padding="12dp"
+        android:textSize="14sp"
+        android:hint="质量说明、交货条件等（选填）"
+        android:gravity="top" />
+</LinearLayout>
