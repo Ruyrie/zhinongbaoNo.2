@@ -13,6 +13,7 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.example.zhinongbao.adapter.CartAdapter;
 import com.example.zhinongbao.data.DataManager;
 import com.example.zhinongbao.model.CartItem;
+import com.example.zhinongbao.model.Product;
 import java.util.List;
 
 public class CartActivity extends AppCompatActivity {
@@ -80,6 +81,13 @@ public class CartActivity extends AppCompatActivity {
         if (checkedItems.isEmpty()) {
             Toast.makeText(this, "请先选择商品", Toast.LENGTH_SHORT).show();
             return;
+        }
+        for (com.example.zhinongbao.model.CartItem item : checkedItems) {
+            Product product = dm.getProductById(item.productId);
+            if (product != null && product.seller != null && product.seller.equals(username)) {
+                Toast.makeText(this, "不能结算自己发布的商品", Toast.LENGTH_SHORT).show();
+                return;
+            }
         }
         for (com.example.zhinongbao.model.CartItem item : checkedItems) {
             dm.addOrder(username, item.productId, item.name, item.price, item.quantity);

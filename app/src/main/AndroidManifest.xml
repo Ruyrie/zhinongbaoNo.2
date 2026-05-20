@@ -135,6 +135,9 @@
         <!-- 卖家：订单管理 -->
         <activity android:name=".SellerOrdersActivity" />
 
+        <!-- 卖家：销售流水分析 -->
+        <activity android:name=".SellerSalesAnalysisActivity" />
+
         <!-- uCrop 裁剪 Activity（子类，用于正确处理 Android 16 edge-to-edge insets） -->
         <activity
             android:name=".UCropCompatActivity"

@@ -27,12 +27,7 @@ public class OrderDetailActivity extends AppCompatActivity {
         username = dm.getLoggedUser();
         String orderId = getIntent().getStringExtra("order_id");
 
-        for (Order o : dm.getOrders(username)) {
-            if (o.orderId.equals(orderId)) {
-                order = o;
-                break;
-            }
-        }
+        order = dm.getOrderById(orderId);
         if (order == null) {
             finish();
             return;
@@ -115,12 +110,36 @@ public class OrderDetailActivity extends AppCompatActivity {
                 btnComment.setVisibility(View.GONE);
                 break;
             case Order.STATUS_PAID:
-                tvStatus.setText("已完成");
-                tvCountdown.setText("感谢您的购买");
+                tvStatus.setText("待发货");
+                tvCountdown.setText("卖家正在准备发货");
                 layoutActions.setVisibility(View.VISIBLE);
+                btnPay.setVisibility(View.VISIBLE);
+                btnPay.setText("申请退款");
+                btnCancel.setVisibility(View.GONE);
+                btnComment.setVisibility(View.GONE);
+                break;
+            case Order.STATUS_SHIPPED:
+                tvStatus.setText("待收货");
+                tvCountdown.setText("卖家已发货，请确认收货后评价");
+                layoutActions.setVisibility(View.VISIBLE);
+                btnPay.setVisibility(View.VISIBLE);
+                btnPay.setText("确认收货");
+                btnCancel.setVisibility(View.VISIBLE);
+                btnCancel.setText("申请退款");
+                btnComment.setVisibility(View.GONE);
+                break;
+            case Order.STATUS_COMPLETED:
+                tvStatus.setText(order.refundAmount > 0 ? "已退款" : "已完成");
+                tvCountdown.setText(order.refundAmount > 0 ? "退款已完成" : "交易成功，可以评价商品");
+                layoutActions.setVisibility(order.refundAmount > 0 ? View.GONE : View.VISIBLE);
                 btnPay.setVisibility(View.GONE);
                 btnCancel.setVisibility(View.GONE);
-                btnComment.setVisibility(View.VISIBLE);
+                btnComment.setVisibility(order.refundAmount > 0 ? View.GONE : View.VISIBLE);
+                break;
+            case Order.STATUS_REFUND:
+                tvStatus.setText("售后中");
+                tvCountdown.setText("退款申请处理中，卖家24小时未处理将自动退款");
+                layoutActions.setVisibility(View.GONE);
                 break;
             case Order.STATUS_CANCELLED:
                 tvStatus.setText("已取消");
@@ -132,18 +151,30 @@ public class OrderDetailActivity extends AppCompatActivity {
         }
 
         btnComment.setOnClickListener(v -> {
-            android.content.Intent intent = new android.content.Intent(this, ProductCommentsActivity.class);
+            android.content.Intent intent = new android.content.Intent(this, AddProductCommentActivity.class);
             intent.putExtra("product_id", order.productId);
             startActivity(intent);
         });
 
         btnPay.setOnClickListener(v -> {
-            dm.updateOrderStatus(username, order.orderId, Order.STATUS_PAID);
-            Toast.makeText(this, "支付成功！", Toast.LENGTH_SHORT).show();
-            finish();
+            if (Order.STATUS_SHIPPED.equals(order.status)) {
+                dm.confirmReceipt(username, order.orderId);
+                Toast.makeText(this, "已确认收货，现在可以评价商品", Toast.LENGTH_SHORT).show();
+                finish();
+            } else if (Order.STATUS_PAID.equals(order.status)) {
+                requestRefund();
+            } else {
+                dm.updateOrderStatus(username, order.orderId, Order.STATUS_PAID);
+                Toast.makeText(this, "支付成功！", Toast.LENGTH_SHORT).show();
+                finish();
+            }
         });
 
         btnCancel.setOnClickListener(v -> {
+            if (Order.STATUS_SHIPPED.equals(order.status)) {
+                requestRefund();
+                return;
+            }
             android.view.View view = getLayoutInflater().inflate(R.layout.dialog_confirm, null);
             android.widget.TextView tvTitle = view.findViewById(R.id.tvDialogTitle);
             android.widget.TextView tvMessage = view.findViewById(R.id.tvDialogMessage);
@@ -167,5 +198,25 @@ public class OrderDetailActivity extends AppCompatActivity {
             });
             dialog.show();
         });
+    }
+
+    private void requestRefund() {
+        android.widget.EditText etReason = new android.widget.EditText(this);
+        etReason.setHint("请输入退款原因");
+        etReason.setMinLines(2);
+        new AlertDialog.Builder(this)
+                .setTitle("申请退款")
+                .setMessage("退款申请提交后，卖家 24 小时内未处理将自动退款。")
+                .setView(etReason)
+                .setPositiveButton("提交申请", (dialog, which) -> {
+                    String reason = etReason.getText().toString().trim();
+                    if (reason.isEmpty())
+                        reason = "买家申请退款";
+                    dm.initiateRefund(order.orderId, reason);
+                    Toast.makeText(this, "退款申请已提交", Toast.LENGTH_SHORT).show();
+                    finish();
+                })
+                .setNegativeButton("取消", null)
+                .show();
     }
 }

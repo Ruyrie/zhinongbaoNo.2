@@ -57,7 +57,10 @@ public class SellerOrderAdapter extends RecyclerView.Adapter<SellerOrderAdapter.
 
         DataManager dm = DataManager.getInstance(holder.itemView.getContext());
         Product p = dm.getProductById(o.productId);
-        if (p != null && p.coverUri != null && !p.coverUri.isEmpty()) {
+        int defaultRes = getDefaultProductImageRes(o.productId);
+        if (defaultRes != 0) {
+            holder.ivCover.setImageResource(defaultRes);
+        } else if (p != null && p.coverUri != null && !p.coverUri.isEmpty()) {
             holder.ivCover.setImageURI(android.net.Uri.parse(p.coverUri.split(",")[0]));
         } else {
             holder.ivCover.setImageResource(R.drawable.ic_product_placeholder);
@@ -107,14 +110,25 @@ public class SellerOrderAdapter extends RecyclerView.Adapter<SellerOrderAdapter.
                 holder.btnAction2.setOnClickListener(v -> listener.onContactBuyer(o));
                 break;
             case Order.STATUS_COMPLETED:
-                holder.tvOrderStatus.setText("已完成");
+                holder.tvOrderStatus.setText(o.refundAmount > 0 ? "已退款" : "已完成");
                 holder.tvOrderStatus.setTextColor(0xFF4CAF50);
+                if (o.refundAmount > 0) {
+                    holder.tvOrderTime.append(String.format("\n已退款: ¥%.2f", o.refundAmount));
+                }
                 break;
             case Order.STATUS_REFUND:
                 holder.tvOrderStatus.setText("待处理售后");
                 holder.tvOrderStatus.setTextColor(0xFFF44336);
                 if (o.refundAmount > 0) {
                     holder.tvOrderTime.append(String.format("\n申请退款: ¥%.2f\n原因: %s", o.refundAmount, o.refundReason));
+                    if (o.refundRequestedAt > 0) {
+                        long remain = o.refundRequestedAt + 24L * 60 * 60 * 1000 - System.currentTimeMillis();
+                        if (remain > 0) {
+                            long h = remain / 3600000;
+                            long m = (remain % 3600000) / 60000;
+                            holder.tvOrderTime.append(String.format("\n自动退款倒计时: %02d小时%02d分", h, m));
+                        }
+                    }
                 }
                 holder.btnAction2.setVisibility(View.VISIBLE);
                 holder.btnAction2.setText("处理售后");
@@ -130,6 +144,33 @@ public class SellerOrderAdapter extends RecyclerView.Adapter<SellerOrderAdapter.
     @Override
     public int getItemCount() {
         return list.size();
+    }
+
+    private int getDefaultProductImageRes(int productId) {
+        switch (productId) {
+            case 1:
+                return R.mipmap.dami1;
+            case 2:
+                return R.mipmap.muer;
+            case 3:
+                return R.mipmap.fengmi1;
+            case 4:
+                return R.mipmap.shucai1;
+            case 5:
+                return R.mipmap.dongchongxiacao1;
+            case 6:
+                return R.mipmap.hongshu1;
+            case 7:
+                return R.mipmap.shanyao1;
+            case 8:
+                return R.mipmap.yangdujun1;
+            case 9:
+                return R.mipmap.luronggu1;
+            case 10:
+                return R.mipmap.tuedan1;
+            default:
+                return 0;
+        }
     }
 
     static class VH extends RecyclerView.ViewHolder {

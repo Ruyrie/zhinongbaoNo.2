@@ -9,6 +9,7 @@ import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import com.example.zhinongbao.data.DataManager;
 import com.example.zhinongbao.model.Product;
@@ -138,6 +139,14 @@ public class ProductDetailActivity extends AppCompatActivity {
         ((TextView) findViewById(R.id.tvDetailProductDesc)).setText(product.desc);
         ((TextView) findViewById(R.id.tvDetailProductPrice))
                 .setText(String.format("¥%.2f", product.price));
+        loadAssetImage(findViewById(R.id.ivDetailStore), "dianpu.png");
+        loadAssetImage(findViewById(R.id.ivDetailService), "lianxikefu.png");
+        loadAssetImage(findViewById(R.id.ivDetailPhone), "dianhua.png");
+
+        final String productNameFinal = product.name;
+        final String seller = product.seller != null && !product.seller.isEmpty()
+                ? product.seller : ChatActivity.SHOP_USERNAME;
+        final boolean isOwnProduct = username != null && username.equals(seller);
 
         // 绑定底部图文详情 RecyclerView
         androidx.recyclerview.widget.RecyclerView rvDetailImages = findViewById(R.id.rvDetailImages);
@@ -189,23 +198,6 @@ public class ProductDetailActivity extends AppCompatActivity {
             startActivity(intent);
         });
 
-        // 加入购物车
-        ((Button) findViewById(R.id.btnAddCart)).setOnClickListener(v -> {
-            dm.addToCart(username, product);
-            Toast.makeText(this, "已加入购物车", Toast.LENGTH_SHORT).show();
-        });
-
-        // 立即购买 → 生成待支付订单并跳转到订单列表
-        ((Button) findViewById(R.id.btnBuy)).setOnClickListener(v -> {
-            dm.addOrder(username, product.id, product.name, product.price, 1);
-            Toast.makeText(this, "下单成功", Toast.LENGTH_SHORT).show();
-            startActivity(new Intent(this, MyOrdersActivity.class));
-        });
-
-        final String productNameFinal = product.name;
-        final String seller = product.seller != null && !product.seller.isEmpty()
-                ? product.seller : ChatActivity.SHOP_USERNAME;
-
         findViewById(R.id.btnOpenStore).setOnClickListener(v -> {
             Intent intent = new Intent(this, SellerStoreActivity.class);
             intent.putExtra("seller", seller);
@@ -229,6 +221,49 @@ public class ProductDetailActivity extends AppCompatActivity {
             intent.setData(Uri.parse("tel:" + phone));
             startActivity(intent);
         });
+
+        Button btnAddCart = findViewById(R.id.btnAddCart);
+        Button btnBuy = findViewById(R.id.btnBuy);
+
+        if (isOwnProduct) {
+            findViewById(R.id.btnOpenStore).setVisibility(android.view.View.GONE);
+            findViewById(R.id.btnContactService).setVisibility(android.view.View.GONE);
+            findViewById(R.id.btnCallShop).setVisibility(android.view.View.GONE);
+
+            btnAddCart.setText("编辑商品");
+            btnAddCart.setBackgroundTintList(android.content.res.ColorStateList.valueOf(0xFF2F80ED));
+            btnAddCart.setOnClickListener(v -> {
+                Intent intent = new Intent(this, AddProductActivity.class);
+                intent.putExtra("product_id", product.id);
+                startActivity(intent);
+            });
+
+            btnBuy.setText("下架商品");
+            btnBuy.setBackgroundTintList(android.content.res.ColorStateList.valueOf(0xFFE53935));
+            btnBuy.setOnClickListener(v -> new AlertDialog.Builder(this)
+                    .setTitle("下架商品")
+                    .setMessage("确认将「" + product.name + "」下架？下架后买家将无法购买。")
+                    .setPositiveButton("确认下架", (dialog, which) -> {
+                        dm.deleteProduct(product.id);
+                        Toast.makeText(this, "已下架", Toast.LENGTH_SHORT).show();
+                        finish();
+                    })
+                    .setNegativeButton("取消", null)
+                    .show());
+        } else {
+            // 加入购物车
+            btnAddCart.setOnClickListener(v -> {
+                dm.addToCart(username, product);
+                Toast.makeText(this, "已加入购物车", Toast.LENGTH_SHORT).show();
+            });
+
+            // 立即购买 → 生成待支付订单并跳转到订单列表
+            btnBuy.setOnClickListener(v -> {
+                dm.addOrder(username, product.id, product.name, product.price, 1);
+                Toast.makeText(this, "下单成功", Toast.LENGTH_SHORT).show();
+                startActivity(new Intent(this, MyOrdersActivity.class));
+            });
+        }
     }
 
     @Override
@@ -271,6 +306,16 @@ public class ProductDetailActivity extends AppCompatActivity {
             }
         } else {
             llLatestComment.setVisibility(android.view.View.GONE);
+        }
+    }
+
+    private void loadAssetImage(ImageView iv, String filename) {
+        if (iv == null)
+            return;
+        try (InputStream is = getAssets().open("pic/" + filename)) {
+            Bitmap bmp = BitmapFactory.decodeStream(is);
+            iv.setImageBitmap(bmp);
+        } catch (IOException ignored) {
         }
     }
 }

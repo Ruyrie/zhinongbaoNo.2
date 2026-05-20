@@ -266,6 +266,7 @@
 
     <!-- 底部操作栏 -->
     <LinearLayout
+        android:id="@+id/llBottomActionBar"
         android:layout_width="match_parent"
         android:layout_height="60dp"
         android:orientation="horizontal"
@@ -274,35 +275,77 @@
         android:background="@android:color/white"
         android:elevation="4dp">
 
-        <TextView
+        <LinearLayout
             android:id="@+id/btnOpenStore"
             android:layout_width="46dp"
             android:layout_height="match_parent"
             android:gravity="center"
-            android:text="店铺"
-            android:textColor="#333333"
-            android:textSize="12sp"
-            android:background="?android:attr/selectableItemBackground" />
+            android:orientation="vertical"
+            android:background="?android:attr/selectableItemBackground"
+            android:clickable="true"
+            android:focusable="true">
 
-        <TextView
+            <ImageView
+                android:id="@+id/ivDetailStore"
+                android:layout_width="22dp"
+                android:layout_height="22dp"
+                android:scaleType="fitCenter" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="店铺"
+                android:textColor="#333333"
+                android:textSize="12sp" />
+        </LinearLayout>
+
+        <LinearLayout
             android:id="@+id/btnContactService"
             android:layout_width="46dp"
             android:layout_height="match_parent"
             android:gravity="center"
-            android:text="客服"
-            android:textColor="#333333"
-            android:textSize="12sp"
-            android:background="?android:attr/selectableItemBackground" />
+            android:orientation="vertical"
+            android:background="?android:attr/selectableItemBackground"
+            android:clickable="true"
+            android:focusable="true">
 
-        <TextView
+            <ImageView
+                android:id="@+id/ivDetailService"
+                android:layout_width="22dp"
+                android:layout_height="22dp"
+                android:scaleType="fitCenter" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="客服"
+                android:textColor="#333333"
+                android:textSize="12sp" />
+        </LinearLayout>
+
+        <LinearLayout
             android:id="@+id/btnCallShop"
             android:layout_width="46dp"
             android:layout_height="match_parent"
             android:gravity="center"
-            android:text="电话"
-            android:textColor="#333333"
-            android:textSize="12sp"
-            android:background="?android:attr/selectableItemBackground" />
+            android:orientation="vertical"
+            android:background="?android:attr/selectableItemBackground"
+            android:clickable="true"
+            android:focusable="true">
+
+            <ImageView
+                android:id="@+id/ivDetailPhone"
+                android:layout_width="22dp"
+                android:layout_height="22dp"
+                android:scaleType="fitCenter" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="电话"
+                android:textColor="#333333"
+                android:textSize="12sp" />
+        </LinearLayout>
 
         <Button
             android:id="@+id/btnAddCart"

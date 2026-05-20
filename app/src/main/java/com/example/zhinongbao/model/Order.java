@@ -46,6 +46,8 @@ public class Order {
     // 售后
     public double refundAmount;
     public String refundReason;
+    public long refundRequestedAt;
+    public String refundPreviousStatus;
 
     public Order(String orderId, int productId, String name, double price, int quantity, String time, String status) {
         this.orderId = orderId;

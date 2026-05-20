@@ -11,7 +11,7 @@ import android.database.sqlite.SQLiteOpenHelper;
 public class AppDatabase extends SQLiteOpenHelper {
 
         private static final String DB_NAME = "zhinongbao.db";
-        private static final int DB_VERSION = 13;
+        private static final int DB_VERSION = 15;
 
         private static AppDatabase instance;
 
@@ -94,7 +94,9 @@ public class AppDatabase extends SQLiteOpenHelper {
                                 "unit_price REAL DEFAULT 0," +
                                 "discount REAL DEFAULT 0," +
                                 "refund_amount REAL DEFAULT 0," +
-                                "refund_reason TEXT)");
+                                "refund_reason TEXT," +
+                                "refund_requested_at INTEGER DEFAULT 0," +
+                                "refund_previous_status TEXT)");
 
                 // 文章点赞表（UNIQUE 防止重复）
                 db.execSQL("CREATE TABLE article_likes (" +
@@ -301,6 +303,12 @@ public class AppDatabase extends SQLiteOpenHelper {
                                         "viewed_at INTEGER NOT NULL," +
                                         "UNIQUE(username, seller))");
                         db.execSQL("CREATE INDEX IF NOT EXISTS idx_store_footprints_user ON store_footprints(username, viewed_at)");
+                }
+                if (oldVersion < 14) {
+                        db.execSQL("ALTER TABLE orders ADD COLUMN refund_requested_at INTEGER DEFAULT 0");
+                }
+                if (oldVersion < 15) {
+                        db.execSQL("ALTER TABLE orders ADD COLUMN refund_previous_status TEXT");
                 }
         }
 }

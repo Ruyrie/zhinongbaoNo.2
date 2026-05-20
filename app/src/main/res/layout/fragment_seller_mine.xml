@@ -147,11 +147,15 @@
 
                 <!-- 今日销售额 -->
                 <LinearLayout
+                    android:id="@+id/layoutTodaySales"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
                     android:orientation="vertical"
-                    android:gravity="center">
+                    android:gravity="center"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:foreground="?attr/selectableItemBackground">
 
                     <TextView
                         android:id="@+id/tvTodaySales"
@@ -180,11 +184,15 @@
 
                 <!-- 本月销售额 -->
                 <LinearLayout
+                    android:id="@+id/layoutMonthSales"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
                     android:orientation="vertical"
-                    android:gravity="center">
+                    android:gravity="center"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:foreground="?attr/selectableItemBackground">
 
                     <TextView
                         android:id="@+id/tvMonthSales"
@@ -213,11 +221,15 @@
 
                 <!-- 总销售额 -->
                 <LinearLayout
+                    android:id="@+id/layoutTotalSales"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
                     android:orientation="vertical"
-                    android:gravity="center">
+                    android:gravity="center"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:foreground="?attr/selectableItemBackground">
 
                     <TextView
                         android:id="@+id/tvTotalSales"

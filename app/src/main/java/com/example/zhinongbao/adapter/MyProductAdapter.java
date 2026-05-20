@@ -46,7 +46,10 @@ public class MyProductAdapter extends RecyclerView.Adapter<MyProductAdapter.View
         String[] cats = p.category != null ? p.category.split(",") : new String[] { "推荐" };
         holder.tvCategory.setText(cats.length > 0 ? cats[0].trim() : "推荐");
 
-        if (p.coverUri != null && !p.coverUri.isEmpty()) {
+        int defaultRes = getDefaultProductImageRes(p.id);
+        if (defaultRes != 0) {
+            holder.ivCover.setImageResource(defaultRes);
+        } else if (p.coverUri != null && !p.coverUri.isEmpty()) {
             String firstImage = p.coverUri.split(",")[0];
             holder.ivCover.setImageURI(android.net.Uri.parse(firstImage));
         } else {
@@ -72,6 +75,33 @@ public class MyProductAdapter extends RecyclerView.Adapter<MyProductAdapter.View
     @Override
     public int getItemCount() {
         return list.size();
+    }
+
+    private int getDefaultProductImageRes(int productId) {
+        switch (productId) {
+            case 1:
+                return R.mipmap.dami1;
+            case 2:
+                return R.mipmap.muer;
+            case 3:
+                return R.mipmap.fengmi1;
+            case 4:
+                return R.mipmap.shucai1;
+            case 5:
+                return R.mipmap.dongchongxiacao1;
+            case 6:
+                return R.mipmap.hongshu1;
+            case 7:
+                return R.mipmap.shanyao1;
+            case 8:
+                return R.mipmap.yangdujun1;
+            case 9:
+                return R.mipmap.luronggu1;
+            case 10:
+                return R.mipmap.tuedan1;
+            default:
+                return 0;
+        }
     }
 
     static class ViewHolder extends RecyclerView.ViewHolder {

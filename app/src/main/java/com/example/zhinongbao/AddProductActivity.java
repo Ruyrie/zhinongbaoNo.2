@@ -36,6 +36,7 @@ public class AddProductActivity extends AppCompatActivity {
     private List<Uri> imageUris = new ArrayList<>();
     private Uri currentCameraUri;
     private int editProductId = -1;
+    private String existingCoverUri;
 
     private final ActivityResultLauncher<String> pickImage = registerForActivityResult(
             new ActivityResultContracts.GetContent(), uri -> {
@@ -88,13 +89,6 @@ public class AddProductActivity extends AppCompatActivity {
         findViewById(R.id.tvBack).setOnClickListener(v -> finish());
         findViewById(R.id.btnSubmitProduct).setOnClickListener(v -> submitProduct());
 
-        if (editProductId > 0) {
-            TextView btnSubmit = findViewById(R.id.btnSubmitProduct);
-            if (btnSubmit != null)
-                btnSubmit.setText("保存修改");
-            loadExistingProduct();
-        }
-
         // Setup image picker RecyclerView
         imageAdapter = new ImagePickerAdapter(imageUris, 9, new ImagePickerAdapter.OnImagePickerClickListener() {
             @Override
@@ -131,6 +125,13 @@ public class AddProductActivity extends AppCompatActivity {
         // Default category
         selectedCategories.add("推荐");
         setupCategoryPicker();
+
+        if (editProductId > 0) {
+            TextView btnSubmit = findViewById(R.id.btnSubmitProduct);
+            if (btnSubmit != null)
+                btnSubmit.setText("保存修改");
+            loadExistingProduct();
+        }
     }
 
     private void loadExistingProduct() {
@@ -141,6 +142,18 @@ public class AddProductActivity extends AppCompatActivity {
         etName.setText(p.name);
         etDesc.setText(p.desc);
         etPrice.setText(String.valueOf(p.price));
+        existingCoverUri = p.coverUri;
+        imageUris.clear();
+        if (existingCoverUri != null && !existingCoverUri.isEmpty()) {
+            for (String uri : existingCoverUri.split(",")) {
+                String trimmed = uri.trim();
+                if (!trimmed.isEmpty()) {
+                    imageUris.add(Uri.parse(trimmed));
+                }
+            }
+            if (imageAdapter != null)
+                imageAdapter.notifyDataSetChanged();
+        }
         selectedCategories.clear();
         if (p.category != null) {
             for (String c : p.category.split(",")) {
@@ -212,8 +225,11 @@ public class AddProductActivity extends AppCompatActivity {
     }
 
     private void refreshCategoryChips() {
+        if (categoryChips == null)
+            return;
         for (int i = 0; i < CATEGORIES.length; i++) {
-            applyCategoryChipStyle(categoryChips[i], selectedCategories.contains(CATEGORIES[i]));
+            if (categoryChips[i] != null)
+                applyCategoryChipStyle(categoryChips[i], selectedCategories.contains(CATEGORIES[i]));
         }
     }
 
@@ -269,6 +285,9 @@ public class AddProductActivity extends AppCompatActivity {
 
         DataManager dm = DataManager.getInstance(this);
         String coverUri = uriBuilder.length() > 0 ? uriBuilder.toString() : null;
+        if (editProductId > 0 && coverUri == null) {
+            coverUri = existingCoverUri;
+        }
         String user = dm.getLoggedUser();
         if (user != null) {
             dm.updateStoreInfo(user, dm.getStoreName(user), storePhone);

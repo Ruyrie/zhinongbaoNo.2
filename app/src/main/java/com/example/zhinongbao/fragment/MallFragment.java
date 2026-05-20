@@ -6,6 +6,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.EditText;
+import android.widget.TextView;
 import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -46,7 +47,32 @@ public class MallFragment extends Fragment {
         displayed = new ArrayList<>();
 
         RecyclerView rv = view.findViewById(R.id.rvProducts);
-        rv.setLayoutManager(new StaggeredGridLayoutManager(2, StaggeredGridLayoutManager.VERTICAL));
+        StaggeredGridLayoutManager layoutManager =
+                new StaggeredGridLayoutManager(2, StaggeredGridLayoutManager.VERTICAL);
+        layoutManager.setGapStrategy(StaggeredGridLayoutManager.GAP_HANDLING_MOVE_ITEMS_BETWEEN_SPANS);
+        rv.setLayoutManager(layoutManager);
+
+        TextView btnScrollTop = view.findViewById(R.id.btnScrollTop);
+        if (btnScrollTop != null) {
+            btnScrollTop.setOnClickListener(v -> {
+                rv.stopScroll();
+                layoutManager.invalidateSpanAssignments();
+                layoutManager.scrollToPositionWithOffset(0, 0);
+                btnScrollTop.setVisibility(View.GONE);
+            });
+            rv.addOnScrollListener(new RecyclerView.OnScrollListener() {
+                @Override
+                public void onScrolled(@NonNull RecyclerView recyclerView, int dx, int dy) {
+                    super.onScrolled(recyclerView, dx, dy);
+                    int offset = recyclerView.computeVerticalScrollOffset();
+                    if (offset == 0) {
+                        layoutManager.invalidateSpanAssignments();
+                    }
+                    boolean show = offset > recyclerView.getHeight();
+                    btnScrollTop.setVisibility(show ? View.VISIBLE : View.GONE);
+                }
+            });
+        }
 
         adapter = new ProductAdapter(displayed, product -> {
             Intent intent = new Intent(getContext(), ProductDetailActivity.class);
@@ -54,7 +80,12 @@ public class MallFragment extends Fragment {
             startActivity(intent);
         });
         adapter.setOnAddCartListener(product -> {
-            dm.addToCart(dm.getLoggedUser(), product);
+            String user = dm.getLoggedUser();
+            if (product.seller != null && product.seller.equals(user)) {
+                Toast.makeText(getContext(), "不能购买自己发布的商品", Toast.LENGTH_SHORT).show();
+                return;
+            }
+            dm.addToCart(user, product);
             Toast.makeText(getContext(), "已加入购物车", Toast.LENGTH_SHORT).show();
         });
         rv.setAdapter(adapter);

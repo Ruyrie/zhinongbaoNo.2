@@ -45,6 +45,8 @@ public class DataManager {
         this.ctx = ctx.getApplicationContext();
         this.appDb = AppDatabase.getInstance(this.ctx);
         seedDefaultData();
+        ensureDefaultStoreContacts();
+        ensureOrderSellers();
     }
 
     public static DataManager getInstance(Context ctx) {
@@ -455,9 +457,15 @@ public class DataManager {
     public boolean hasPurchasedProduct(String username, int productId) {
         if (username == null || username.isEmpty())
             return false;
-        // Check if user has an order for this product
-        return queryCount("SELECT COUNT(*) FROM orders WHERE username=? AND product_id=?",
-                new String[] { username, String.valueOf(productId) }) > 0;
+        return queryCount("SELECT COUNT(*) FROM orders WHERE username=? AND product_id=? AND status=? AND refund_amount=0",
+                new String[] { username, String.valueOf(productId), Order.STATUS_COMPLETED }) > 0;
+    }
+
+    public boolean hasCompletedProductOrder(String username, int productId) {
+        if (username == null || username.isEmpty())
+            return false;
+        return queryCount("SELECT COUNT(*) FROM orders WHERE username=? AND product_id=? AND status=? AND refund_amount=0",
+                new String[] { username, String.valueOf(productId), Order.STATUS_COMPLETED }) > 0;
     }
 
     public com.example.zhinongbao.model.ProductComment addProductComment(int productId, String username, String content,
@@ -499,6 +507,13 @@ public class DataManager {
     public int getProductCommentCount(int productId) {
         return queryCount("SELECT COUNT(*) FROM product_comments WHERE product_id=?",
                 String.valueOf(productId));
+    }
+
+    public boolean hasReviewedProduct(String username, int productId) {
+        if (username == null || username.isEmpty())
+            return false;
+        return queryCount("SELECT COUNT(*) FROM product_comments WHERE username=? AND product_id=?",
+                new String[] { username, String.valueOf(productId) }) > 0;
     }
 
     // ─── 评论 ────────────────────────────────────────────────────────────────
@@ -831,18 +846,52 @@ public class DataManager {
     }
 
     public double getProductSalesRevenue(int productId) {
+        autoCompleteExpiredRefunds();
         try (Cursor c = rdb().rawQuery(
-                "SELECT COALESCE(SUM(price * quantity), 0.0) FROM orders WHERE product_id=?",
-                new String[] { String.valueOf(productId) })) {
+                "SELECT COALESCE(SUM((CASE WHEN unit_price>0 THEN unit_price ELSE price END) * quantity - discount - refund_amount), 0.0) " +
+                        "FROM orders WHERE product_id=? AND status=?",
+                new String[] { String.valueOf(productId), Order.STATUS_COMPLETED })) {
+            return c.moveToFirst() ? c.getDouble(0) : 0.0;
+        }
+    }
+
+    public double getOrderPaidAmount(Order o) {
+        double unit = o.unitPrice > 0 ? o.unitPrice : o.price;
+        double total = unit * o.quantity - o.discount;
+        return Math.max(0, total);
+    }
+
+    public double getOrderPaidAmount(String orderId) {
+        Order o = getOrderById(orderId);
+        return o == null ? 0 : getOrderPaidAmount(o);
+    }
+
+    public double getRefundedRevenueForSeller(String seller) {
+        autoCompleteExpiredRefunds();
+        try (Cursor c = rdb().rawQuery(
+                "SELECT COALESCE(SUM(refund_amount), 0.0) FROM orders WHERE seller=? AND refund_amount>0",
+                new String[] { seller })) {
             return c.moveToFirst() ? c.getDouble(0) : 0.0;
         }
     }
 
     public double getTotalRevenueForSeller(String seller) {
+        autoCompleteExpiredRefunds();
         try (Cursor c = rdb().rawQuery(
-                "SELECT COALESCE(SUM(o.price * o.quantity), 0.0) FROM orders o " +
-                        "INNER JOIN products p ON o.product_id=p.id WHERE p.seller=?",
-                new String[] { seller })) {
+                "SELECT COALESCE(SUM((CASE WHEN o.unit_price>0 THEN o.unit_price ELSE o.price END) * o.quantity - o.discount - o.refund_amount), 0.0) " +
+                        "FROM orders o WHERE o.seller=? AND o.status=?",
+                new String[] { seller, Order.STATUS_COMPLETED })) {
+            return c.moveToFirst() ? c.getDouble(0) : 0.0;
+        }
+    }
+
+    public double getRevenueForSeller(String seller, String scope) {
+        autoCompleteExpiredRefunds();
+        String dateFilter = getSalesDateFilter(scope);
+        String sql = "SELECT COALESCE(SUM((CASE WHEN unit_price>0 THEN unit_price ELSE price END) * quantity - discount - refund_amount), 0.0) "
+                + "FROM orders WHERE seller=? AND status=?" + dateFilter;
+        try (Cursor c = rdb().rawQuery(sql,
+                new String[] { seller, Order.STATUS_COMPLETED })) {
             return c.moveToFirst() ? c.getDouble(0) : 0.0;
         }
     }
@@ -876,6 +925,8 @@ public class DataManager {
     }
 
     public void addToCart(String username, Product product) {
+        if (username != null && product != null && product.seller != null && product.seller.equals(username))
+            return;
         try (Cursor c = rdb().rawQuery(
                 "SELECT quantity FROM cart WHERE username=? AND product_id=?",
                 new String[] { username, String.valueOf(product.id) })) {
@@ -912,6 +963,7 @@ public class DataManager {
     // ─── 订单 ────────────────────────────────────────────────────────────────
 
     public List<Order> getOrders(String username) {
+        autoCompleteExpiredRefunds();
         List<Order> list = new ArrayList<>();
         try (Cursor c = rdb().rawQuery(
                 "SELECT order_id,product_id,name,price,quantity,time,status " +
@@ -924,6 +976,24 @@ public class DataManager {
         return list;
     }
 
+    public List<Order> getPendingReviewOrders(String username) {
+        autoCompleteExpiredRefunds();
+        List<Order> list = new ArrayList<>();
+        try (Cursor c = rdb().rawQuery(
+                "SELECT order_id,product_id,name,price,quantity,time,status " +
+                        "FROM orders WHERE username=? AND product_id>0 " +
+                        "AND status=? AND refund_amount=0 " +
+                        "AND product_id NOT IN (SELECT product_id FROM product_comments WHERE username=?) " +
+                        "ORDER BY id DESC",
+                new String[] { username, Order.STATUS_COMPLETED, username })) {
+            while (c.moveToNext()) {
+                list.add(new Order(c.getString(0), c.getInt(1), c.getString(2),
+                        c.getDouble(3), c.getInt(4), c.getString(5), c.getString(6)));
+            }
+        }
+        return list;
+    }
+
     public void addOrder(String username, int productId, String name, double price, int quantity) {
         String seller = null;
         try (Cursor c = rdb().rawQuery("SELECT seller FROM products WHERE id=?",
@@ -931,6 +1001,8 @@ public class DataManager {
             if (c.moveToFirst())
                 seller = c.getString(0);
         }
+        if (username != null && seller != null && !seller.trim().isEmpty() && seller.equals(username))
+            return;
         ContentValues cv = new ContentValues();
         cv.put("order_id", "JN" + System.currentTimeMillis());
         cv.put("username", username);
@@ -941,8 +1013,10 @@ public class DataManager {
         cv.put("time", now("yyyy-MM-dd HH:mm"));
         cv.put("status", Order.STATUS_PENDING);
         cv.put("order_type", Order.ORDER_TYPE_RETAIL);
-        if (seller != null)
+        if (seller != null && !seller.trim().isEmpty())
             cv.put("seller", seller);
+        else
+            cv.put("seller", "admin");
         wdb().insert("orders", null, cv);
     }
 
@@ -954,11 +1028,12 @@ public class DataManager {
     }
 
     public Order getOrderById(String orderId) {
+        autoCompleteExpiredRefunds();
         try (Cursor c = rdb().rawQuery(
                 "SELECT o.order_id,o.product_id,o.name,o.price,o.quantity,o.time,o.status," +
                         "o.seller,o.username,o.order_type,o.purchase_request_id," +
                         "o.ship_type,o.ship_name,o.ship_no,o.ship_phone,o.proof_images," +
-                        "o.unit_price,o.discount,o.refund_amount,o.refund_reason," +
+                        "o.unit_price,o.discount,o.refund_amount,o.refund_reason,o.refund_requested_at,o.refund_previous_status," +
                         "u.nickname FROM orders o LEFT JOIN users u ON o.username=u.username " +
                         "WHERE o.order_id=?",
                 new String[] { orderId })) {
@@ -984,7 +1059,9 @@ public class DataManager {
         o.discount = c.getDouble(17);
         o.refundAmount = c.getDouble(18);
         o.refundReason = c.getString(19);
-        o.buyerNickname = c.getColumnCount() > 20 ? c.getString(20) : o.buyerUser;
+        o.refundRequestedAt = c.getLong(20);
+        o.refundPreviousStatus = c.getString(21);
+        o.buyerNickname = c.getColumnCount() > 22 ? c.getString(22) : o.buyerUser;
         if (o.buyerNickname == null || o.buyerNickname.isEmpty())
             o.buyerNickname = o.buyerUser;
         if (o.orderType == null)
@@ -993,12 +1070,13 @@ public class DataManager {
     }
 
     public List<Order> getSellerSoldOrders(String seller) {
+        autoCompleteExpiredRefunds();
         List<Order> list = new ArrayList<>();
         try (Cursor c = rdb().rawQuery(
                 "SELECT o.order_id,o.product_id,o.name,o.price,o.quantity,o.time,o.status," +
                         "o.seller,o.username,o.order_type,o.purchase_request_id," +
                         "o.ship_type,o.ship_name,o.ship_no,o.ship_phone,o.proof_images," +
-                        "o.unit_price,o.discount,o.refund_amount,o.refund_reason," +
+                        "o.unit_price,o.discount,o.refund_amount,o.refund_reason,o.refund_requested_at,o.refund_previous_status," +
                         "u.nickname FROM orders o LEFT JOIN users u ON o.username=u.username " +
                         "WHERE o.seller=? ORDER BY o.id DESC",
                 new String[] { seller })) {
@@ -1009,12 +1087,13 @@ public class DataManager {
     }
 
     public List<Order> getSellerSoldOrdersByStatus(String seller, String status) {
+        autoCompleteExpiredRefunds();
         List<Order> list = new ArrayList<>();
         try (Cursor c = rdb().rawQuery(
                 "SELECT o.order_id,o.product_id,o.name,o.price,o.quantity,o.time,o.status," +
                         "o.seller,o.username,o.order_type,o.purchase_request_id," +
                         "o.ship_type,o.ship_name,o.ship_no,o.ship_phone,o.proof_images," +
-                        "o.unit_price,o.discount,o.refund_amount,o.refund_reason," +
+                        "o.unit_price,o.discount,o.refund_amount,o.refund_reason,o.refund_requested_at,o.refund_previous_status," +
                         "u.nickname FROM orders o LEFT JOIN users u ON o.username=u.username " +
                         "WHERE o.seller=? AND o.status=? ORDER BY o.id DESC",
                 new String[] { seller, status })) {
@@ -1022,6 +1101,34 @@ public class DataManager {
                 list.add(cursorToFullOrder(c));
         }
         return list;
+    }
+
+    public List<Order> getSellerSalesOrders(String seller, String scope) {
+        autoCompleteExpiredRefunds();
+        List<Order> list = new ArrayList<>();
+        String dateFilter = getSalesDateFilter(scope);
+        try (Cursor c = rdb().rawQuery(
+                "SELECT o.order_id,o.product_id,o.name,o.price,o.quantity,o.time,o.status," +
+                        "o.seller,o.username,o.order_type,o.purchase_request_id," +
+                        "o.ship_type,o.ship_name,o.ship_no,o.ship_phone,o.proof_images," +
+                        "o.unit_price,o.discount,o.refund_amount,o.refund_reason,o.refund_requested_at,o.refund_previous_status," +
+                        "u.nickname FROM orders o LEFT JOIN users u ON o.username=u.username " +
+                        "WHERE o.seller=? AND o.status=?" + dateFilter + " ORDER BY o.id DESC",
+                new String[] { seller, Order.STATUS_COMPLETED })) {
+            while (c.moveToNext())
+                list.add(cursorToFullOrder(c));
+        }
+        return list;
+    }
+
+    private String getSalesDateFilter(String scope) {
+        if ("today".equals(scope)) {
+            return " AND time LIKE '" + now("yyyy-MM-dd") + "%'";
+        }
+        if ("month".equals(scope)) {
+            return " AND time LIKE '" + now("yyyy-MM") + "%'";
+        }
+        return "";
     }
 
     public boolean shipOrder(String orderId, String shipType, String shipName,
@@ -1043,19 +1150,60 @@ public class DataManager {
     }
 
     public boolean initiatePartialRefund(String orderId, double amount, String reason) {
+        Order order = getOrderById(orderId);
+        if (order == null)
+            return false;
         ContentValues cv = new ContentValues();
         cv.put("refund_amount", amount);
         cv.put("refund_reason", reason);
+        cv.put("refund_requested_at", System.currentTimeMillis());
+        cv.put("refund_previous_status", order.status);
         cv.put("status", Order.STATUS_REFUND);
         return wdb().update("orders", cv, "order_id=?", new String[] { orderId }) > 0;
+    }
+
+    public boolean initiateRefund(String orderId, String reason) {
+        Order order = getOrderById(orderId);
+        if (order == null)
+            return false;
+        return initiatePartialRefund(orderId, getOrderPaidAmount(order), reason);
     }
 
     public boolean processRefund(String orderId, double amount, String reason, boolean approve) {
         ContentValues cv = new ContentValues();
         cv.put("refund_amount", amount);
         cv.put("refund_reason", reason);
-        cv.put("status", approve ? Order.STATUS_COMPLETED : Order.STATUS_SHIPPED);
+        cv.put("refund_requested_at", 0);
+        if (approve) {
+            cv.put("status", Order.STATUS_COMPLETED);
+        } else {
+            Order order = getOrderById(orderId);
+            String restore = (order != null && order.refundPreviousStatus != null && !order.refundPreviousStatus.isEmpty())
+                    ? order.refundPreviousStatus
+                    : Order.STATUS_SHIPPED;
+            cv.put("refund_amount", 0);
+            cv.put("status", restore);
+        }
+        cv.put("refund_previous_status", (String) null);
         return wdb().update("orders", cv, "order_id=?", new String[] { orderId }) > 0;
+    }
+
+    public boolean confirmReceipt(String username, String orderId) {
+        ContentValues cv = new ContentValues();
+        cv.put("status", Order.STATUS_COMPLETED);
+        return wdb().update("orders", cv, "username=? AND order_id=? AND status=?",
+                new String[] { username, orderId, Order.STATUS_SHIPPED }) > 0;
+    }
+
+    public void autoCompleteExpiredRefunds() {
+        long deadline = System.currentTimeMillis() - 24L * 60 * 60 * 1000;
+        ContentValues cv = new ContentValues();
+        cv.put("status", Order.STATUS_COMPLETED);
+        cv.put("refund_requested_at", 0);
+        cv.put("refund_previous_status", (String) null);
+        wdb().update("orders", cv,
+                "status=? AND refund_requested_at>0 AND refund_requested_at<=?",
+                new String[] { Order.STATUS_REFUND, String.valueOf(deadline) });
     }
 
     public boolean updateOrderProofImages(String orderId, String images) {
@@ -1113,8 +1261,10 @@ public class DataManager {
                 needSeed = true;
             }
         }
-        if (!needSeed)
+        if (!needSeed) {
+            ensureDefaultProductSellers();
             return;
+        }
 
         SQLiteDatabase d = wdb();
         // 清除旧数据，避免主键冲突
@@ -1126,6 +1276,7 @@ public class DataManager {
         register("user2", "123456");
         register("user3", "123456");
         register("user4", "123456");
+        ensureDefaultStoreContacts();
 
         // 示例文章 (5个不同用户发布，覆盖不同分类)
         insertArticle(d, 5, "吉林科技学院举办科技节",
@@ -1153,7 +1304,7 @@ public class DataManager {
                 "纯天然百花蜂蜜，无任何添加剂，每瓶均经过质量检测，香甜可口。", 68.00, "推荐");
         insertProduct(d, 4, "绿色蔬菜礼盒",
                 "精选时令新鲜蔬菜组合，产自有机农场，当日采摘，新鲜直达。", 99.00, "推荐,水果蔬菜");
-        insertProduct(d, 5, "优质冬虫夏草（10g）",
+        insertProduct(d, 5, "优质冬虫夏草（100g）",
                 "精选高原正宗冬虫夏草，根条饱满，色泽金黄，滋补佳品，送礼自用两相宜。", 880.00, "推荐");
         insertProduct(d, 6, "农家红薯（5kg）",
                 "沙地种植红心红薯，软糯香甜，富含膳食纤维，健康代餐好选择。", 29.90, "水果蔬菜");
@@ -1163,7 +1314,7 @@ public class DataManager {
                 "深山野生采摘羊肚菌，香味浓郁，肉质厚实，炖汤鲜美无比，营养滋补。", 128.00, "农资农具");
         insertProduct(d, 9, "鲜货鹿茸菇（250g）",
                 "新鲜采摘鹿茸菇，口感脆滑，香味独特，富含多种氨基酸，适合炒菜或炖汤。", 45.00, "农资农具");
-        insertProduct(d, 10, "散养土鹅蛋（10枚）",
+        insertProduct(d, 10, "散养土鹅蛋（12枚）",
                 "农家林地散养大白鹅产蛋，蛋黄大而橙红，营养丰富，天然无公害。", 65.00, "推荐,米面粮油");
     }
 
@@ -1191,7 +1342,42 @@ public class DataManager {
         cv.put("desc", desc);
         cv.put("price", price);
         cv.put("category", category);
+        cv.put("seller", "admin");
         d.insertWithOnConflict("products", null, cv, SQLiteDatabase.CONFLICT_IGNORE);
+    }
+
+    private void ensureDefaultProductSellers() {
+        ContentValues cv = new ContentValues();
+        cv.put("seller", "admin");
+        wdb().update("products", cv, "id<=10 AND (seller IS NULL OR seller='')", null);
+    }
+
+    private void ensureDefaultStoreContacts() {
+        ContentValues cv = new ContentValues();
+        cv.put("store_phone", "13800138000");
+        wdb().update("users", cv, "username='admin' AND (store_phone IS NULL OR store_phone='')", null);
+        cv.clear();
+        cv.put("store_phone", "13800138001");
+        wdb().update("users", cv, "username='user1' AND (store_phone IS NULL OR store_phone='')", null);
+        cv.clear();
+        cv.put("store_phone", "13800138002");
+        wdb().update("users", cv, "username='user2' AND (store_phone IS NULL OR store_phone='')", null);
+        cv.clear();
+        cv.put("store_phone", "13800138003");
+        wdb().update("users", cv, "username='user3' AND (store_phone IS NULL OR store_phone='')", null);
+        cv.clear();
+        cv.put("store_phone", "13800138004");
+        wdb().update("users", cv, "username='user4' AND (store_phone IS NULL OR store_phone='')", null);
+    }
+
+    private void ensureOrderSellers() {
+        wdb().execSQL("UPDATE orders SET seller=(" +
+                "SELECT CASE WHEN p.seller IS NULL OR p.seller='' THEN 'admin' ELSE p.seller END " +
+                "FROM products p WHERE p.id=orders.product_id) " +
+                "WHERE (seller IS NULL OR seller='') AND product_id>0");
+        ContentValues cv = new ContentValues();
+        cv.put("seller", "admin");
+        wdb().update("orders", cv, "(seller IS NULL OR seller='') AND product_id>0", null);
     }
 
     // ─── 农友圈 ──────────────────────────────────────────────────────────────

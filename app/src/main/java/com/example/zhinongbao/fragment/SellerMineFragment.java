@@ -22,6 +22,7 @@ import com.example.zhinongbao.R;
 import com.example.zhinongbao.SellerMyProductsActivity;
 import com.example.zhinongbao.SellerOrdersActivity;
 import com.example.zhinongbao.SellerPurchaseMgmtActivity;
+import com.example.zhinongbao.SellerSalesAnalysisActivity;
 import com.example.zhinongbao.SellerStoreActivity;
 import com.example.zhinongbao.SettingsActivity;
 import com.example.zhinongbao.data.DataManager;
@@ -100,6 +101,13 @@ public class SellerMineFragment extends Fragment {
         loadAssetImage(view.findViewById(R.id.ivSellerOrderSent), "daishouhuo.png");
         loadAssetImage(view.findViewById(R.id.ivSellerOrderAfterSale), "tuikuanshouhou.png");
 
+        ((TextView) view.findViewById(R.id.tvTodaySales))
+                .setText(String.format(java.util.Locale.getDefault(), "%.2f", dm.getRevenueForSeller(username, "today")));
+        ((TextView) view.findViewById(R.id.tvMonthSales))
+                .setText(String.format(java.util.Locale.getDefault(), "%.2f", dm.getRevenueForSeller(username, "month")));
+        ((TextView) view.findViewById(R.id.tvTotalSales))
+                .setText(String.format(java.util.Locale.getDefault(), "%.2f", dm.getRevenueForSeller(username, "all")));
+
         // ── 点击事件 ──
 
         // 去买货：切换为买家身份
@@ -123,6 +131,10 @@ public class SellerMineFragment extends Fragment {
                 v -> startActivity(new Intent(getContext(), SellerOrdersActivity.class)));
         view.findViewById(R.id.quickShopMgmt).setOnClickListener(
                 v -> startActivity(new Intent(getContext(), SellerStoreActivity.class)));
+
+        view.findViewById(R.id.layoutTodaySales).setOnClickListener(v -> openSalesOrders("today"));
+        view.findViewById(R.id.layoutMonthSales).setOnClickListener(v -> openSalesOrders("month"));
+        view.findViewById(R.id.layoutTotalSales).setOnClickListener(v -> openSalesOrders("all"));
 
         // 订单按钮
         view.findViewById(R.id.tvSellerAllOrders).setOnClickListener(
@@ -149,6 +161,12 @@ public class SellerMineFragment extends Fragment {
         });
 
         bindNewsList(view, dm, username);
+    }
+
+    private void openSalesOrders(String scope) {
+        Intent i = new Intent(getContext(), SellerSalesAnalysisActivity.class);
+        i.putExtra("sales_scope", scope);
+        startActivity(i);
     }
 
     private void bindNewsList(View root, DataManager dm, String username) {

@@ -20,16 +20,21 @@ public class OrderAdapter extends RecyclerView.Adapter<OrderAdapter.VH> {
     public interface OnActionListener {
         void onPay(Order order);
         void onCancel(Order order);
+        void onReview(Order order);
+        void onConfirmReceipt(Order order);
+        void onRequestRefund(Order order);
     }
 
     private final List<Order> data;
     private OnItemClickListener clickListener;
     private OnActionListener actionListener;
     private final Handler handler = new Handler(Looper.getMainLooper());
+    private boolean reviewMode = false;
 
     public OrderAdapter(List<Order> data) { this.data = data; }
     public void setOnItemClickListener(OnItemClickListener l) { this.clickListener = l; }
     public void setOnActionListener(OnActionListener l) { this.actionListener = l; }
+    public void setReviewMode(boolean reviewMode) { this.reviewMode = reviewMode; }
 
     @NonNull
     @Override
@@ -58,7 +63,20 @@ public class OrderAdapter extends RecyclerView.Adapter<OrderAdapter.VH> {
             o.status = Order.STATUS_CANCELLED;
         }
 
-        switch (o.status) {
+        if (reviewMode) {
+            styleStatus(holder, "待评价", 0xFFFF9500, 0x1AFF9500);
+            holder.tvCountdown.setText("交易成功");
+            holder.tvCountdown.setTextColor(0xFF34C759);
+            holder.layoutActions.setVisibility(View.VISIBLE);
+            holder.btnCancel.setVisibility(View.GONE);
+            holder.btnPay.setText("去评价");
+        } else {
+            holder.btnCancel.setVisibility(View.VISIBLE);
+            holder.btnCancel.setText("取消订单");
+            holder.btnPay.setText("立即支付");
+        }
+
+        if (!reviewMode) switch (o.status) {
             case Order.STATUS_PENDING:
                 styleStatus(holder, "待支付", 0xFFFF9500, 0x1AFF9500);
                 holder.tvCountdown.setTextColor(0xFFFF9500);
@@ -80,9 +98,38 @@ public class OrderAdapter extends RecyclerView.Adapter<OrderAdapter.VH> {
                 handler.post(holder.countdownRunnable);
                 break;
             case Order.STATUS_PAID:
+                styleStatus(holder, "待发货", 0xFF34C759, 0x1A34C759);
+                holder.tvCountdown.setText("支付成功");
+                holder.tvCountdown.setTextColor(0xFF34C759);
+                holder.layoutActions.setVisibility(View.VISIBLE);
+                holder.btnCancel.setVisibility(View.GONE);
+                holder.btnPay.setText("申请退款");
+                break;
+            case Order.STATUS_SHIPPED:
+                styleStatus(holder, "待收货", 0xFF34C759, 0x1A34C759);
+                holder.tvCountdown.setText("卖家已发货");
+                holder.tvCountdown.setTextColor(0xFF34C759);
+                holder.layoutActions.setVisibility(View.VISIBLE);
+                holder.btnCancel.setVisibility(View.VISIBLE);
+                holder.btnCancel.setText("申请退款");
+                holder.btnPay.setText("确认收货");
+                break;
+            case Order.STATUS_COMPLETED:
                 styleStatus(holder, "已完成", 0xFF34C759, 0x1A34C759);
                 holder.tvCountdown.setText("交易成功");
                 holder.tvCountdown.setTextColor(0xFF34C759);
+                holder.layoutActions.setVisibility(View.VISIBLE);
+                holder.btnCancel.setVisibility(View.GONE);
+                holder.btnPay.setText("申请退款");
+                if (o.refundAmount > 0) {
+                    holder.layoutActions.setVisibility(View.GONE);
+                    holder.tvCountdown.setText("已退款");
+                }
+                break;
+            case Order.STATUS_REFUND:
+                styleStatus(holder, "售后中", 0xFFFF9500, 0x1AFF9500);
+                holder.tvCountdown.setText("售后处理中");
+                holder.tvCountdown.setTextColor(0xFFFF9500);
                 holder.layoutActions.setVisibility(View.GONE);
                 break;
             case Order.STATUS_CANCELLED:
@@ -93,8 +140,28 @@ public class OrderAdapter extends RecyclerView.Adapter<OrderAdapter.VH> {
                 break;
         }
 
-        holder.btnPay.setOnClickListener(v -> { if (actionListener != null) actionListener.onPay(o); });
-        holder.btnCancel.setOnClickListener(v -> { if (actionListener != null) actionListener.onCancel(o); });
+        holder.btnPay.setOnClickListener(v -> {
+            if (actionListener == null)
+                return;
+            if (reviewMode) {
+                actionListener.onReview(o);
+            } else if (Order.STATUS_SHIPPED.equals(o.status)) {
+                actionListener.onConfirmReceipt(o);
+            } else if (Order.STATUS_PAID.equals(o.status) || Order.STATUS_COMPLETED.equals(o.status)) {
+                actionListener.onRequestRefund(o);
+            } else {
+                actionListener.onPay(o);
+            }
+        });
+        holder.btnCancel.setOnClickListener(v -> {
+            if (actionListener == null)
+                return;
+            if (Order.STATUS_SHIPPED.equals(o.status)) {
+                actionListener.onRequestRefund(o);
+            } else {
+                actionListener.onCancel(o);
+            }
+        });
         holder.itemView.setOnClickListener(v -> { if (clickListener != null) clickListener.onClick(o); });
     }
 

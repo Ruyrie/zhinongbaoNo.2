@@ -1,6 +1,8 @@
 package com.example.zhinongbao;
 
 import android.animation.ValueAnimator;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.os.Bundle;
 import android.view.View;
 import android.view.ViewTreeObserver;
@@ -16,6 +18,8 @@ import com.example.zhinongbao.fragment.HeadlineFragment;
 import com.example.zhinongbao.fragment.MallFragment;
 import com.example.zhinongbao.fragment.MineFragment;
 import com.example.zhinongbao.view.BlurBehindView;
+import java.io.IOException;
+import java.io.InputStream;
 
 /** 主界面：iOS 液态玻璃风格底部导航 */
 public class MainActivity extends AppCompatActivity {
@@ -107,8 +111,8 @@ public class MainActivity extends AppCompatActivity {
         super.onResume();
         int role = com.example.zhinongbao.data.DataManager.getInstance(this).getActiveRole();
         if (role != lastRole) {
-            refreshRoleTabs();
             currentIndex = 0;
+            refreshRoleTabs();
             switchFragment(isSellerMode()
                     ? new com.example.zhinongbao.fragment.SellerMineFragment()
                     : new MallFragment(), false);
@@ -124,7 +128,32 @@ public class MainActivity extends AppCompatActivity {
         boolean sellerMode = isSellerMode();
         labels[0].setText(sellerMode ? "我的店铺" : "首页");
         labels[1].setText(sellerMode ? "农友圈" : "农技学堂");
+        loadRoleIcons(sellerMode);
         lastRole = com.example.zhinongbao.data.DataManager.getInstance(this).getActiveRole();
+    }
+
+    private void loadRoleIcons(boolean sellerMode) {
+        if (sellerMode) {
+            loadAssetIcon(icons[0], "dianpu.png");
+            loadAssetIcon(icons[1], "nongyouquan.png");
+        } else {
+            icons[0].setImageResource(R.drawable.ic_nav_headline);
+            loadAssetIcon(icons[1], "nongjixuetang.png");
+        }
+        loadAssetIcon(icons[2], "fabu.png");
+        loadAssetIcon(icons[3], "xiaoxi.png");
+        icons[4].setImageResource(R.drawable.ic_nav_mine);
+        for (int i = 0; i < icons.length; i++) {
+            icons[i].setColorFilter(i == currentIndex ? ACTIVE_COLOR : INACTIVE_COLOR);
+        }
+    }
+
+    private void loadAssetIcon(ImageView iv, String filename) {
+        try (InputStream is = getAssets().open("pic/" + filename)) {
+            Bitmap bmp = BitmapFactory.decodeStream(is);
+            iv.setImageBitmap(bmp);
+        } catch (IOException ignored) {
+        }
     }
 
     private void selectTab(int idx, boolean animate) {

@@ -1,0 +1,187 @@
+package com.example.zhinongbao;
+
+import android.os.Bundle;
+import android.view.View;
+import android.widget.LinearLayout;
+import android.widget.TextView;
+import androidx.appcompat.app.AppCompatActivity;
+import com.example.zhinongbao.data.DataManager;
+import com.example.zhinongbao.model.Order;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+
+public class SellerSalesAnalysisActivity extends AppCompatActivity {
+
+    private DataManager dm;
+
+    private static class ProductSummary {
+        int quantity;
+        double amount;
+    }
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_seller_sales_analysis);
+        if (getSupportActionBar() != null)
+            getSupportActionBar().hide();
+
+        dm = DataManager.getInstance(this);
+        findViewById(R.id.ivBack).setOnClickListener(v -> finish());
+        bindSalesAnalysis();
+    }
+
+    private void bindSalesAnalysis() {
+        String seller = dm.getLoggedUser();
+        String scope = getIntent().getStringExtra("sales_scope");
+        if (scope == null || scope.isEmpty())
+            scope = "all";
+
+        List<Order> orders = dm.getSellerSalesOrders(seller, scope);
+        double total = 0;
+        Map<String, ProductSummary> productMap = new LinkedHashMap<>();
+        for (Order order : orders) {
+            double amount = dm.getOrderPaidAmount(order) - order.refundAmount;
+            if (amount < 0)
+                amount = 0;
+            total += amount;
+
+            ProductSummary summary = productMap.get(order.name);
+            if (summary == null) {
+                summary = new ProductSummary();
+                productMap.put(order.name, summary);
+            }
+            summary.quantity += order.quantity;
+            summary.amount += amount;
+        }
+
+        ((TextView) findViewById(R.id.tvTitle)).setText(scopeName(scope) + "销售流水分析");
+        ((TextView) findViewById(R.id.tvScope)).setText(scopeDesc(scope));
+        ((TextView) findViewById(R.id.tvRevenue)).setText(String.format(Locale.getDefault(), "¥%.2f", total));
+        ((TextView) findViewById(R.id.tvOrderCount)).setText("到账订单 " + orders.size() + " 笔");
+        double avg = orders.isEmpty() ? 0 : total / orders.size();
+        ((TextView) findViewById(R.id.tvAvgAmount)).setText(String.format(Locale.getDefault(), "客单价 ¥%.2f", avg));
+
+        bindProductSummary(productMap);
+        bindOrderFlow(orders);
+    }
+
+    private void bindProductSummary(Map<String, ProductSummary> productMap) {
+        LinearLayout container = findViewById(R.id.llProductSummary);
+        container.removeAllViews();
+        if (productMap.isEmpty()) {
+            addEmptyText(container, "暂无销售数据");
+            return;
+        }
+        for (Map.Entry<String, ProductSummary> entry : productMap.entrySet()) {
+            ProductSummary summary = entry.getValue();
+            LinearLayout row = createRow();
+            TextView name = createText(entry.getKey(), 0xFF333333, 14, 1, false);
+            TextView amount = createText(
+                    String.format(Locale.getDefault(), "x%d  ¥%.2f", summary.quantity, summary.amount),
+                    0xFFE53935, 14, 0, true);
+            row.addView(name);
+            row.addView(amount);
+            container.addView(row);
+            addDivider(container);
+        }
+    }
+
+    private void bindOrderFlow(List<Order> orders) {
+        LinearLayout container = findViewById(R.id.llOrderFlow);
+        container.removeAllViews();
+        if (orders.isEmpty()) {
+            addEmptyText(container, "暂无订单流水");
+            return;
+        }
+        for (Order order : orders) {
+            double amount = dm.getOrderPaidAmount(order) - order.refundAmount;
+            LinearLayout row = new LinearLayout(this);
+            row.setOrientation(LinearLayout.VERTICAL);
+            row.setPadding(0, 8, 0, 8);
+
+            LinearLayout top = createRow();
+            top.addView(createText(order.name, 0xFF333333, 14, 1, false));
+            top.addView(createText(String.format(Locale.getDefault(), "¥%.2f", Math.max(0, amount)),
+                    0xFFE53935, 14, 0, true));
+            row.addView(top);
+
+            TextView sub = createText(
+                    order.time + "  " + statusText(order.status) + "  买家：" + order.buyerNickname,
+                    0xFF999999, 12, 1, false);
+            sub.setPadding(0, 4, 0, 0);
+            row.addView(sub);
+            container.addView(row);
+            addDivider(container);
+        }
+    }
+
+    private LinearLayout createRow() {
+        LinearLayout row = new LinearLayout(this);
+        row.setLayoutParams(new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT));
+        row.setGravity(android.view.Gravity.CENTER_VERTICAL);
+        row.setOrientation(LinearLayout.HORIZONTAL);
+        row.setPadding(0, 8, 0, 8);
+        return row;
+    }
+
+    private TextView createText(String text, int color, int sp, int weight, boolean end) {
+        TextView tv = new TextView(this);
+        LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(
+                weight > 0 ? 0 : LinearLayout.LayoutParams.WRAP_CONTENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT);
+        lp.weight = weight;
+        tv.setLayoutParams(lp);
+        tv.setText(text);
+        tv.setTextColor(color);
+        tv.setTextSize(sp);
+        tv.setSingleLine(false);
+        if (end)
+            tv.setGravity(android.view.Gravity.END);
+        return tv;
+    }
+
+    private void addDivider(LinearLayout container) {
+        View divider = new View(this);
+        divider.setLayoutParams(new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT, 1));
+        divider.setBackgroundColor(0xFFF2F2F7);
+        container.addView(divider);
+    }
+
+    private void addEmptyText(LinearLayout container, String text) {
+        TextView tv = createText(text, 0xFF999999, 14, 1, false);
+        tv.setGravity(android.view.Gravity.CENTER);
+        tv.setPadding(0, 24, 0, 24);
+        container.addView(tv);
+    }
+
+    private String scopeName(String scope) {
+        if ("today".equals(scope))
+            return "今日";
+        if ("month".equals(scope))
+            return "本月";
+        return "累计";
+    }
+
+    private String scopeDesc(String scope) {
+        if ("today".equals(scope))
+            return "今日买家确认收货后的到账流水";
+        if ("month".equals(scope))
+            return "本月买家确认收货后的到账流水";
+        return "累计买家确认收货后的到账流水";
+    }
+
+    private String statusText(String status) {
+        if (Order.STATUS_PAID.equals(status))
+            return "待发货";
+        if (Order.STATUS_SHIPPED.equals(status))
+            return "已发货";
+        if (Order.STATUS_COMPLETED.equals(status))
+            return "已完成";
+        return status;
+    }
+}

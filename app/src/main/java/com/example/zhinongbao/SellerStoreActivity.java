@@ -208,7 +208,10 @@ public class SellerStoreActivity extends AppCompatActivity {
             h.tvSales.setText("已售 " + orderCount + " 件");
 
             // 封面图
-            if (p.coverUri != null && !p.coverUri.isEmpty()) {
+            int defaultRes = getDefaultProductImageRes(p.id);
+            if (defaultRes != 0) {
+                h.ivCover.setImageResource(defaultRes);
+            } else if (p.coverUri != null && !p.coverUri.isEmpty()) {
                 String firstUri = p.coverUri.contains(",")
                         ? p.coverUri.split(",")[0] : p.coverUri;
                 try {
@@ -219,10 +222,10 @@ public class SellerStoreActivity extends AppCompatActivity {
                         h.ivCover.setImageURI(Uri.parse(firstUri));
                     }
                 } catch (Exception ignored) {
-                    h.ivCover.setImageResource(android.R.drawable.ic_menu_gallery);
+                    h.ivCover.setImageResource(R.drawable.ic_product_placeholder);
                 }
             } else {
-                h.ivCover.setImageResource(android.R.drawable.ic_menu_gallery);
+                h.ivCover.setImageResource(R.drawable.ic_product_placeholder);
             }
 
             // 下架按钮
@@ -234,6 +237,33 @@ public class SellerStoreActivity extends AppCompatActivity {
             }
 
             h.itemView.setOnClickListener(v -> clickListener.onClick(p));
+        }
+
+        private int getDefaultProductImageRes(int productId) {
+            switch (productId) {
+                case 1:
+                    return R.mipmap.dami1;
+                case 2:
+                    return R.mipmap.muer;
+                case 3:
+                    return R.mipmap.fengmi1;
+                case 4:
+                    return R.mipmap.shucai1;
+                case 5:
+                    return R.mipmap.dongchongxiacao1;
+                case 6:
+                    return R.mipmap.hongshu1;
+                case 7:
+                    return R.mipmap.shanyao1;
+                case 8:
+                    return R.mipmap.yangdujun1;
+                case 9:
+                    return R.mipmap.luronggu1;
+                case 10:
+                    return R.mipmap.tuedan1;
+                default:
+                    return 0;
+            }
         }
 
         @Override

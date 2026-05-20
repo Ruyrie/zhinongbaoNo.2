@@ -1,10 +1,8 @@
 package com.example.zhinongbao;
 
 import android.content.Intent;
-import android.net.Uri;
 import android.os.Bundle;
 import android.text.Editable;
-import android.text.TextUtils;
 import android.text.TextWatcher;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -31,6 +29,7 @@ public class SellerOrdersActivity extends AppCompatActivity {
     private DataManager dm;
 
     private TextView tabAll, tabPending, tabPaid, tabShipped, tabRefund;
+    private String salesScope;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -45,6 +44,7 @@ public class SellerOrdersActivity extends AppCompatActivity {
         if (intentFilter != null) {
             currentFilter = intentFilter;
         }
+        salesScope = getIntent().getStringExtra("sales_scope");
 
         findViewById(R.id.ivBack).setOnClickListener(v -> finish());
 
@@ -55,6 +55,7 @@ public class SellerOrdersActivity extends AppCompatActivity {
         tabRefund = findViewById(R.id.tabRefund);
 
         View.OnClickListener tabListener = v -> {
+            salesScope = null;
             int id = v.getId();
             if (id == R.id.tabAll)
                 currentFilter = "all";
@@ -97,13 +98,9 @@ public class SellerOrdersActivity extends AppCompatActivity {
 
             @Override
             public void onContactBuyer(Order o) {
-                String phone = dm.getPhone(o.buyerUser);
-                if (TextUtils.isEmpty(phone)) {
-                    Toast.makeText(SellerOrdersActivity.this, "该买家未绑定手机号", Toast.LENGTH_SHORT).show();
-                    return;
-                }
-                Intent intent = new Intent(Intent.ACTION_DIAL);
-                intent.setData(Uri.parse("tel:" + phone));
+                Intent intent = new Intent(SellerOrdersActivity.this, ChatActivity.class);
+                intent.putExtra("other_user", o.buyerUser);
+                intent.putExtra("product_name", o.name);
                 startActivity(intent);
             }
         });
@@ -138,7 +135,9 @@ public class SellerOrdersActivity extends AppCompatActivity {
             return;
 
         orderList.clear();
-        if ("all".equals(currentFilter)) {
+        if (salesScope != null) {
+            orderList.addAll(dm.getSellerSalesOrders(user, salesScope));
+        } else if ("all".equals(currentFilter)) {
             orderList.addAll(dm.getSellerSoldOrders(user));
         } else {
             orderList.addAll(dm.getSellerSoldOrdersByStatus(user, currentFilter));

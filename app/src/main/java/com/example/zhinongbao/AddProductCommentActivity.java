@@ -86,6 +86,11 @@ public class AddProductCommentActivity extends AppCompatActivity {
 
         DataManager dm = DataManager.getInstance(this);
         String username = dm.getLoggedUser();
+        if (!dm.hasPurchasedProduct(username, productId) && !"admin".equals(username)) {
+            Toast.makeText(this, "确认收货后才能评价该商品", Toast.LENGTH_SHORT).show();
+            finish();
+            return;
+        }
 
         btnSubmit.setOnClickListener(v -> {
             String content = etContent.getText().toString().trim();
