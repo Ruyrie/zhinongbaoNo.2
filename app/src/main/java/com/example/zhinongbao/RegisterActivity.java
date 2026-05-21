@@ -7,16 +7,16 @@ import android.widget.EditText;
 import android.widget.RadioButton;
 import android.widget.RadioGroup;
 import android.widget.Toast;
-import androidx.appcompat.app.AppCompatActivity;
-import com.example.zhinongbao.data.DataManager;
+import com.example.zhinongbao.base.BaseMvpActivity;
 import com.example.zhinongbao.model.User;
+import com.example.zhinongbao.mvp.register.RegisterContract;
+import com.example.zhinongbao.mvp.register.RegisterPresenter;
 
 /** 注册界面（复用为添加账号界面） */
-public class RegisterActivity extends AppCompatActivity {
+public class RegisterActivity extends BaseMvpActivity<RegisterContract.Presenter> implements RegisterContract.View {
 
     private EditText etUsername, etPassword, etPhone;
     private RadioGroup rgRole;
-    private DataManager dm;
 
     // 是否从账号管理进入（添加账号模式）
     private boolean isAddMode = false;
@@ -26,7 +26,7 @@ public class RegisterActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_register);
 
-        dm = DataManager.getInstance(this);
+        new RegisterPresenter(this, this);
         isAddMode = getIntent().getBooleanExtra("add_mode", false);
 
         etUsername = findViewById(R.id.etRegUsername);
@@ -44,54 +44,27 @@ public class RegisterActivity extends AppCompatActivity {
         String username = etUsername.getText().toString().trim();
         String password = etPassword.getText().toString().trim();
         String phone = etPhone.getText().toString().trim();
-
-        if (username.isEmpty() || password.isEmpty()) {
-            Toast.makeText(this, "用户名和密码不能为空", Toast.LENGTH_SHORT).show();
-            return;
-        }
-        if (!username.matches("^[a-zA-Z0-9\\-@_.]+$")) {
-            Toast.makeText(this, "用户名只能包含字母、数字及-@_.", Toast.LENGTH_SHORT).show();
-            return;
-        }
-        if (password.length() < 6) {
-            Toast.makeText(this, "密码至少6位", Toast.LENGTH_SHORT).show();
-            return;
-        }
-
-        if (!phone.isEmpty()) {
-            if (phone.length() != 11 || !phone.matches("^1[3-9]\\d{9}$") || phone.matches("^(\\d)\\1{10}$")) {
-                Toast.makeText(this, "请输入有效的11位手机号", Toast.LENGTH_SHORT).show();
-                return;
-            }
-            if (dm.isPhoneBound(phone)) {
-                Toast.makeText(this, "该手机号已被注册或绑定，请更换手机号", Toast.LENGTH_SHORT).show();
-                return;
-            }
-        }
-
         int selectedRole = User.ROLE_BUYER;
         if (rgRole != null && rgRole.getCheckedRadioButtonId() == R.id.rbSeller) {
             selectedRole = User.ROLE_SELLER;
         }
+        presenter.register(username, password, phone, selectedRole, isAddMode);
+    }
 
-        boolean ok = dm.register(username, password, phone, selectedRole);
-        if (!ok) {
-            Toast.makeText(this, "该用户名已被使用，请更换用户名", Toast.LENGTH_SHORT).show();
-            return;
-        }
+    @Override
+    public void showToast(String message) {
+        Toast.makeText(this, message, Toast.LENGTH_SHORT).show();
+    }
 
-        Toast.makeText(this, "注册成功", Toast.LENGTH_SHORT).show();
+    @Override
+    public void closePage() {
+        finish();
+    }
 
-        if (isAddMode) {
-            // 账号管理模式，直接返回
-            finish();
-        } else {
-            // 注册完成后自动登录并进入主界面
-            dm.setLoggedUser(username);
-            dm.setActiveRole(selectedRole);
-            Intent intent = new Intent(this, MainActivity.class);
-            intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
-            startActivity(intent);
-        }
+    @Override
+    public void goMain() {
+        Intent intent = new Intent(this, MainActivity.class);
+        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+        startActivity(intent);
     }
 }

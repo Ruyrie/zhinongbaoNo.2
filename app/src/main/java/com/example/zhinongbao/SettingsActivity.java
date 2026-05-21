@@ -4,14 +4,12 @@ import android.content.Intent;
 import android.content.res.ColorStateList;
 import android.os.Bundle;
 import android.view.View;
-import android.widget.LinearLayout;
 import androidx.appcompat.app.AlertDialog;
-import androidx.appcompat.app.AppCompatActivity;
-import com.example.zhinongbao.data.DataManager;
+import com.example.zhinongbao.base.BaseMvpActivity;
+import com.example.zhinongbao.mvp.settings.SettingsContract;
+import com.example.zhinongbao.mvp.settings.SettingsPresenter;
 
-public class SettingsActivity extends AppCompatActivity {
-
-    private DataManager dm;
+public class SettingsActivity extends BaseMvpActivity<SettingsContract.Presenter> implements SettingsContract.View {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -20,7 +18,7 @@ public class SettingsActivity extends AppCompatActivity {
 
         findViewById(R.id.tvBack).setOnClickListener(v -> finish());
 
-        dm = DataManager.getInstance(this);
+        new SettingsPresenter(this, this);
 
         findViewById(R.id.tvAccountManager)
                 .setOnClickListener(v -> startActivity(new Intent(this, AccountManagerActivity.class)));
@@ -55,11 +53,15 @@ public class SettingsActivity extends AppCompatActivity {
         view.findViewById(R.id.btnDialogCancel).setOnClickListener(v -> dialog.dismiss());
         view.findViewById(R.id.btnDialogConfirm).setOnClickListener(v -> {
             dialog.dismiss();
-            dm.logout();
-            Intent intent = new Intent(this, LoginActivity.class);
-            intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
-            startActivity(intent);
+            presenter.logout();
         });
         dialog.show();
+    }
+
+    @Override
+    public void goLogin() {
+        Intent intent = new Intent(this, LoginActivity.class);
+        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+        startActivity(intent);
     }
 }

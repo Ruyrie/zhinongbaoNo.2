@@ -10,15 +10,14 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 import androidx.appcompat.app.AlertDialog;
-import androidx.appcompat.app.AppCompatActivity;
+import com.example.zhinongbao.base.BaseMvpActivity;
 import com.example.zhinongbao.model.Order;
 import com.example.zhinongbao.mvp.orderdetail.OrderDetailContract;
 import com.example.zhinongbao.mvp.orderdetail.OrderDetailPresenter;
 
-public class OrderDetailActivity extends AppCompatActivity implements OrderDetailContract.View {
+public class OrderDetailActivity extends BaseMvpActivity<OrderDetailContract.Presenter> implements OrderDetailContract.View {
 
     private Order order;
-    private OrderDetailContract.Presenter presenter;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -27,11 +26,6 @@ public class OrderDetailActivity extends AppCompatActivity implements OrderDetai
 
         String orderId = getIntent().getStringExtra("order_id");
         new OrderDetailPresenter(this, this, orderId).start();
-    }
-
-    @Override
-    public void setPresenter(OrderDetailContract.Presenter presenter) {
-        this.presenter = presenter;
     }
 
     @Override

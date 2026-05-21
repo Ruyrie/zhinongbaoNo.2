@@ -7,23 +7,22 @@ import android.widget.CheckBox;
 import android.widget.TextView;
 import android.widget.Toast;
 import androidx.appcompat.app.AlertDialog;
-import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import com.example.zhinongbao.adapter.CartAdapter;
-import com.example.zhinongbao.data.DataManager;
+import com.example.zhinongbao.base.BaseMvpActivity;
 import com.example.zhinongbao.model.CartItem;
-import com.example.zhinongbao.model.Product;
+import com.example.zhinongbao.mvp.cart.CartContract;
+import com.example.zhinongbao.mvp.cart.CartPresenter;
+import java.util.ArrayList;
 import java.util.List;
 
-public class CartActivity extends AppCompatActivity {
+public class CartActivity extends BaseMvpActivity<CartContract.Presenter> implements CartContract.View {
 
     private CartAdapter adapter;
-    private List<CartItem> items;
+    private final List<CartItem> items = new ArrayList<>();
     private CheckBox cbSelectAll;
     private TextView tvTotal, tvCount;
-    private DataManager dm;
-    private String username;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -31,10 +30,6 @@ public class CartActivity extends AppCompatActivity {
         setContentView(R.layout.activity_cart);
 
         findViewById(R.id.tvBack).setOnClickListener(v -> finish());
-
-        dm = DataManager.getInstance(this);
-        username = dm.getLoggedUser();
-        items = dm.getCart(username);
 
         RecyclerView rv = findViewById(R.id.rvCart);
         rv.setLayoutManager(new LinearLayoutManager(this));
@@ -58,48 +53,58 @@ public class CartActivity extends AppCompatActivity {
                 .setMessage("确定要清空所有商品吗？")
                 .setPositiveButton("清空", (d, w) -> {
                     adapter.clearAll();
-                    dm.saveCartPublic(username, items);
-                    refreshBottomBar();
+                    presenter.onClearCart(items);
                 })
                 .setNegativeButton("取消", null)
                 .show());
 
+        new CartPresenter(this, this).start();
         refreshBottomBar();
     }
 
     private void refreshBottomBar() {
         double total = adapter.getSelectedTotal();
-        tvTotal.setText(String.format("¥%.2f", total));
-        tvCount.setText("共 " + items.size() + " 件");
-        cbSelectAll.setOnCheckedChangeListener(null);
-        cbSelectAll.setChecked(adapter.areAllChecked());
-        cbSelectAll.setOnCheckedChangeListener((btn, checked) -> adapter.setAllChecked(checked));
+        presenter.onCartSelectionChanged(total, items.size(), adapter.areAllChecked());
     }
 
     private void checkout() {
-        List<com.example.zhinongbao.model.CartItem> checkedItems = adapter.getCheckedItems();
-        if (checkedItems.isEmpty()) {
-            Toast.makeText(this, "请先选择商品", Toast.LENGTH_SHORT).show();
-            return;
-        }
-        for (com.example.zhinongbao.model.CartItem item : checkedItems) {
-            Product product = dm.getProductById(item.productId);
-            if (product != null && product.seller != null && product.seller.equals(username)) {
-                Toast.makeText(this, "不能结算自己发布的商品", Toast.LENGTH_SHORT).show();
-                return;
-            }
-        }
-        if (dm.getDefaultAddress(username) == null) {
-            Toast.makeText(this, "请先添加收货地址", Toast.LENGTH_SHORT).show();
-            startActivity(new Intent(this, AddressManagerActivity.class));
-            return;
-        }
-        for (com.example.zhinongbao.model.CartItem item : checkedItems) {
-            dm.addOrder(username, item.productId, item.name, item.price, item.quantity);
-        }
-        adapter.removeChecked();
-        dm.saveCartPublic(username, items);
+        presenter.checkout(items, adapter.getCheckedItems());
+    }
+
+    @Override
+    public void showCart(List<CartItem> newItems) {
+        items.clear();
+        items.addAll(newItems);
+        adapter.notifyDataSetChanged();
+        refreshBottomBar();
+    }
+
+    @Override
+    public void updateSummary(double total, int itemCount, boolean allChecked) {
+        tvTotal.setText(String.format("¥%.2f", total));
+        tvCount.setText("共 " + itemCount + " 件");
+        cbSelectAll.setOnCheckedChangeListener(null);
+        cbSelectAll.setChecked(allChecked);
+        cbSelectAll.setOnCheckedChangeListener((btn, checked) -> adapter.setAllChecked(checked));
+    }
+
+    @Override
+    public void showToast(String message) {
+        Toast.makeText(this, message, Toast.LENGTH_SHORT).show();
+    }
+
+    @Override
+    public void openAddressManager() {
+        startActivity(new Intent(this, AddressManagerActivity.class));
+    }
+
+    @Override
+    public void openMyOrders() {
         startActivity(new Intent(this, MyOrdersActivity.class));
+    }
+
+    @Override
+    public void closePage() {
         finish();
     }
 }

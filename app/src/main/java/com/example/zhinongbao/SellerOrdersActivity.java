@@ -11,22 +11,22 @@ import android.widget.RadioGroup;
 import android.widget.TextView;
 import android.widget.Toast;
 import androidx.appcompat.app.AlertDialog;
-import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import com.example.zhinongbao.adapter.SellerOrderAdapter;
-import com.example.zhinongbao.data.DataManager;
+import com.example.zhinongbao.base.BaseMvpActivity;
 import com.example.zhinongbao.model.Order;
+import com.example.zhinongbao.mvp.sellerorders.SellerOrdersContract;
+import com.example.zhinongbao.mvp.sellerorders.SellerOrdersPresenter;
 import java.util.ArrayList;
 import java.util.List;
 
-public class SellerOrdersActivity extends AppCompatActivity {
+public class SellerOrdersActivity extends BaseMvpActivity<SellerOrdersContract.Presenter> implements SellerOrdersContract.View {
 
     private String currentFilter = "all"; // all, pending, paid, shipped, refund
     private RecyclerView rvOrders;
     private SellerOrderAdapter adapter;
     private List<Order> orderList = new ArrayList<>();
-    private DataManager dm;
     private EditText etOrderSearch;
 
     private TextView tabAll, tabPending, tabPaid, tabShipped, tabRefund;
@@ -39,8 +39,6 @@ public class SellerOrdersActivity extends AppCompatActivity {
         setContentView(R.layout.activity_seller_orders);
         if (getSupportActionBar() != null)
             getSupportActionBar().hide();
-
-        dm = DataManager.getInstance(this);
 
         String intentFilter = getIntent().getStringExtra("filter");
         if (intentFilter != null) {
@@ -58,7 +56,8 @@ public class SellerOrdersActivity extends AppCompatActivity {
         etOrderSearch = findViewById(R.id.etOrderSearch);
         findViewById(R.id.btnOrderSearch).setOnClickListener(v -> {
             orderSearchKeyword = etOrderSearch.getText().toString().trim();
-            loadOrders();
+            presenter.setSearchKeyword(orderSearchKeyword);
+            presenter.refresh();
         });
 
         View.OnClickListener tabListener = v -> {
@@ -75,7 +74,7 @@ public class SellerOrdersActivity extends AppCompatActivity {
             else if (id == R.id.tabRefund)
                 currentFilter = "refund";
             updateTabStyles();
-            loadOrders();
+            presenter.setFilter(currentFilter);
         };
 
         tabAll.setOnClickListener(tabListener);
@@ -92,6 +91,7 @@ public class SellerOrdersActivity extends AppCompatActivity {
             @Override
             public void onTextChanged(CharSequence s, int start, int before, int count) {
                 orderSearchKeyword = s == null ? "" : s.toString().trim();
+                presenter.setSearchKeyword(orderSearchKeyword);
             }
 
             @Override
@@ -105,31 +105,28 @@ public class SellerOrdersActivity extends AppCompatActivity {
         adapter = new SellerOrderAdapter(orderList, new SellerOrderAdapter.OnOrderActionListener() {
             @Override
             public void onShip(Order o) {
-                showShipDialog(o);
+                presenter.onShipClicked(o);
             }
 
             @Override
             public void onModifyPrice(Order o) {
-                showModifyPriceDialog(o);
+                presenter.onModifyPriceClicked(o);
             }
 
             @Override
             public void onRefund(Order o) {
-                showRefundDialog(o);
+                presenter.onRefundClicked(o);
             }
 
             @Override
             public void onContactBuyer(Order o) {
-                Intent intent = new Intent(SellerOrdersActivity.this, ChatActivity.class);
-                intent.putExtra("other_user", o.buyerUser);
-                intent.putExtra("product_name", o.name);
-                startActivity(intent);
+                presenter.onContactBuyer(o);
             }
         });
         rvOrders.setAdapter(adapter);
 
+        new SellerOrdersPresenter(this, this, currentFilter, salesScope).start();
         updateTabStyles();
-        loadOrders();
     }
 
     private void updateTabStyles() {
@@ -151,25 +148,28 @@ public class SellerOrdersActivity extends AppCompatActivity {
                 "refund".equals(currentFilter) ? android.graphics.Typeface.BOLD : android.graphics.Typeface.NORMAL);
     }
 
-    private void loadOrders() {
-        String user = dm.getLoggedUser();
-        if (user == null)
-            return;
-
+    @Override
+    public void showOrders(List<Order> orders) {
         orderList.clear();
-        if (!orderSearchKeyword.isEmpty()) {
-            orderList.addAll(dm.searchSellerSoldOrdersByOrderId(user, orderSearchKeyword));
-        } else if (salesScope != null) {
-            orderList.addAll(dm.getSellerSalesOrders(user, salesScope));
-        } else if ("all".equals(currentFilter)) {
-            orderList.addAll(dm.getSellerSoldOrders(user));
-        } else {
-            orderList.addAll(dm.getSellerSoldOrdersByStatus(user, currentFilter));
-        }
+        orderList.addAll(orders);
         adapter.notifyDataSetChanged();
     }
 
-    private void showModifyPriceDialog(Order o) {
+    @Override
+    public void showToast(String message) {
+        Toast.makeText(this, message, Toast.LENGTH_SHORT).show();
+    }
+
+    @Override
+    public void openChat(String buyerUser, String productName) {
+        Intent intent = new Intent(this, ChatActivity.class);
+        intent.putExtra("other_user", buyerUser);
+        intent.putExtra("product_name", productName);
+        startActivity(intent);
+    }
+
+    @Override
+    public void showModifyPriceDialog(Order o) {
         View v = LayoutInflater.from(this).inflate(R.layout.dialog_seller_price, null);
         TextView tvOrig = v.findViewById(R.id.tvOriginalPrice);
         TextView tvFinal = v.findViewById(R.id.tvFinalPrice);
@@ -216,10 +216,7 @@ public class SellerOrdersActivity extends AppCompatActivity {
                     try {
                         double u = Double.parseDouble(etUnit.getText().toString());
                         double dist = Double.parseDouble(etDiscount.getText().toString());
-                        if (dm.updateOrderPrice(o.orderId, u, dist)) {
-                            Toast.makeText(this, "改价成功", Toast.LENGTH_SHORT).show();
-                            loadOrders();
-                        }
+                        presenter.updateOrderPrice(o, u, dist);
                     } catch (Exception e) {
                     }
                 })
@@ -227,7 +224,8 @@ public class SellerOrdersActivity extends AppCompatActivity {
                 .show();
     }
 
-    private void showShipDialog(Order o) {
+    @Override
+    public void showShipDialog(Order o) {
         View v = LayoutInflater.from(this).inflate(R.layout.dialog_seller_ship, null);
         RadioGroup rg = v.findViewById(R.id.rgShipType);
         View llExpress = v.findViewById(R.id.llExpressInputs);
@@ -255,20 +253,18 @@ public class SellerOrdersActivity extends AppCompatActivity {
                 .setView(v)
                 .setPositiveButton("确定发货", (d, w) -> {
                     if (rg.getCheckedRadioButtonId() == R.id.rbExpress) {
-                        dm.shipOrder(o.orderId, "express", etCompany.getText().toString(), etNo.getText().toString(),
-                                "");
+                        presenter.shipOrder(o, "express", etCompany.getText().toString(), etNo.getText().toString(), "");
                     } else {
-                        dm.shipOrder(o.orderId, "custom", etDriver.getText().toString(), etCar.getText().toString(),
+                        presenter.shipOrder(o, "custom", etDriver.getText().toString(), etCar.getText().toString(),
                                 etPhone.getText().toString());
                     }
-                    Toast.makeText(this, "已发货", Toast.LENGTH_SHORT).show();
-                    loadOrders();
                 })
                 .setNegativeButton("取消", null)
                 .show();
     }
 
-    private void showRefundDialog(Order o) {
+    @Override
+    public void showRefundDialog(Order o) {
         View v = LayoutInflater.from(this).inflate(R.layout.dialog_partial_refund, null);
         TextView tvInfo = v.findViewById(R.id.tvRefundOrderInfo);
         EditText etAmt = v.findViewById(R.id.etRefundAmount);
@@ -287,16 +283,12 @@ public class SellerOrdersActivity extends AppCompatActivity {
                 .setPositiveButton("同意退款", (d, w) -> {
                     try {
                         double amt = Double.parseDouble(etAmt.getText().toString());
-                        dm.processRefund(o.orderId, amt, etReason.getText().toString(), true);
-                        Toast.makeText(this, "已同意退款", Toast.LENGTH_SHORT).show();
-                        loadOrders();
+                        presenter.processRefund(o, amt, etReason.getText().toString(), true);
                     } catch (Exception e) {
                     }
                 })
                 .setNeutralButton("拒绝退款", (d, w) -> {
-                    dm.processRefund(o.orderId, 0, etReason.getText().toString(), false);
-                    Toast.makeText(this, "已拒绝退款，恢复为发货状态", Toast.LENGTH_SHORT).show();
-                    loadOrders();
+                    presenter.processRefund(o, 0, etReason.getText().toString(), false);
                 })
                 .setNegativeButton("取消", null)
                 .show();

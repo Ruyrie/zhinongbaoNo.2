@@ -13,24 +13,24 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 import androidx.annotation.NonNull;
-import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
-import com.example.zhinongbao.data.DataManager;
+import com.example.zhinongbao.base.BaseMvpActivity;
 import com.example.zhinongbao.model.PurchaseQuote;
 import com.example.zhinongbao.model.PurchaseRequest;
+import com.example.zhinongbao.mvp.sellerpurchase.SellerPurchaseContract;
+import com.example.zhinongbao.mvp.sellerpurchase.SellerPurchasePresenter;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
 
-public class SellerPurchaseMgmtActivity extends AppCompatActivity {
+public class SellerPurchaseMgmtActivity extends BaseMvpActivity<SellerPurchaseContract.Presenter>
+        implements SellerPurchaseContract.View {
 
     private TextView tabMarket, tabMyQuotes, tabMyRequests;
     private View tabIndicator;
     private RecyclerView rvPurchase;
-    private DataManager dm;
-    private String currentUser;
     private SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.getDefault());
 
     private int currentTab = 0; // 0=Market, 1=MyQuotes, 2=MyRequests
@@ -41,9 +41,6 @@ public class SellerPurchaseMgmtActivity extends AppCompatActivity {
         setContentView(R.layout.activity_seller_purchase_mgmt);
         if (getSupportActionBar() != null)
             getSupportActionBar().hide();
-
-        dm = DataManager.getInstance(this);
-        currentUser = dm.getLoggedUser();
 
         findViewById(R.id.ivBack).setOnClickListener(v -> finish());
 
@@ -58,6 +55,7 @@ public class SellerPurchaseMgmtActivity extends AppCompatActivity {
         tabMyQuotes.setOnClickListener(v -> switchTab(1));
         tabMyRequests.setOnClickListener(v -> switchTab(2));
 
+        new SellerPurchasePresenter(this, this);
         tabIndicator.post(() -> switchTab(0));
     }
 
@@ -76,22 +74,22 @@ public class SellerPurchaseMgmtActivity extends AppCompatActivity {
         lp.leftMargin = activeTab.getLeft();
         tabIndicator.setLayoutParams(lp);
 
-        loadData();
+        presenter.switchTab(tab);
     }
 
-    private void loadData() {
-        if (currentTab == 0) {
-            List<PurchaseRequest> reqs = dm.getPurchaseRequests();
-            // Filter out own requests
-            reqs.removeIf(r -> r.buyerUser.equals(currentUser));
-            rvPurchase.setAdapter(new MarketAdapter(reqs));
-        } else if (currentTab == 1) {
-            List<PurchaseQuote> quotes = dm.getQuotesBySellerUser(currentUser);
-            rvPurchase.setAdapter(new MyQuotesAdapter(quotes));
-        } else if (currentTab == 2) {
-            List<PurchaseRequest> myReqs = dm.getMyPurchaseRequests(currentUser);
-            rvPurchase.setAdapter(new MyRequestsAdapter(myReqs));
-        }
+    @Override
+    public void showMarket(List<PurchaseRequest> requests) {
+        rvPurchase.setAdapter(new MarketAdapter(requests));
+    }
+
+    @Override
+    public void showMyQuotes(List<PurchaseQuote> quotes) {
+        rvPurchase.setAdapter(new MyQuotesAdapter(quotes));
+    }
+
+    @Override
+    public void showMyRequests(List<PurchaseRequest> requests) {
+        rvPurchase.setAdapter(new MyRequestsAdapter(requests));
     }
 
     private String formatTime(long ts) {
@@ -182,10 +180,7 @@ public class SellerPurchaseMgmtActivity extends AppCompatActivity {
                     try {
                         double p = Double.parseDouble(etPrice.getText().toString());
                         String desc = etDesc.getText().toString();
-                        if (dm.addQuote(r.id, currentUser, p, desc)) {
-                            Toast.makeText(this, "报价成功", Toast.LENGTH_SHORT).show();
-                            loadData();
-                        }
+                        presenter.submitQuote(r, etPrice.getText().toString(), desc);
                     } catch (Exception e) {
                     }
                 })
@@ -284,7 +279,7 @@ public class SellerPurchaseMgmtActivity extends AppCompatActivity {
             holder.tvTime.setText(formatTime(r.timestamp));
 
             holder.llQuotes.removeAllViews();
-            List<PurchaseQuote> quotes = dm.getQuotesForRequestWithStatus(r.id);
+            List<PurchaseQuote> quotes = presenter.getQuotesForRequest(r.id);
             for (PurchaseQuote q : quotes) {
                 View qv = LayoutInflater.from(holder.itemView.getContext()).inflate(R.layout.item_received_quote,
                         holder.llQuotes, false);
@@ -362,20 +357,18 @@ public class SellerPurchaseMgmtActivity extends AppCompatActivity {
                 .setPositiveButton("确定", (d, w) -> {
                     String reply = etReply.getText().toString();
                     if (isAccept) {
-                        if (dm.getDefaultAddress(currentUser) == null) {
-                            Toast.makeText(this, "请先在设置中添加收货地址", Toast.LENGTH_SHORT).show();
-                            return;
-                        }
-                        dm.acceptQuote(quoteId, reply);
-                        Toast.makeText(this, "已接受报价，请到我的订单完成支付", Toast.LENGTH_SHORT).show();
+                        presenter.acceptQuote(quoteId, reply);
                     } else {
-                        dm.rejectQuote(quoteId, reply);
-                        Toast.makeText(this, "已拒绝报价", Toast.LENGTH_SHORT).show();
+                        presenter.rejectQuote(quoteId, reply);
                     }
-                    loadData();
                 })
                 .setNegativeButton("取消", null)
                 .show();
+    }
+
+    @Override
+    public void showToast(String message) {
+        Toast.makeText(this, message, Toast.LENGTH_SHORT).show();
     }
 
     private void bindQuoteTotal(EditText etPrice, TextView tvTotal, double quantity) {

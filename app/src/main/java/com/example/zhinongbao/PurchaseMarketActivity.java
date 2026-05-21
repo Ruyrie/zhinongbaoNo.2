@@ -2,7 +2,6 @@ package com.example.zhinongbao;
 
 import android.content.Intent;
 import android.os.Bundle;
-import android.text.TextUtils;
 import android.text.TextWatcher;
 import android.text.Editable;
 import android.view.LayoutInflater;
@@ -11,22 +10,22 @@ import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
 import androidx.appcompat.app.AlertDialog;
-import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import com.example.zhinongbao.adapter.PurchaseRequestAdapter;
-import com.example.zhinongbao.data.DataManager;
+import com.example.zhinongbao.base.BaseMvpActivity;
 import com.example.zhinongbao.model.PurchaseQuote;
 import com.example.zhinongbao.model.PurchaseRequest;
-import com.example.zhinongbao.model.User;
+import com.example.zhinongbao.mvp.purchasemarket.PurchaseMarketContract;
+import com.example.zhinongbao.mvp.purchasemarket.PurchaseMarketPresenter;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
 
-public class PurchaseMarketActivity extends AppCompatActivity {
+public class PurchaseMarketActivity extends BaseMvpActivity<PurchaseMarketContract.Presenter>
+        implements PurchaseMarketContract.View {
 
-    private DataManager dm;
     private String currentUser;
     private boolean isSeller;
     private RecyclerView rvRequests;
@@ -40,11 +39,6 @@ public class PurchaseMarketActivity extends AppCompatActivity {
         setContentView(R.layout.activity_purchase_market);
         if (getSupportActionBar() != null) getSupportActionBar().hide();
 
-        dm = DataManager.getInstance(this);
-        currentUser = dm.getLoggedUser();
-        int role = dm.getActiveRole();
-        isSeller = (role == User.ROLE_SELLER || role == User.ROLE_BOTH);
-
         findViewById(R.id.ivPurchaseBack).setOnClickListener(v -> finish());
         findViewById(R.id.tvToolbarPost).setOnClickListener(v ->
                 startActivity(new Intent(this, PostPurchaseActivity.class)));
@@ -53,18 +47,19 @@ public class PurchaseMarketActivity extends AppCompatActivity {
         tvEmpty = findViewById(R.id.tvPurchaseEmpty);
         rvRequests.setLayoutManager(new LinearLayoutManager(this));
 
-        loadRequests();
+        new PurchaseMarketPresenter(this, this).start();
     }
 
     @Override
     protected void onResume() {
         super.onResume();
-        loadRequests();
+        if (presenter != null) presenter.refresh();
     }
 
-    private void loadRequests() {
-        List<PurchaseRequest> newItems = dm.getPurchaseRequests();
-
+    @Override
+    public void showRequests(List<PurchaseRequest> newItems, String currentUser, boolean sellerMode) {
+        this.currentUser = currentUser;
+        this.isSeller = sellerMode;
         if (newItems.isEmpty()) {
             rvRequests.setVisibility(View.GONE);
             tvEmpty.setVisibility(View.VISIBLE);
@@ -79,19 +74,15 @@ public class PurchaseMarketActivity extends AppCompatActivity {
                     new PurchaseRequestAdapter.OnActionListener() {
                         @Override
                         public void onQuoteClick(PurchaseRequest req) {
-                            showQuoteDialog(req);
+                            presenter.onQuoteClick(req);
                         }
                         @Override
                         public void onViewQuotesClick(PurchaseRequest req) {
-                            showQuoteListDialog(req);
+                            presenter.onViewQuotesClick(req);
                         }
                         @Override
                         public void onItemClick(PurchaseRequest req) {
-                            if (isSeller && !req.buyerUser.equals(currentUser)) {
-                                showQuoteDialog(req);
-                            } else {
-                                showQuoteListDialog(req);
-                            }
+                            presenter.onItemClick(req);
                         }
                     });
             rvRequests.setAdapter(adapter);
@@ -102,13 +93,8 @@ public class PurchaseMarketActivity extends AppCompatActivity {
         }
     }
 
-    private void showQuoteDialog(PurchaseRequest req) {
-        if (dm.hasQuoted(req.id, currentUser)) {
-            Toast.makeText(this, "您已报过价，查看报价列表", Toast.LENGTH_SHORT).show();
-            showQuoteListDialog(req);
-            return;
-        }
-
+    @Override
+    public void showQuoteEditor(PurchaseRequest req) {
         View dialogView = LayoutInflater.from(this).inflate(R.layout.dialog_quote, null);
         EditText etPrice = dialogView.findViewById(R.id.etQuotePrice);
         EditText etDesc = dialogView.findViewById(R.id.etQuoteDesc);
@@ -124,32 +110,14 @@ public class PurchaseMarketActivity extends AppCompatActivity {
                 .setPositiveButton("提交报价", (d, w) -> {
                     String priceStr = etPrice.getText().toString().trim();
                     String desc = etDesc.getText().toString().trim();
-                    if (TextUtils.isEmpty(priceStr)) {
-                        Toast.makeText(this, "请填写报价金额", Toast.LENGTH_SHORT).show();
-                        return;
-                    }
-                    double price;
-                    try {
-                        price = Double.parseDouble(priceStr);
-                    } catch (NumberFormatException e) {
-                        Toast.makeText(this, "价格格式不正确", Toast.LENGTH_SHORT).show();
-                        return;
-                    }
-                    boolean ok = dm.addQuote(req.id, currentUser, price, desc);
-                    if (ok) {
-                        Toast.makeText(this, "报价成功！买家将看到您的报价", Toast.LENGTH_SHORT).show();
-                        loadRequests();
-                    } else {
-                        Toast.makeText(this, "报价失败，请重试", Toast.LENGTH_SHORT).show();
-                    }
+                    presenter.submitQuote(req, priceStr, desc);
                 })
                 .setNegativeButton("取消", null)
                 .show();
     }
 
-    private void showQuoteListDialog(PurchaseRequest req) {
-        List<PurchaseQuote> quotes = dm.getQuotesForRequest(req.id);
-
+    @Override
+    public void showQuoteList(PurchaseRequest req, List<PurchaseQuote> quotes) {
         StringBuilder sb = new StringBuilder();
         sb.append("📦 ").append(req.productName)
           .append("  需求量：").append(formatQty(req.quantity)).append(req.unit)
@@ -181,6 +149,11 @@ public class PurchaseMarketActivity extends AppCompatActivity {
                 .setMessage(sb.toString())
                 .setPositiveButton("关闭", null)
                 .show();
+    }
+
+    @Override
+    public void showToast(String message) {
+        Toast.makeText(this, message, Toast.LENGTH_SHORT).show();
     }
 
     private String formatQty(double qty) {

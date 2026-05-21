@@ -1,14 +1,14 @@
 package com.example.zhinongbao;
 
 import android.os.Bundle;
-import android.text.TextUtils;
 import android.widget.EditText;
-import android.widget.TextView;
 import android.widget.Toast;
-import androidx.appcompat.app.AppCompatActivity;
-import com.example.zhinongbao.data.DataManager;
+import com.example.zhinongbao.base.BaseMvpActivity;
+import com.example.zhinongbao.mvp.postpurchase.PostPurchaseContract;
+import com.example.zhinongbao.mvp.postpurchase.PostPurchasePresenter;
 
-public class PostPurchaseActivity extends AppCompatActivity {
+public class PostPurchaseActivity extends BaseMvpActivity<PostPurchaseContract.Presenter>
+        implements PostPurchaseContract.View {
 
     private EditText etProductName, etCategory, etQuantity, etUnit, etTargetPrice, etDesc;
 
@@ -17,6 +17,7 @@ public class PostPurchaseActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_post_purchase);
         if (getSupportActionBar() != null) getSupportActionBar().hide();
+        new PostPurchasePresenter(this, this);
 
         etProductName = findViewById(R.id.etPurchaseProductName);
         etCategory = findViewById(R.id.etPurchaseCategory);
@@ -37,39 +38,16 @@ public class PostPurchaseActivity extends AppCompatActivity {
         String priceStr = etTargetPrice.getText().toString().trim();
         String desc = etDesc.getText().toString().trim();
 
-        if (TextUtils.isEmpty(name)) {
-            Toast.makeText(this, "请填写货品名称", Toast.LENGTH_SHORT).show();
-            return;
-        }
-        if (TextUtils.isEmpty(qtyStr)) {
-            Toast.makeText(this, "请填写需求数量", Toast.LENGTH_SHORT).show();
-            return;
-        }
-        if (TextUtils.isEmpty(unit)) {
-            Toast.makeText(this, "请填写单位", Toast.LENGTH_SHORT).show();
-            return;
-        }
-        if (TextUtils.isEmpty(priceStr)) {
-            Toast.makeText(this, "请填写目标价格", Toast.LENGTH_SHORT).show();
-            return;
-        }
+        presenter.submit(name, category, qtyStr, unit, priceStr, desc);
+    }
 
-        double quantity, targetPrice;
-        try {
-            quantity = Double.parseDouble(qtyStr);
-            targetPrice = Double.parseDouble(priceStr);
-        } catch (NumberFormatException e) {
-            Toast.makeText(this, "数量或价格格式不正确", Toast.LENGTH_SHORT).show();
-            return;
-        }
+    @Override
+    public void showToast(String message) {
+        Toast.makeText(this, message, Toast.LENGTH_SHORT).show();
+    }
 
-        boolean ok = DataManager.getInstance(this)
-                .addPurchaseRequest(name, category, quantity, unit, targetPrice, desc);
-        if (ok) {
-            Toast.makeText(this, "采购需求发布成功！", Toast.LENGTH_SHORT).show();
-            finish();
-        } else {
-            Toast.makeText(this, "发布失败，请重试", Toast.LENGTH_SHORT).show();
-        }
+    @Override
+    public void closePage() {
+        finish();
     }
 }
