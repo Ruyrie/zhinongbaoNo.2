@@ -2,6 +2,8 @@ package com.example.zhinongbao.fragment;
 
 import android.content.Intent;
 import android.graphics.Typeface;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.net.Uri;
 import android.os.Bundle;
 import android.view.LayoutInflater;
@@ -25,6 +27,7 @@ import com.example.zhinongbao.data.DataManager;
 import com.example.zhinongbao.model.Article;
 import java.util.ArrayList;
 import java.util.List;
+import java.io.InputStream;
 
 public class AgriCircleFragment extends Fragment {
 
@@ -43,6 +46,7 @@ public class AgriCircleFragment extends Fragment {
     private View tabFollow, tabLatest;
     private TextView tvTabFollow, tvTabLatest;
     private View tabIndicator;
+    private ImageView btnScrollTop;
 
     @Nullable
     @Override
@@ -59,6 +63,16 @@ public class AgriCircleFragment extends Fragment {
         rvCircle = view.findViewById(R.id.rvCircle);
         tvEmpty  = view.findViewById(R.id.tvCircleEmpty);
         rvCircle.setLayoutManager(new LinearLayoutManager(requireContext()));
+        btnScrollTop = view.findViewById(R.id.btnCircleScrollTop);
+        loadScrollTopIcon(btnScrollTop);
+        btnScrollTop.setOnClickListener(v -> rvCircle.smoothScrollToPosition(0));
+        rvCircle.addOnScrollListener(new RecyclerView.OnScrollListener() {
+            @Override
+            public void onScrolled(@NonNull RecyclerView recyclerView, int dx, int dy) {
+                super.onScrolled(recyclerView, dx, dy);
+                btnScrollTop.setVisibility(recyclerView.canScrollVertically(-1) ? View.VISIBLE : View.GONE);
+            }
+        });
 
         tabFollow    = view.findViewById(R.id.tabFollow);
         tabLatest    = view.findViewById(R.id.tabLatest);
@@ -231,5 +245,14 @@ public class AgriCircleFragment extends Fragment {
         tvInitial.setVisibility(View.VISIBLE);
         tvInitial.setText(currentUser.isEmpty() ? "我" :
                 String.valueOf(currentUser.charAt(0)).toUpperCase());
+    }
+
+    private void loadScrollTopIcon(ImageView iv) {
+        try (InputStream is = requireContext().getAssets().open("pic/xiangshangfanhui.png")) {
+            Bitmap bitmap = BitmapFactory.decodeStream(is);
+            iv.setImageBitmap(bitmap);
+        } catch (Exception ignored) {
+            iv.setImageResource(R.mipmap.fanhui);
+        }
     }
 }

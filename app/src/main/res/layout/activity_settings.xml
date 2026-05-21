@@ -78,6 +78,27 @@
                 <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
                     android:text="›" android:textSize="22sp" android:textColor="#C7C7CC"/>
             </LinearLayout>
+
+            <View android:layout_width="match_parent" android:layout_height="0.5dp"
+                android:background="#E5E5EA" android:layout_marginStart="52dp"/>
+
+            <LinearLayout
+                android:id="@+id/tvAddressManager"
+                android:layout_width="match_parent"
+                android:layout_height="52dp"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:paddingHorizontal="20dp"
+                android:background="?android:attr/selectableItemBackground">
+                <TextView android:layout_width="18dp" android:layout_height="18dp"
+                    android:gravity="center" android:text="⌂" android:textSize="16sp"
+                    android:textColor="#4CAF50" android:layout_marginEnd="14dp"/>
+                <TextView android:layout_width="0dp" android:layout_height="wrap_content"
+                    android:layout_weight="1" android:text="地址管理"
+                    android:textSize="16sp" android:textColor="#1F1F1F"/>
+                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                    android:text="›" android:textSize="22sp" android:textColor="#C7C7CC"/>
+            </LinearLayout>
         </LinearLayout>
 
         <!-- 分组2：内容发布 -->

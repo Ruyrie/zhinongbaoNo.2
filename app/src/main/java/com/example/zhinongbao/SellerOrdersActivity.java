@@ -27,9 +27,11 @@ public class SellerOrdersActivity extends AppCompatActivity {
     private SellerOrderAdapter adapter;
     private List<Order> orderList = new ArrayList<>();
     private DataManager dm;
+    private EditText etOrderSearch;
 
     private TextView tabAll, tabPending, tabPaid, tabShipped, tabRefund;
     private String salesScope;
+    private String orderSearchKeyword = "";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -53,6 +55,11 @@ public class SellerOrdersActivity extends AppCompatActivity {
         tabPaid = findViewById(R.id.tabPaid);
         tabShipped = findViewById(R.id.tabShipped);
         tabRefund = findViewById(R.id.tabRefund);
+        etOrderSearch = findViewById(R.id.etOrderSearch);
+        findViewById(R.id.btnOrderSearch).setOnClickListener(v -> {
+            orderSearchKeyword = etOrderSearch.getText().toString().trim();
+            loadOrders();
+        });
 
         View.OnClickListener tabListener = v -> {
             salesScope = null;
@@ -76,6 +83,21 @@ public class SellerOrdersActivity extends AppCompatActivity {
         tabPaid.setOnClickListener(tabListener);
         tabShipped.setOnClickListener(tabListener);
         tabRefund.setOnClickListener(tabListener);
+
+        etOrderSearch.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+            }
+
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+                orderSearchKeyword = s == null ? "" : s.toString().trim();
+            }
+
+            @Override
+            public void afterTextChanged(Editable s) {
+            }
+        });
 
         rvOrders = findViewById(R.id.rvSellerOrders);
         rvOrders.setLayoutManager(new LinearLayoutManager(this));
@@ -135,7 +157,9 @@ public class SellerOrdersActivity extends AppCompatActivity {
             return;
 
         orderList.clear();
-        if (salesScope != null) {
+        if (!orderSearchKeyword.isEmpty()) {
+            orderList.addAll(dm.searchSellerSoldOrdersByOrderId(user, orderSearchKeyword));
+        } else if (salesScope != null) {
             orderList.addAll(dm.getSellerSalesOrders(user, salesScope));
         } else if ("all".equals(currentFilter)) {
             orderList.addAll(dm.getSellerSoldOrders(user));

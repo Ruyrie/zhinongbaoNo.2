@@ -70,9 +70,8 @@
             android:layout_width="60dp"
             android:layout_height="wrap_content"
             android:text="同意"
-            android:textColor="#FFFFFF"
+            android:textColor="#4CAF50"
             android:background="@drawable/bg_btn_outline_green"
-            android:backgroundTint="#4CAF50"
             android:gravity="center"
             android:paddingVertical="4dp"
             android:textSize="12sp"/>
@@ -83,9 +82,8 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="8dp"
             android:text="拒绝"
-            android:textColor="#FFFFFF"
-            android:background="@drawable/bg_btn_outline_green"
-            android:backgroundTint="#F44336"
+            android:textColor="#F44336"
+            android:background="@drawable/bg_btn_outline_red"
             android:gravity="center"
             android:paddingVertical="4dp"
             android:textSize="12sp"/>

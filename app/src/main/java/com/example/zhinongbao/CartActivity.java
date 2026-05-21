@@ -89,6 +89,11 @@ public class CartActivity extends AppCompatActivity {
                 return;
             }
         }
+        if (dm.getDefaultAddress(username) == null) {
+            Toast.makeText(this, "请先添加收货地址", Toast.LENGTH_SHORT).show();
+            startActivity(new Intent(this, AddressManagerActivity.class));
+            return;
+        }
         for (com.example.zhinongbao.model.CartItem item : checkedItems) {
             dm.addOrder(username, item.productId, item.name, item.price, item.quantity);
         }

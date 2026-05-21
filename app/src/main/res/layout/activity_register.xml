@@ -34,7 +34,7 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="吉农头条"
+                android:text="支农宝"
                 android:textSize="22sp"
                 android:textStyle="bold"
                 android:textColor="#1F1F1F"
@@ -53,7 +53,7 @@
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="加入吉农头条，开启你的资讯之旅"
+            android:text="加入支农宝，开启你的助农之旅"
             android:textSize="14sp"
             android:textColor="#8A8A8A"
             android:layout_marginBottom="40dp" />

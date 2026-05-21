@@ -6,6 +6,7 @@ import android.view.inputmethod.EditorInfo;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
+import android.widget.Toast;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -39,6 +40,11 @@ public class ChatActivity extends AppCompatActivity {
         currentUser = dm.getLoggedUser();
         otherUser = getIntent().getStringExtra("other_user");
         if (otherUser == null) otherUser = SHOP_USERNAME;
+        if (currentUser == null || currentUser.equals(otherUser)) {
+            Toast.makeText(this, "不能给自己发送消息", Toast.LENGTH_SHORT).show();
+            finish();
+            return;
+        }
 
         String productName = getIntent().getStringExtra("product_name");
         currentNickname = dm.getNickname(currentUser);

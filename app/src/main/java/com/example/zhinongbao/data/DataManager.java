@@ -6,6 +6,7 @@ import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import com.example.zhinongbao.model.Article;
+import com.example.zhinongbao.model.Address;
 import com.example.zhinongbao.model.CartItem;
 import com.example.zhinongbao.model.Comment;
 import com.example.zhinongbao.model.Order;
@@ -38,6 +39,13 @@ public class DataManager {
         public String storeName;
         public String storePhone;
         public long viewedAt;
+        public int productCount;
+    }
+
+    public static class StoreSearchResult {
+        public String seller;
+        public String storeName;
+        public String storePhone;
         public int productCount;
     }
 
@@ -315,6 +323,42 @@ public class DataManager {
         cv.put("store_name", storeName);
         cv.put("store_phone", storePhone);
         return wdb().update("users", cv, "username=?", new String[] { username }) > 0;
+    }
+
+    public List<StoreSearchResult> searchStores(String keyword) {
+        List<StoreSearchResult> list = new ArrayList<>();
+        String query = keyword == null ? "" : keyword.trim();
+        if (query.isEmpty())
+            return list;
+        String like = "%" + query + "%";
+        String sql = "SELECT u.username,u.store_name,u.nickname,u.store_phone,u.phone," +
+                "COUNT(DISTINCT p.id) AS product_count " +
+                "FROM users u LEFT JOIN products p ON p.seller=u.username " +
+                "WHERE u.username LIKE ? OR u.nickname LIKE ? OR u.store_name LIKE ? " +
+                "OR p.name LIKE ? OR p.`desc` LIKE ? OR p.category LIKE ? " +
+                "GROUP BY u.username,u.store_name,u.nickname,u.store_phone,u.phone,u.role " +
+                "HAVING product_count>0 OR u.store_name IS NOT NULL OR u.role=? " +
+                "ORDER BY product_count DESC,u.id ASC";
+        try (Cursor c = rdb().rawQuery(sql,
+                new String[] { like, like, like, like, like, like, String.valueOf(User.ROLE_SELLER) })) {
+            while (c.moveToNext()) {
+                StoreSearchResult item = new StoreSearchResult();
+                item.seller = c.getString(0);
+                String storeName = c.getString(1);
+                String nick = c.getString(2);
+                item.storeName = storeName != null && !storeName.trim().isEmpty()
+                        ? storeName
+                        : (((nick != null && !nick.isEmpty()) ? nick : item.seller) + "的店铺");
+                String storePhone = c.getString(3);
+                String phone = c.getString(4);
+                item.storePhone = storePhone != null && !storePhone.trim().isEmpty()
+                        ? storePhone
+                        : (phone != null ? phone : "");
+                item.productCount = c.getInt(5);
+                list.add(item);
+            }
+        }
+        return list;
     }
 
     // ─── 文章 ────────────────────────────────────────────────────────────────
@@ -898,8 +942,7 @@ public class DataManager {
 
     public int getTotalOrderCountForSeller(String seller) {
         try (Cursor c = rdb().rawQuery(
-                "SELECT COALESCE(COUNT(*), 0) FROM orders o " +
-                        "INNER JOIN products p ON o.product_id=p.id WHERE p.seller=?",
+                "SELECT COALESCE(COUNT(*), 0) FROM orders WHERE seller=?",
                 new String[] { seller })) {
             return c.moveToFirst() ? c.getInt(0) : 0;
         }
@@ -960,6 +1003,78 @@ public class DataManager {
         }
     }
 
+    // ─── 地址管理 ─────────────────────────────────────────────────────────────
+
+    public List<Address> getAddresses(String username) {
+        List<Address> list = new ArrayList<>();
+        if (username == null || username.isEmpty())
+            return list;
+        try (Cursor c = rdb().rawQuery(
+                "SELECT id,username,receiver_name,phone,address,is_default FROM addresses " +
+                        "WHERE username=? ORDER BY is_default DESC,id DESC",
+                new String[] { username })) {
+            while (c.moveToNext()) {
+                Address a = new Address();
+                a.id = c.getLong(0);
+                a.username = c.getString(1);
+                a.receiverName = c.getString(2);
+                a.phone = c.getString(3);
+                a.address = c.getString(4);
+                a.isDefault = c.getInt(5) == 1;
+                list.add(a);
+            }
+        }
+        return list;
+    }
+
+    public Address getDefaultAddress(String username) {
+        List<Address> list = getAddresses(username);
+        return list.isEmpty() ? null : list.get(0);
+    }
+
+    public boolean saveAddress(String username, long id, String receiverName, String phone,
+            String address, boolean isDefault) {
+        if (username == null || receiverName == null || phone == null || address == null)
+            return false;
+        SQLiteDatabase db = wdb();
+        if (isDefault) {
+            ContentValues clear = new ContentValues();
+            clear.put("is_default", 0);
+            db.update("addresses", clear, "username=?", new String[] { username });
+        }
+        ContentValues cv = new ContentValues();
+        cv.put("username", username);
+        cv.put("receiver_name", receiverName);
+        cv.put("phone", phone);
+        cv.put("address", address);
+        cv.put("is_default", isDefault ? 1 : 0);
+        if (id > 0) {
+            return db.update("addresses", cv, "id=? AND username=?",
+                    new String[] { String.valueOf(id), username }) > 0;
+        }
+        long newId = db.insert("addresses", null, cv);
+        if (!isDefault && getAddresses(username).size() == 1) {
+            setDefaultAddress(username, newId);
+        }
+        return newId != -1;
+    }
+
+    public boolean setDefaultAddress(String username, long id) {
+        SQLiteDatabase db = wdb();
+        ContentValues clear = new ContentValues();
+        clear.put("is_default", 0);
+        db.update("addresses", clear, "username=?", new String[] { username });
+        ContentValues cv = new ContentValues();
+        cv.put("is_default", 1);
+        return db.update("addresses", cv, "id=? AND username=?",
+                new String[] { String.valueOf(id), username }) > 0;
+    }
+
+    public boolean deleteAddress(String username, long id) {
+        return wdb().delete("addresses", "id=? AND username=?",
+                new String[] { String.valueOf(id), username }) > 0;
+    }
+
     // ─── 订单 ────────────────────────────────────────────────────────────────
 
     public List<Order> getOrders(String username) {
@@ -1017,6 +1132,12 @@ public class DataManager {
             cv.put("seller", seller);
         else
             cv.put("seller", "admin");
+        Address address = getDefaultAddress(username);
+        if (address != null) {
+            cv.put("receiver_name", address.receiverName);
+            cv.put("receiver_phone", address.phone);
+            cv.put("receiver_address", address.address);
+        }
         wdb().insert("orders", null, cv);
     }
 
@@ -1034,7 +1155,8 @@ public class DataManager {
                         "o.seller,o.username,o.order_type,o.purchase_request_id," +
                         "o.ship_type,o.ship_name,o.ship_no,o.ship_phone,o.proof_images," +
                         "o.unit_price,o.discount,o.refund_amount,o.refund_reason,o.refund_requested_at,o.refund_previous_status," +
-                        "u.nickname FROM orders o LEFT JOIN users u ON o.username=u.username " +
+                        "o.receiver_name,o.receiver_phone,o.receiver_address,u.nickname " +
+                        "FROM orders o LEFT JOIN users u ON o.username=u.username " +
                         "WHERE o.order_id=?",
                 new String[] { orderId })) {
             if (c.moveToFirst())
@@ -1061,7 +1183,10 @@ public class DataManager {
         o.refundReason = c.getString(19);
         o.refundRequestedAt = c.getLong(20);
         o.refundPreviousStatus = c.getString(21);
-        o.buyerNickname = c.getColumnCount() > 22 ? c.getString(22) : o.buyerUser;
+        o.receiverName = c.getColumnCount() > 22 ? c.getString(22) : null;
+        o.receiverPhone = c.getColumnCount() > 23 ? c.getString(23) : null;
+        o.receiverAddress = c.getColumnCount() > 24 ? c.getString(24) : null;
+        o.buyerNickname = c.getColumnCount() > 25 ? c.getString(25) : o.buyerUser;
         if (o.buyerNickname == null || o.buyerNickname.isEmpty())
             o.buyerNickname = o.buyerUser;
         if (o.orderType == null)
@@ -1077,7 +1202,8 @@ public class DataManager {
                         "o.seller,o.username,o.order_type,o.purchase_request_id," +
                         "o.ship_type,o.ship_name,o.ship_no,o.ship_phone,o.proof_images," +
                         "o.unit_price,o.discount,o.refund_amount,o.refund_reason,o.refund_requested_at,o.refund_previous_status," +
-                        "u.nickname FROM orders o LEFT JOIN users u ON o.username=u.username " +
+                        "o.receiver_name,o.receiver_phone,o.receiver_address,u.nickname " +
+                        "FROM orders o LEFT JOIN users u ON o.username=u.username " +
                         "WHERE o.seller=? ORDER BY o.id DESC",
                 new String[] { seller })) {
             while (c.moveToNext())
@@ -1094,11 +1220,58 @@ public class DataManager {
                         "o.seller,o.username,o.order_type,o.purchase_request_id," +
                         "o.ship_type,o.ship_name,o.ship_no,o.ship_phone,o.proof_images," +
                         "o.unit_price,o.discount,o.refund_amount,o.refund_reason,o.refund_requested_at,o.refund_previous_status," +
-                        "u.nickname FROM orders o LEFT JOIN users u ON o.username=u.username " +
+                        "o.receiver_name,o.receiver_phone,o.receiver_address,u.nickname " +
+                        "FROM orders o LEFT JOIN users u ON o.username=u.username " +
                         "WHERE o.seller=? AND o.status=? ORDER BY o.id DESC",
                 new String[] { seller, status })) {
             while (c.moveToNext())
                 list.add(cursorToFullOrder(c));
+        }
+        return list;
+    }
+
+    public boolean isProductFavorited(String username, int productId) {
+        if (username == null || username.isEmpty())
+            return false;
+        return queryCount("SELECT COUNT(*) FROM product_favorites WHERE username=? AND product_id=?",
+                new String[] { username, String.valueOf(productId) }) > 0;
+    }
+
+    public boolean toggleProductFavorite(String username, int productId) {
+        if (username == null || username.isEmpty())
+            return false;
+        if (isProductFavorited(username, productId)) {
+            wdb().delete("product_favorites", "username=? AND product_id=?",
+                    new String[] { username, String.valueOf(productId) });
+            return false;
+        }
+        ContentValues cv = new ContentValues();
+        cv.put("username", username);
+        cv.put("product_id", productId);
+        wdb().insertWithOnConflict("product_favorites", null, cv, SQLiteDatabase.CONFLICT_IGNORE);
+        return true;
+    }
+
+    public List<Order> searchSellerSoldOrdersByOrderId(String seller, String keyword) {
+        autoCompleteExpiredRefunds();
+        List<Order> list = new ArrayList<>();
+        String query = keyword == null ? "" : keyword.trim();
+        if (query.isEmpty()) {
+            return getSellerSoldOrders(seller);
+        }
+        try (Cursor c = rdb().rawQuery(
+                "SELECT o.order_id,o.product_id,o.name,o.price,o.quantity,o.time,o.status," +
+                        "o.seller,o.username,o.order_type,o.purchase_request_id," +
+                        "o.ship_type,o.ship_name,o.ship_no,o.ship_phone,o.proof_images," +
+                        "o.unit_price,o.discount,o.refund_amount,o.refund_reason,o.refund_requested_at,o.refund_previous_status," +
+                        "o.receiver_name,o.receiver_phone,o.receiver_address,u.nickname " +
+                        "FROM orders o LEFT JOIN users u ON o.username=u.username " +
+                        "WHERE o.seller=? AND (o.order_id LIKE ? OR o.name LIKE ? OR o.username LIKE ? OR u.nickname LIKE ?) " +
+                        "ORDER BY o.id DESC",
+                new String[] { seller, "%" + query + "%", "%" + query + "%", "%" + query + "%", "%" + query + "%" })) {
+            while (c.moveToNext()) {
+                list.add(cursorToFullOrder(c));
+            }
         }
         return list;
     }
@@ -1112,7 +1285,8 @@ public class DataManager {
                         "o.seller,o.username,o.order_type,o.purchase_request_id," +
                         "o.ship_type,o.ship_name,o.ship_no,o.ship_phone,o.proof_images," +
                         "o.unit_price,o.discount,o.refund_amount,o.refund_reason,o.refund_requested_at,o.refund_previous_status," +
-                        "u.nickname FROM orders o LEFT JOIN users u ON o.username=u.username " +
+                        "o.receiver_name,o.receiver_phone,o.receiver_address,u.nickname " +
+                        "FROM orders o LEFT JOIN users u ON o.username=u.username " +
                         "WHERE o.seller=? AND o.status=?" + dateFilter + " ORDER BY o.id DESC",
                 new String[] { seller, Order.STATUS_COMPLETED })) {
             while (c.moveToNext())
@@ -1318,6 +1492,7 @@ public class DataManager {
                 "农家林地散养大白鹅产蛋，蛋黄大而橙红，营养丰富，天然无公害。", 65.00, "推荐,米面粮油");
     }
 
+
     private void insertArticle(SQLiteDatabase d, int id, String title, String content,
             String author, String time, int readCount, String category) {
         ContentValues cv = new ContentValues();
@@ -1414,6 +1589,8 @@ public class DataManager {
     // ─── 聊天消息 ─────────────────────────────────────────────────────────────
 
     public void sendMessage(String fromUser, String toUser, String content) {
+        if (fromUser == null || toUser == null || fromUser.equals(toUser))
+            return;
         ContentValues cv = new ContentValues();
         cv.put("from_user", fromUser);
         cv.put("to_user", toUser);
@@ -1686,6 +1863,13 @@ public class DataManager {
                 ocv.put("order_type", Order.ORDER_TYPE_PROCUREMENT);
                 ocv.put("purchase_request_id", reqId);
                 ocv.put("seller", sellerUser);
+                ocv.put("unit_price", price);
+                Address address = getDefaultAddress(buyerUser);
+                if (address != null) {
+                    ocv.put("receiver_name", address.receiverName);
+                    ocv.put("receiver_phone", address.phone);
+                    ocv.put("receiver_address", address.address);
+                }
                 wdb().insert("orders", null, ocv);
             }
         }

@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:padding="20dp">
+
+    <EditText
+        android:id="@+id/etReceiverName"
+        android:layout_width="match_parent"
+        android:layout_height="48dp"
+        android:background="@drawable/bg_auth_input"
+        android:hint="收货人"
+        android:paddingHorizontal="14dp"
+        android:singleLine="true" />
+
+    <EditText
+        android:id="@+id/etReceiverPhone"
+        android:layout_width="match_parent"
+        android:layout_height="48dp"
+        android:layout_marginTop="12dp"
+        android:background="@drawable/bg_auth_input"
+        android:hint="手机号"
+        android:inputType="phone"
+        android:paddingHorizontal="14dp"
+        android:singleLine="true" />
+
+    <EditText
+        android:id="@+id/etReceiverAddress"
+        android:layout_width="match_parent"
+        android:layout_height="84dp"
+        android:layout_marginTop="12dp"
+        android:background="@drawable/bg_auth_input"
+        android:gravity="top"
+        android:hint="省市区、街道、门牌号"
+        android:padding="14dp" />
+
+    <CheckBox
+        android:id="@+id/cbDefaultAddress"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="10dp"
+        android:text="设为默认地址"
+        android:textColor="#333333"
+        android:textSize="14sp" />
+</LinearLayout>

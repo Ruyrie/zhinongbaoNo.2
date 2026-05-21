@@ -49,6 +49,10 @@ public class Order {
     public long refundRequestedAt;
     public String refundPreviousStatus;
 
+    public String receiverName;
+    public String receiverPhone;
+    public String receiverAddress;
+
     public Order(String orderId, int productId, String name, double price, int quantity, String time, String status) {
         this.orderId = orderId;
         this.productId = productId;

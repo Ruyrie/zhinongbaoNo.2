@@ -3,6 +3,8 @@ package com.example.zhinongbao;
 import android.content.Intent;
 import android.os.Bundle;
 import android.text.TextUtils;
+import android.text.TextWatcher;
+import android.text.Editable;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.EditText;
@@ -110,9 +112,11 @@ public class PurchaseMarketActivity extends AppCompatActivity {
         View dialogView = LayoutInflater.from(this).inflate(R.layout.dialog_quote, null);
         EditText etPrice = dialogView.findViewById(R.id.etQuotePrice);
         EditText etDesc = dialogView.findViewById(R.id.etQuoteDesc);
+        TextView tvTotal = dialogView.findViewById(R.id.tvQuoteTotal);
         TextView tvReqInfo = dialogView.findViewById(R.id.tvQuoteReqInfo);
         tvReqInfo.setText(req.productName + " · " + formatQty(req.quantity) + req.unit
                 + " · 目标价 ¥" + formatPrice(req.targetPrice));
+        bindQuoteTotal(etPrice, tvTotal, req.quantity);
 
         new AlertDialog.Builder(this)
                 .setTitle("报价")
@@ -186,5 +190,20 @@ public class PurchaseMarketActivity extends AppCompatActivity {
     private String formatPrice(double price) {
         return price % 1 == 0 ? String.valueOf((int) price)
                 : String.format(Locale.CHINA, "%.2f", price);
+    }
+
+    private void bindQuoteTotal(EditText etPrice, TextView tvTotal, double quantity) {
+        etPrice.addTextChangedListener(new TextWatcher() {
+            @Override public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+            @Override public void onTextChanged(CharSequence s, int start, int before, int count) {}
+            @Override public void afterTextChanged(Editable s) {
+                try {
+                    double price = Double.parseDouble(s.toString());
+                    tvTotal.setText(String.format(Locale.CHINA, "预计成交总额：¥%.2f", price * quantity));
+                } catch (Exception e) {
+                    tvTotal.setText("预计成交总额：¥0.00");
+                }
+            }
+        });
     }
 }

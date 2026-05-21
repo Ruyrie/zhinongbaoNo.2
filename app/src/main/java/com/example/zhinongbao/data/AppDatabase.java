@@ -11,7 +11,7 @@ import android.database.sqlite.SQLiteOpenHelper;
 public class AppDatabase extends SQLiteOpenHelper {
 
         private static final String DB_NAME = "zhinongbao.db";
-        private static final int DB_VERSION = 15;
+        private static final int DB_VERSION = 16;
 
         private static AppDatabase instance;
 
@@ -96,7 +96,18 @@ public class AppDatabase extends SQLiteOpenHelper {
                                 "refund_amount REAL DEFAULT 0," +
                                 "refund_reason TEXT," +
                                 "refund_requested_at INTEGER DEFAULT 0," +
-                                "refund_previous_status TEXT)");
+                                "refund_previous_status TEXT," +
+                                "receiver_name TEXT," +
+                                "receiver_phone TEXT," +
+                                "receiver_address TEXT)");
+
+                db.execSQL("CREATE TABLE addresses (" +
+                                "id INTEGER PRIMARY KEY AUTOINCREMENT," +
+                                "username TEXT NOT NULL," +
+                                "receiver_name TEXT NOT NULL," +
+                                "phone TEXT NOT NULL," +
+                                "address TEXT NOT NULL," +
+                                "is_default INTEGER DEFAULT 0)");
 
                 // 文章点赞表（UNIQUE 防止重复）
                 db.execSQL("CREATE TABLE article_likes (" +
@@ -309,6 +320,18 @@ public class AppDatabase extends SQLiteOpenHelper {
                 }
                 if (oldVersion < 15) {
                         db.execSQL("ALTER TABLE orders ADD COLUMN refund_previous_status TEXT");
+                }
+                if (oldVersion < 16) {
+                        db.execSQL("ALTER TABLE orders ADD COLUMN receiver_name TEXT");
+                        db.execSQL("ALTER TABLE orders ADD COLUMN receiver_phone TEXT");
+                        db.execSQL("ALTER TABLE orders ADD COLUMN receiver_address TEXT");
+                        db.execSQL("CREATE TABLE IF NOT EXISTS addresses (" +
+                                        "id INTEGER PRIMARY KEY AUTOINCREMENT," +
+                                        "username TEXT NOT NULL," +
+                                        "receiver_name TEXT NOT NULL," +
+                                        "phone TEXT NOT NULL," +
+                                        "address TEXT NOT NULL," +
+                                        "is_default INTEGER DEFAULT 0)");
                 }
         }
 }

@@ -142,6 +142,7 @@ public class ProductDetailActivity extends AppCompatActivity {
         loadAssetImage(findViewById(R.id.ivDetailStore), "dianpu.png");
         loadAssetImage(findViewById(R.id.ivDetailService), "lianxikefu.png");
         loadAssetImage(findViewById(R.id.ivDetailPhone), "dianhua.png");
+        TextView tvFavorite = findViewById(R.id.tvProductFavorite);
 
         final String productNameFinal = product.name;
         final String seller = product.seller != null && !product.seller.isEmpty()
@@ -222,6 +223,24 @@ public class ProductDetailActivity extends AppCompatActivity {
             startActivity(intent);
         });
 
+        tvFavorite.setText(dm.isProductFavorited(username, product.id) ? "已收藏" : "收藏");
+        findViewById(R.id.btnFavoriteProduct).setOnClickListener(v -> {
+            if (username == null || username.isEmpty()) {
+                Toast.makeText(this, "请先登录", Toast.LENGTH_SHORT).show();
+                return;
+            }
+            boolean favorited = dm.toggleProductFavorite(username, product.id);
+            tvFavorite.setText(favorited ? "已收藏" : "收藏");
+            Toast.makeText(this, favorited ? "已收藏商品" : "已取消收藏", Toast.LENGTH_SHORT).show();
+        });
+        findViewById(R.id.btnShareProduct).setOnClickListener(v -> {
+            Intent share = new Intent(Intent.ACTION_SEND);
+            share.setType("text/plain");
+            share.putExtra(Intent.EXTRA_TEXT,
+                    product.name + "\n价格：" + String.format("¥%.2f", product.price) + "\n来自支农宝");
+            startActivity(Intent.createChooser(share, "分享商品"));
+        });
+
         Button btnAddCart = findViewById(R.id.btnAddCart);
         Button btnBuy = findViewById(R.id.btnBuy);
 
@@ -229,6 +248,8 @@ public class ProductDetailActivity extends AppCompatActivity {
             findViewById(R.id.btnOpenStore).setVisibility(android.view.View.GONE);
             findViewById(R.id.btnContactService).setVisibility(android.view.View.GONE);
             findViewById(R.id.btnCallShop).setVisibility(android.view.View.GONE);
+            findViewById(R.id.btnFavoriteProduct).setVisibility(android.view.View.GONE);
+            findViewById(R.id.btnShareProduct).setVisibility(android.view.View.GONE);
 
             btnAddCart.setText("编辑商品");
             btnAddCart.setBackgroundTintList(android.content.res.ColorStateList.valueOf(0xFF2F80ED));
@@ -253,12 +274,21 @@ public class ProductDetailActivity extends AppCompatActivity {
         } else {
             // 加入购物车
             btnAddCart.setOnClickListener(v -> {
+                if (username == null || username.isEmpty()) {
+                    Toast.makeText(this, "请先登录", Toast.LENGTH_SHORT).show();
+                    return;
+                }
                 dm.addToCart(username, product);
                 Toast.makeText(this, "已加入购物车", Toast.LENGTH_SHORT).show();
             });
 
             // 立即购买 → 生成待支付订单并跳转到订单列表
             btnBuy.setOnClickListener(v -> {
+                if (dm.getDefaultAddress(username) == null) {
+                    Toast.makeText(this, "请先添加收货地址", Toast.LENGTH_SHORT).show();
+                    startActivity(new Intent(this, AddressManagerActivity.class));
+                    return;
+                }
                 dm.addOrder(username, product.id, product.name, product.price, 1);
                 Toast.makeText(this, "下单成功", Toast.LENGTH_SHORT).show();
                 startActivity(new Intent(this, MyOrdersActivity.class));

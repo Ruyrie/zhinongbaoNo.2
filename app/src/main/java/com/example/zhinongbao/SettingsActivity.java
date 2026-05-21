@@ -25,6 +25,9 @@ public class SettingsActivity extends AppCompatActivity {
         findViewById(R.id.tvAccountManager)
                 .setOnClickListener(v -> startActivity(new Intent(this, AccountManagerActivity.class)));
 
+        findViewById(R.id.tvAddressManager)
+                .setOnClickListener(v -> startActivity(new Intent(this, AddressManagerActivity.class)));
+
         findViewById(R.id.tvLogout).setOnClickListener(v -> confirmLogout());
 
         findViewById(R.id.tvAddArticle)

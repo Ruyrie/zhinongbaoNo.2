@@ -155,33 +155,34 @@
             <androidx.recyclerview.widget.RecyclerView
                 android:id="@+id/rvSearchResults"
                 android:layout_width="match_parent"
-                android:layout_height="match_parent"
+                android:layout_height="0dp"
+                android:layout_weight="1"
                 android:clipToPadding="false"
                 android:paddingTop="8dp" />
-        </LinearLayout>
 
-        <!-- No results state -->
-        <LinearLayout
-            android:id="@+id/llNoResults"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:orientation="vertical"
-            android:gravity="center"
-            android:visibility="gone">
+            <LinearLayout
+                android:id="@+id/llNoResults"
+                android:layout_width="match_parent"
+                android:layout_height="0dp"
+                android:layout_weight="1"
+                android:orientation="vertical"
+                android:gravity="center"
+                android:visibility="gone">
 
-            <ImageView
-                android:layout_width="64dp"
-                android:layout_height="64dp"
-                android:src="@mipmap/sousuo"
-                android:layout_marginBottom="16dp" />
+                <ImageView
+                    android:layout_width="64dp"
+                    android:layout_height="64dp"
+                    android:src="@mipmap/sousuo"
+                    android:layout_marginBottom="16dp" />
 
-            <TextView
-                android:id="@+id/tvNoResultsHint"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:textSize="15sp"
-                android:textColor="#8E8E93"
-                android:text="未找到相关内容" />
+                <TextView
+                    android:id="@+id/tvNoResultsHint"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textSize="15sp"
+                    android:textColor="#8E8E93"
+                    android:text="未找到相关内容" />
+            </LinearLayout>
         </LinearLayout>
         
     </FrameLayout>

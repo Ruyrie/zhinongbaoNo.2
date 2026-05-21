@@ -3,6 +3,8 @@ package com.example.zhinongbao;
 import android.app.AlertDialog;
 import android.os.Bundle;
 import android.text.TextUtils;
+import android.text.Editable;
+import android.text.TextWatcher;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -117,15 +119,17 @@ public class SellerPurchaseMgmtActivity extends AppCompatActivity {
             holder.tvName.setText(r.productName);
             holder.tvUser.setText(r.buyerNickname);
             holder.tvCategory.setText(r.category);
-            holder.tvTarget.setText("目标价: ¥" + r.targetPrice);
-            holder.tvQuantity.setText("需求量: " + r.quantity + r.unit);
+            holder.tvTarget.setText("¥" + formatPrice(r.targetPrice));
+            holder.tvQuantity.setText(formatQuantity(r.quantity) + r.unit);
             holder.tvDesc.setText(r.description);
             holder.tvTime.setText(formatTime(r.timestamp));
 
             holder.btnQuote.setVisibility(View.VISIBLE);
             holder.btnQuote.setText("立即报价");
+            holder.btnQuote.setTextColor(0xFF4CAF50);
             holder.btnQuote.setBackgroundResource(R.drawable.bg_btn_outline_green);
             holder.btnQuote.setOnClickListener(v -> showQuoteDialog(r));
+            holder.btnViewQuotes.setVisibility(View.GONE);
         }
 
         @Override
@@ -134,7 +138,7 @@ public class SellerPurchaseMgmtActivity extends AppCompatActivity {
         }
 
         class VH extends RecyclerView.ViewHolder {
-            TextView tvName, tvUser, tvCategory, tvTarget, tvQuantity, tvDesc, tvTime, btnQuote;
+            TextView tvName, tvUser, tvCategory, tvTarget, tvQuantity, tvDesc, tvTime, btnQuote, btnViewQuotes;
 
             VH(View v) {
                 super(v);
@@ -146,14 +150,31 @@ public class SellerPurchaseMgmtActivity extends AppCompatActivity {
                 tvDesc = v.findViewById(R.id.tvReqDesc);
                 tvTime = v.findViewById(R.id.tvReqTime);
                 btnQuote = v.findViewById(R.id.btnReqQuote);
+                btnViewQuotes = v.findViewById(R.id.btnViewQuotes);
             }
         }
+    }
+
+    private String formatQuantity(double quantity) {
+        if (quantity % 1 == 0) {
+            return String.valueOf((int) quantity);
+        }
+        return String.format(Locale.CHINA, "%.1f", quantity);
+    }
+
+    private String formatPrice(double price) {
+        if (price % 1 == 0) {
+            return String.valueOf((int) price);
+        }
+        return String.format(Locale.CHINA, "%.2f", price);
     }
 
     private void showQuoteDialog(PurchaseRequest r) {
         View v = LayoutInflater.from(this).inflate(R.layout.dialog_quote, null);
         EditText etPrice = v.findViewById(R.id.etQuotePrice);
         EditText etDesc = v.findViewById(R.id.etQuoteDesc);
+        TextView tvTotal = v.findViewById(R.id.tvQuoteTotal);
+        bindQuoteTotal(etPrice, tvTotal, r.quantity);
         new AlertDialog.Builder(this)
                 .setTitle("对 " + r.productName + " 报价")
                 .setView(v)
@@ -341,8 +362,12 @@ public class SellerPurchaseMgmtActivity extends AppCompatActivity {
                 .setPositiveButton("确定", (d, w) -> {
                     String reply = etReply.getText().toString();
                     if (isAccept) {
+                        if (dm.getDefaultAddress(currentUser) == null) {
+                            Toast.makeText(this, "请先在设置中添加收货地址", Toast.LENGTH_SHORT).show();
+                            return;
+                        }
                         dm.acceptQuote(quoteId, reply);
-                        Toast.makeText(this, "已接受报价并生成供货订单", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(this, "已接受报价，请到我的订单完成支付", Toast.LENGTH_SHORT).show();
                     } else {
                         dm.rejectQuote(quoteId, reply);
                         Toast.makeText(this, "已拒绝报价", Toast.LENGTH_SHORT).show();
@@ -351,5 +376,20 @@ public class SellerPurchaseMgmtActivity extends AppCompatActivity {
                 })
                 .setNegativeButton("取消", null)
                 .show();
+    }
+
+    private void bindQuoteTotal(EditText etPrice, TextView tvTotal, double quantity) {
+        etPrice.addTextChangedListener(new TextWatcher() {
+            @Override public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+            @Override public void onTextChanged(CharSequence s, int start, int before, int count) {}
+            @Override public void afterTextChanged(Editable s) {
+                try {
+                    double price = Double.parseDouble(s.toString());
+                    tvTotal.setText(String.format(Locale.CHINA, "预计成交总额：¥%.2f", price * quantity));
+                } catch (Exception e) {
+                    tvTotal.setText("预计成交总额：¥0.00");
+                }
+            }
+        });
     }
 }

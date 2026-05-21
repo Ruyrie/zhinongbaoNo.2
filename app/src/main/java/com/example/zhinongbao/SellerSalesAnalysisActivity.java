@@ -104,15 +104,31 @@ public class SellerSalesAnalysisActivity extends AppCompatActivity {
 
             LinearLayout top = createRow();
             top.addView(createText(order.name, 0xFF333333, 14, 1, false));
+            int amountColor = order.refundAmount > 0 ? 0xFF8A8A8A : 0xFFE53935;
             top.addView(createText(String.format(Locale.getDefault(), "¥%.2f", Math.max(0, amount)),
-                    0xFFE53935, 14, 0, true));
+                    amountColor, 14, 0, true));
             row.addView(top);
 
+            TextView status = createText(statusText(order), statusColor(order), 12, 0, false);
+            status.setPadding(10, 4, 10, 4);
+            row.addView(status);
+
             TextView sub = createText(
-                    order.time + "  " + statusText(order.status) + "  买家：" + order.buyerNickname,
+                    order.time + "  买家：" + order.buyerNickname + "  单价¥"
+                            + String.format(Locale.getDefault(), "%.2f", order.unitPrice > 0 ? order.unitPrice : order.price)
+                            + " x" + order.quantity,
                     0xFF999999, 12, 1, false);
             sub.setPadding(0, 4, 0, 0);
             row.addView(sub);
+            if (order.refundAmount > 0) {
+                TextView refund = createText(
+                        String.format(Locale.getDefault(), "已退款 ¥%.2f  原因：%s",
+                                order.refundAmount,
+                                order.refundReason == null || order.refundReason.isEmpty() ? "无" : order.refundReason),
+                        0xFFE53935, 12, 1, false);
+                refund.setPadding(0, 4, 0, 0);
+                row.addView(refund);
+            }
             container.addView(row);
             addDivider(container);
         }
@@ -175,7 +191,10 @@ public class SellerSalesAnalysisActivity extends AppCompatActivity {
         return "累计买家确认收货后的到账流水";
     }
 
-    private String statusText(String status) {
+    private String statusText(Order order) {
+        if (order.refundAmount > 0)
+            return "已退款";
+        String status = order.status;
         if (Order.STATUS_PAID.equals(status))
             return "待发货";
         if (Order.STATUS_SHIPPED.equals(status))
@@ -183,5 +202,15 @@ public class SellerSalesAnalysisActivity extends AppCompatActivity {
         if (Order.STATUS_COMPLETED.equals(status))
             return "已完成";
         return status;
+    }
+
+    private int statusColor(Order order) {
+        if (order.refundAmount > 0)
+            return 0xFFE53935;
+        if (Order.STATUS_COMPLETED.equals(order.status))
+            return 0xFF4CAF50;
+        if (Order.STATUS_SHIPPED.equals(order.status))
+            return 0xFF007AFF;
+        return 0xFFFF9800;
     }
 }

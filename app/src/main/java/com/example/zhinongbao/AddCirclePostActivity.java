@@ -14,6 +14,8 @@ import androidx.core.content.FileProvider;
 import com.example.zhinongbao.data.DataManager;
 import com.example.zhinongbao.utils.ImageUtils;
 import java.io.File;
+import java.util.ArrayList;
+import java.util.List;
 
 public class AddCirclePostActivity extends AppCompatActivity {
 
@@ -22,6 +24,7 @@ public class AddCirclePostActivity extends AppCompatActivity {
     private TextView tvImageHint;
     private Uri selectedImageUri;
     private Uri currentCameraUri;
+    private final List<Uri> selectedImageUris = new ArrayList<>();
 
     private final ActivityResultLauncher<String> pickImage =
             registerForActivityResult(new ActivityResultContracts.GetContent(), uri -> {
@@ -31,7 +34,25 @@ public class AddCirclePostActivity extends AppCompatActivity {
                                 uri, Intent.FLAG_GRANT_READ_URI_PERMISSION);
                     } catch (SecurityException ignored) {}
                     selectedImageUri = uri;
+                    selectedImageUris.clear();
+                    selectedImageUris.add(uri);
                     showPreview(uri);
+                }
+            });
+
+    private final ActivityResultLauncher<String> pickImages =
+            registerForActivityResult(new ActivityResultContracts.GetMultipleContents(), uris -> {
+                if (uris != null && !uris.isEmpty()) {
+                    selectedImageUris.clear();
+                    for (Uri uri : uris) {
+                        try {
+                            getContentResolver().takePersistableUriPermission(
+                                    uri, Intent.FLAG_GRANT_READ_URI_PERMISSION);
+                        } catch (SecurityException ignored) {}
+                        selectedImageUris.add(uri);
+                    }
+                    selectedImageUri = selectedImageUris.get(0);
+                    showPreview(selectedImageUri);
                 }
             });
 
@@ -39,6 +60,8 @@ public class AddCirclePostActivity extends AppCompatActivity {
             registerForActivityResult(new ActivityResultContracts.TakePicture(), success -> {
                 if (success && currentCameraUri != null) {
                     selectedImageUri = currentCameraUri;
+                    selectedImageUris.clear();
+                    selectedImageUris.add(currentCameraUri);
                     showPreview(currentCameraUri);
                 }
             });
@@ -68,7 +91,7 @@ public class AddCirclePostActivity extends AppCompatActivity {
                     }
                     @Override
                     public void onPickFromGallery() {
-                        pickImage.launch("image/*");
+                        pickImages.launch("image/*");
                     }
                 });
     }
@@ -76,7 +99,8 @@ public class AddCirclePostActivity extends AppCompatActivity {
     private void showPreview(Uri uri) {
         ivPreview.setVisibility(android.view.View.VISIBLE);
         ivPreview.setImageURI(uri);
-        tvImageHint.setText("已选择");
+        int count = selectedImageUris.isEmpty() ? 1 : selectedImageUris.size();
+        tvImageHint.setText("已选择 " + count + " 张");
     }
 
     private Uri createImageFile() {
@@ -92,7 +116,18 @@ public class AddCirclePostActivity extends AppCompatActivity {
             Toast.makeText(this, "请输入动态内容", Toast.LENGTH_SHORT).show();
             return;
         }
-        String imgUri = selectedImageUri != null ? selectedImageUri.toString() : null;
+        String imgUri = null;
+        if (!selectedImageUris.isEmpty()) {
+            StringBuilder sb = new StringBuilder();
+            for (Uri uri : selectedImageUris) {
+                if (sb.length() > 0)
+                    sb.append(",");
+                sb.append(uri.toString());
+            }
+            imgUri = sb.toString();
+        } else if (selectedImageUri != null) {
+            imgUri = selectedImageUri.toString();
+        }
         DataManager.getInstance(this).addCirclePost(content, imgUri);
         Toast.makeText(this, "发布成功！", Toast.LENGTH_SHORT).show();
         finish();

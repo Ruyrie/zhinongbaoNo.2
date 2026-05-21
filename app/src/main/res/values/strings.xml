@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">智农宝</string>
+    <string name="app_name">支农宝</string>
 
     <!-- article_detail -->
     <string name="action_delete">删除</string>

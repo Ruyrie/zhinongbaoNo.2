@@ -77,21 +77,25 @@ public class AgriCircleAdapter extends RecyclerView.Adapter<AgriCircleAdapter.Vi
         // 正文
         h.tvContent.setText(a.content);
 
-        // 封面图
+        // 图片轮播
         if (a.coverUri != null && !a.coverUri.isEmpty()) {
-            h.ivCover.setVisibility(View.VISIBLE);
-            try {
-                if (a.coverUri.startsWith("data:image")) {
-                    com.example.zhinongbao.utils.ImageUtils
-                            .setAvatarFromBase64(h.ivCover, a.coverUri);
-                } else {
-                    h.ivCover.setImageURI(Uri.parse(a.coverUri));
-                }
-            } catch (Exception e) {
-                h.ivCover.setVisibility(View.GONE);
+            h.layoutImages.setVisibility(View.VISIBLE);
+            java.util.List<Object> images = new java.util.ArrayList<>();
+            for (String uri : a.coverUri.split(",")) {
+                if (!uri.trim().isEmpty())
+                    images.add(uri.trim());
             }
+            h.vpImages.setAdapter(new com.example.zhinongbao.adapter.ProductImageAdapter(images));
+            h.tvImageIndicator.setVisibility(images.size() > 1 ? View.VISIBLE : View.GONE);
+            h.tvImageIndicator.setText("1/" + images.size());
+            h.vpImages.registerOnPageChangeCallback(new androidx.viewpager2.widget.ViewPager2.OnPageChangeCallback() {
+                @Override
+                public void onPageSelected(int page) {
+                    h.tvImageIndicator.setText((page + 1) + "/" + images.size());
+                }
+            });
         } else {
-            h.ivCover.setVisibility(View.GONE);
+            h.layoutImages.setVisibility(View.GONE);
         }
 
         // 点赞
@@ -102,6 +106,7 @@ public class AgriCircleAdapter extends RecyclerView.Adapter<AgriCircleAdapter.Vi
 
         // 评论数
         h.tvCommentCount.setText(String.valueOf(dm.getCommentCount(a.id)));
+        h.tvReadCount.setText(a.readCount + " 浏览");
 
         // 进店铺（卖家身份的作者）
         int authorRole = dm.getUserRole(a.author);
@@ -134,23 +139,28 @@ public class AgriCircleAdapter extends RecyclerView.Adapter<AgriCircleAdapter.Vi
     public int getItemCount() { return items.size(); }
 
     static class ViewHolder extends RecyclerView.ViewHolder {
-        ImageView ivAvatar, ivCover, ivLikeIcon;
+        ImageView ivAvatar, ivLikeIcon;
+        View layoutImages;
+        androidx.viewpager2.widget.ViewPager2 vpImages;
         TextView tvAvatarInitial, tvNickname, tvTime, tvContent;
-        TextView tvLikeCount, tvCommentCount;
+        TextView tvLikeCount, tvCommentCount, tvReadCount, tvImageIndicator;
         View btnLike, btnComment;
         TextView btnEnterStore, btnFollow;
 
         ViewHolder(View v) {
             super(v);
             ivAvatar       = v.findViewById(R.id.ivPostAvatar);
-            ivCover        = v.findViewById(R.id.ivPostCover);
             ivLikeIcon     = v.findViewById(R.id.ivLikeIcon);
+            layoutImages   = v.findViewById(R.id.layoutPostImages);
+            vpImages       = v.findViewById(R.id.vpPostImages);
+            tvImageIndicator = v.findViewById(R.id.tvPostImageIndicator);
             tvAvatarInitial= v.findViewById(R.id.tvPostAvatarInitial);
             tvNickname     = v.findViewById(R.id.tvPostNickname);
             tvTime         = v.findViewById(R.id.tvPostTime);
             tvContent      = v.findViewById(R.id.tvPostContent);
             tvLikeCount    = v.findViewById(R.id.tvLikeCount);
             tvCommentCount = v.findViewById(R.id.tvCommentCount);
+            tvReadCount    = v.findViewById(R.id.tvPostReadCount);
             btnLike        = v.findViewById(R.id.btnPostLike);
             btnComment     = v.findViewById(R.id.btnPostComment);
             btnEnterStore  = v.findViewById(R.id.btnEnterStore);

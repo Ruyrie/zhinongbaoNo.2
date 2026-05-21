@@ -80,6 +80,9 @@
         <!-- 账号管理 -->
         <activity android:name=".AccountManagerActivity" />
 
+        <!-- 地址管理 -->
+        <activity android:name=".AddressManagerActivity" />
+
         <!-- 修改密码 -->
         <activity android:name=".ChangePasswordActivity" />
 
