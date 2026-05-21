@@ -4,32 +4,29 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.TextView;
-import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import com.example.zhinongbao.adapter.AgriCircleAdapter;
-import com.example.zhinongbao.data.DataManager;
+import com.example.zhinongbao.base.BaseMvpActivity;
 import com.example.zhinongbao.model.Article;
+import com.example.zhinongbao.mvp.mycircleposts.MyCirclePostsContract;
+import com.example.zhinongbao.mvp.mycircleposts.MyCirclePostsPresenter;
 import java.util.ArrayList;
 import java.util.List;
 
-public class MyCirclePostsActivity extends AppCompatActivity {
+public class MyCirclePostsActivity extends BaseMvpActivity<MyCirclePostsContract.Presenter>
+        implements MyCirclePostsContract.View {
 
     private RecyclerView rv;
     private TextView tvEmpty;
     private AgriCircleAdapter adapter;
     private final List<Article> items = new ArrayList<>();
-    private DataManager dm;
-    private String currentUser;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_my_circle_posts);
         if (getSupportActionBar() != null) getSupportActionBar().hide();
-
-        dm = DataManager.getInstance(this);
-        currentUser = dm.getLoggedUser();
 
         findViewById(R.id.ivBack).setOnClickListener(v -> finish());
         findViewById(R.id.fabPost).setOnClickListener(v ->
@@ -39,7 +36,23 @@ public class MyCirclePostsActivity extends AppCompatActivity {
         tvEmpty = findViewById(R.id.tvEmpty);
         rv.setLayoutManager(new LinearLayoutManager(this));
 
-        adapter = new AgriCircleAdapter(items, currentUser, dm,
+        new MyCirclePostsPresenter(this, this).start();
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        if (presenter != null) {
+            presenter.refresh();
+        }
+    }
+
+    @Override
+    public void showPosts(List<Article> posts, String currentUser) {
+        items.clear();
+        items.addAll(posts);
+        if (adapter == null) {
+            adapter = new AgriCircleAdapter(items, currentUser, circleDelegate(),
                 new AgriCircleAdapter.OnActionListener() {
                     @Override
                     public void onItemClick(Article article) {
@@ -49,11 +62,7 @@ public class MyCirclePostsActivity extends AppCompatActivity {
                     }
                     @Override
                     public void onLikeClick(Article article, int position) {
-                        if (dm.isArticleLiked(currentUser, article.id)) {
-                            dm.unlikeArticle(currentUser, article.id);
-                        } else {
-                            dm.likeArticle(currentUser, article.id);
-                        }
+                        presenter.toggleArticleLike(article.id);
                         adapter.notifyItemChanged(position);
                     }
                     @Override
@@ -71,26 +80,45 @@ public class MyCirclePostsActivity extends AppCompatActivity {
                     }
                     @Override
                     public void onFollow(Article article, int position) {
-                        dm.followUser(currentUser, article.author);
+                        presenter.followUser(article.author);
                         adapter.notifyItemChanged(position);
                     }
                 });
-        rv.setAdapter(adapter);
-    }
-
-    @Override
-    protected void onResume() {
-        super.onResume();
-        loadPosts();
-    }
-
-    private void loadPosts() {
-        List<Article> fresh = dm.getCirclePostsByAuthor(currentUser);
-        items.clear();
-        items.addAll(fresh);
-        if (adapter != null) adapter.notifyDataSetChanged();
+            rv.setAdapter(adapter);
+        } else {
+            adapter.notifyDataSetChanged();
+        }
         boolean empty = items.isEmpty();
         rv.setVisibility(empty ? View.GONE : View.VISIBLE);
         tvEmpty.setVisibility(empty ? View.VISIBLE : View.GONE);
+    }
+
+    private AgriCircleAdapter.CircleInteractionDelegate circleDelegate() {
+        return new AgriCircleAdapter.CircleInteractionDelegate() {
+            @Override
+            public int getArticleLikeCount(int articleId) {
+                return presenter.getArticleLikeCount(articleId);
+            }
+
+            @Override
+            public int getCommentCount(int articleId) {
+                return presenter.getCommentCount(articleId);
+            }
+
+            @Override
+            public boolean isArticleLiked(int articleId) {
+                return presenter.isArticleLiked(articleId);
+            }
+
+            @Override
+            public boolean isFollowing(String author) {
+                return presenter.isFollowing(author);
+            }
+
+            @Override
+            public int getUserRole(String username) {
+                return presenter.getUserRole(username);
+            }
+        };
     }
 }

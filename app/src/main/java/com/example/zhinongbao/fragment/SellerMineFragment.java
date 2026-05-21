@@ -13,7 +13,6 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.fragment.app.Fragment;
 import com.example.zhinongbao.AddProductActivity;
 import com.example.zhinongbao.ArticleDetailActivity;
 import com.example.zhinongbao.MainActivity;
@@ -25,13 +24,15 @@ import com.example.zhinongbao.SellerPurchaseMgmtActivity;
 import com.example.zhinongbao.SellerSalesAnalysisActivity;
 import com.example.zhinongbao.SellerStoreActivity;
 import com.example.zhinongbao.SettingsActivity;
-import com.example.zhinongbao.data.DataManager;
+import com.example.zhinongbao.base.BaseMvpFragment;
 import com.example.zhinongbao.model.Article;
+import com.example.zhinongbao.mvp.sellermine.SellerMineContract;
+import com.example.zhinongbao.mvp.sellermine.SellerMinePresenter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.List;
 
-public class SellerMineFragment extends Fragment {
+public class SellerMineFragment extends BaseMvpFragment<SellerMineContract.Presenter> implements SellerMineContract.View {
 
     @Nullable
     @Override
@@ -42,24 +43,58 @@ public class SellerMineFragment extends Fragment {
 
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
-        bindViews(view);
+        bindStaticViews(view);
+        new SellerMinePresenter(requireContext(), this).start();
     }
 
     @Override
     public void onResume() {
         super.onResume();
         if (getView() != null)
-            bindViews(getView());
+            presenter.start();
     }
 
-    private void bindViews(View view) {
-        DataManager dm = DataManager.getInstance(requireContext());
-        String username = dm.getLoggedUser();
-        String nickname = dm.getNickname(username);
+    private void bindStaticViews(View view) {
+        loadAssetImage(view.findViewById(R.id.ivMyProducts), "wodehuopin.png");
+        loadAssetImage(view.findViewById(R.id.ivPurchaseMgmt), "caigouguanli.png");
+        loadAssetImage(view.findViewById(R.id.ivOrderMgmt), "dingdanguanli.png");
+        loadAssetImage(view.findViewById(R.id.ivShopMgmt), "dianpuguanli.png");
+        loadAssetImage(view.findViewById(R.id.ivSellerOrderPending), "daifukuan.png");
+        loadAssetImage(view.findViewById(R.id.ivSellerOrderShipping), "daifahuo.png");
+        loadAssetImage(view.findViewById(R.id.ivSellerOrderSent), "daishouhuo.png");
+        loadAssetImage(view.findViewById(R.id.ivSellerOrderAfterSale), "tuikuanshouhou.png");
+
+        view.findViewById(R.id.btnGoShopping).setOnClickListener(v -> presenter.switchToBuyer());
+        view.findViewById(R.id.layoutSellerProfile).setOnClickListener(
+                v -> startActivity(new Intent(getContext(), ProfileEditActivity.class)));
+        view.findViewById(R.id.quickMyProducts).setOnClickListener(
+                v -> startActivity(new Intent(getContext(), SellerMyProductsActivity.class)));
+        view.findViewById(R.id.quickPurchaseMgmt).setOnClickListener(
+                v -> startActivity(new Intent(getContext(), SellerPurchaseMgmtActivity.class)));
+        view.findViewById(R.id.quickOrderMgmt).setOnClickListener(
+                v -> startActivity(new Intent(getContext(), SellerOrdersActivity.class)));
+        view.findViewById(R.id.quickShopMgmt).setOnClickListener(
+                v -> startActivity(new Intent(getContext(), SellerStoreActivity.class)));
+        view.findViewById(R.id.layoutTodaySales).setOnClickListener(v -> openSalesOrders("today"));
+        view.findViewById(R.id.layoutMonthSales).setOnClickListener(v -> openSalesOrders("month"));
+        view.findViewById(R.id.layoutTotalSales).setOnClickListener(v -> openSalesOrders("all"));
+        view.findViewById(R.id.tvSellerAllOrders).setOnClickListener(
+                v -> startActivity(new Intent(getContext(), SellerOrdersActivity.class)));
+        view.findViewById(R.id.sellerOrderPending).setOnClickListener(v -> openSellerOrders("pending"));
+        view.findViewById(R.id.sellerOrderShipping).setOnClickListener(v -> openSellerOrders("paid"));
+        view.findViewById(R.id.sellerOrderSent).setOnClickListener(v -> openSellerOrders("shipped"));
+        view.findViewById(R.id.sellerOrderAfterSale).setOnClickListener(v -> openSellerOrders("refund"));
+    }
+
+    @Override
+    public void renderSeller(String username, String storeName, String nickname, String avatarUri,
+            double todayRevenue, double monthRevenue, double totalRevenue) {
+        View view = getView();
+        if (view == null) return;
 
         // 店铺名称（用昵称代替）
         ((TextView) view.findViewById(R.id.tvSellerShopName))
-                .setText(dm.getStoreName(username) + " ›");
+                .setText(storeName + " ›");
 
         // 昵称
         ((TextView) view.findViewById(R.id.tvSellerNickname)).setText(nickname);
@@ -67,7 +102,6 @@ public class SellerMineFragment extends Fragment {
         // 头像
         ImageView ivAvatar = view.findViewById(R.id.ivSellerAvatar);
         TextView tvInitial = view.findViewById(R.id.tvSellerAvatarInitial);
-        String avatarUri = dm.getAvatarUri(username);
         if (avatarUri != null) {
             try {
                 if (avatarUri.startsWith("data:image")) {
@@ -89,78 +123,25 @@ public class SellerMineFragment extends Fragment {
             tvInitial.setVisibility(View.VISIBLE);
         }
 
-        // 加载快捷功能图标（来自 assets/pic）
-        loadAssetImage(view.findViewById(R.id.ivMyProducts), "wodehuopin.png");
-        loadAssetImage(view.findViewById(R.id.ivPurchaseMgmt), "caigouguanli.png");
-        loadAssetImage(view.findViewById(R.id.ivOrderMgmt), "dingdanguanli.png");
-        loadAssetImage(view.findViewById(R.id.ivShopMgmt), "dianpuguanli.png");
-
-        // 加载订单状态图标
-        loadAssetImage(view.findViewById(R.id.ivSellerOrderPending), "daifukuan.png");
-        loadAssetImage(view.findViewById(R.id.ivSellerOrderShipping), "daifahuo.png");
-        loadAssetImage(view.findViewById(R.id.ivSellerOrderSent), "daishouhuo.png");
-        loadAssetImage(view.findViewById(R.id.ivSellerOrderAfterSale), "tuikuanshouhou.png");
-
         ((TextView) view.findViewById(R.id.tvTodaySales))
-                .setText(String.format(java.util.Locale.getDefault(), "%.2f", dm.getRevenueForSeller(username, "today")));
+                .setText(String.format(java.util.Locale.getDefault(), "%.2f", todayRevenue));
         ((TextView) view.findViewById(R.id.tvMonthSales))
-                .setText(String.format(java.util.Locale.getDefault(), "%.2f", dm.getRevenueForSeller(username, "month")));
+                .setText(String.format(java.util.Locale.getDefault(), "%.2f", monthRevenue));
         ((TextView) view.findViewById(R.id.tvTotalSales))
-                .setText(String.format(java.util.Locale.getDefault(), "%.2f", dm.getRevenueForSeller(username, "all")));
+                .setText(String.format(java.util.Locale.getDefault(), "%.2f", totalRevenue));
+    }
 
-        // ── 点击事件 ──
+    @Override
+    public void renderNews(List<Article> articles) {
+        View view = getView();
+        if (view != null) bindNewsList(view, articles);
+    }
 
-        // 去买货：切换为买家身份
-        view.findViewById(R.id.btnGoShopping).setOnClickListener(v -> {
-            dm.setActiveRole(com.example.zhinongbao.model.User.ROLE_BUYER);
-            Intent intent = new Intent(requireContext(), MainActivity.class);
-            intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK | Intent.FLAG_ACTIVITY_NEW_TASK);
-            startActivity(intent);
-        });
-
-        // 编辑资料
-        view.findViewById(R.id.layoutSellerProfile).setOnClickListener(
-                v -> startActivity(new Intent(getContext(), ProfileEditActivity.class)));
-
-        // 快捷功能
-        view.findViewById(R.id.quickMyProducts).setOnClickListener(
-                v -> startActivity(new Intent(getContext(), SellerMyProductsActivity.class)));
-        view.findViewById(R.id.quickPurchaseMgmt).setOnClickListener(
-                v -> startActivity(new Intent(getContext(), SellerPurchaseMgmtActivity.class)));
-        view.findViewById(R.id.quickOrderMgmt).setOnClickListener(
-                v -> startActivity(new Intent(getContext(), SellerOrdersActivity.class)));
-        view.findViewById(R.id.quickShopMgmt).setOnClickListener(
-                v -> startActivity(new Intent(getContext(), SellerStoreActivity.class)));
-
-        view.findViewById(R.id.layoutTodaySales).setOnClickListener(v -> openSalesOrders("today"));
-        view.findViewById(R.id.layoutMonthSales).setOnClickListener(v -> openSalesOrders("month"));
-        view.findViewById(R.id.layoutTotalSales).setOnClickListener(v -> openSalesOrders("all"));
-
-        // 订单按钮
-        view.findViewById(R.id.tvSellerAllOrders).setOnClickListener(
-                v -> startActivity(new Intent(getContext(), SellerOrdersActivity.class)));
-        view.findViewById(R.id.sellerOrderPending).setOnClickListener(v -> {
-            Intent i = new Intent(getContext(), SellerOrdersActivity.class);
-            i.putExtra("filter", "pending");
-            startActivity(i);
-        });
-        view.findViewById(R.id.sellerOrderShipping).setOnClickListener(v -> {
-            Intent i = new Intent(getContext(), SellerOrdersActivity.class);
-            i.putExtra("filter", "paid");
-            startActivity(i);
-        });
-        view.findViewById(R.id.sellerOrderSent).setOnClickListener(v -> {
-            Intent i = new Intent(getContext(), SellerOrdersActivity.class);
-            i.putExtra("filter", "shipped");
-            startActivity(i);
-        });
-        view.findViewById(R.id.sellerOrderAfterSale).setOnClickListener(v -> {
-            Intent i = new Intent(getContext(), SellerOrdersActivity.class);
-            i.putExtra("filter", "refund");
-            startActivity(i);
-        });
-
-        bindNewsList(view, dm, username);
+    @Override
+    public void restartMain() {
+        Intent intent = new Intent(requireContext(), MainActivity.class);
+        intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK | Intent.FLAG_ACTIVITY_NEW_TASK);
+        startActivity(intent);
     }
 
     private void openSalesOrders(String scope) {
@@ -169,23 +150,22 @@ public class SellerMineFragment extends Fragment {
         startActivity(i);
     }
 
-    private void bindNewsList(View root, DataManager dm, String username) {
+    private void bindNewsList(View root, List<Article> articles) {
         LinearLayout container = root.findViewById(R.id.llNewsContainer);
         if (container == null)
             return;
         container.removeAllViews();
         LayoutInflater inflater = LayoutInflater.from(requireContext());
-        List<Article> articles = dm.getArticles();
         for (Article article : articles) {
             if ("农友圈".equals(article.category))
                 continue;
             View item = inflater.inflate(R.layout.item_article, container, false);
-            bindNewsItem(item, article, dm, username);
+            bindNewsItem(item, article);
             container.addView(item);
         }
     }
 
-    private void bindNewsItem(View item, Article article, DataManager dm, String username) {
+    private void bindNewsItem(View item, Article article) {
         ((TextView) item.findViewById(R.id.tvArticleTitle)).setText(article.title);
         ((TextView) item.findViewById(R.id.tvArticleTime)).setText(article.time);
         TextView category = item.findViewById(R.id.tvArticleCategory);
@@ -195,20 +175,16 @@ public class SellerMineFragment extends Fragment {
         ImageView likeIcon = item.findViewById(R.id.ivArticleLike);
         TextView likeCount = item.findViewById(R.id.tvArticleLikeCount);
         TextView commentCount = item.findViewById(R.id.tvArticleCommentCount);
-        boolean liked = username != null && dm.isArticleLiked(username, article.id);
+        boolean liked = presenter.isArticleLiked(article.id);
         likeIcon.setImageResource(liked ? R.mipmap.dianzan : R.mipmap.weidianzan);
-        likeCount.setText(String.valueOf(dm.getArticleLikeCount(article.id)));
-        commentCount.setText(String.valueOf(dm.getCommentCount(article.id)));
+        likeCount.setText(String.valueOf(presenter.getArticleLikeCount(article.id)));
+        commentCount.setText(String.valueOf(presenter.getCommentCount(article.id)));
 
         View.OnClickListener likeClick = v -> {
-            if (dm.isArticleLiked(username, article.id)) {
-                dm.unlikeArticle(username, article.id);
-            } else {
-                dm.likeArticle(username, article.id);
-            }
-            boolean nowLiked = dm.isArticleLiked(username, article.id);
+            presenter.toggleArticleLike(article.id);
+            boolean nowLiked = presenter.isArticleLiked(article.id);
             likeIcon.setImageResource(nowLiked ? R.mipmap.dianzan : R.mipmap.weidianzan);
-            likeCount.setText(String.valueOf(dm.getArticleLikeCount(article.id)));
+            likeCount.setText(String.valueOf(presenter.getArticleLikeCount(article.id)));
         };
         likeIcon.setOnClickListener(likeClick);
         likeCount.setOnClickListener(likeClick);
@@ -221,6 +197,12 @@ public class SellerMineFragment extends Fragment {
             intent.putExtra("article_id", article.id);
             startActivity(intent);
         });
+    }
+
+    private void openSellerOrders(String filter) {
+        Intent i = new Intent(getContext(), SellerOrdersActivity.class);
+        i.putExtra("filter", filter);
+        startActivity(i);
     }
 
     private void bindArticleThumb(ImageView thumb, Article article) {

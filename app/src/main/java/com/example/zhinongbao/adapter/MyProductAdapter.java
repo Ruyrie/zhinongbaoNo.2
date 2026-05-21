@@ -8,7 +8,6 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 import com.example.zhinongbao.R;
-import com.example.zhinongbao.data.DataManager;
 import com.example.zhinongbao.model.Product;
 import java.util.List;
 
@@ -16,6 +15,7 @@ public class MyProductAdapter extends RecyclerView.Adapter<MyProductAdapter.View
 
     private final List<Product> list;
     private final OnProductActionListener listener;
+    private final ProductStatsDelegate statsDelegate;
 
     public interface OnProductActionListener {
         void onEdit(Product product);
@@ -23,9 +23,16 @@ public class MyProductAdapter extends RecyclerView.Adapter<MyProductAdapter.View
         void onDelete(Product product, int position);
     }
 
-    public MyProductAdapter(List<Product> list, OnProductActionListener listener) {
+    public interface ProductStatsDelegate {
+        int getProductOrderCount(int productId);
+        double getProductSalesRevenue(int productId);
+    }
+
+    public MyProductAdapter(List<Product> list, OnProductActionListener listener,
+            ProductStatsDelegate statsDelegate) {
         this.list = list;
         this.listener = listener;
+        this.statsDelegate = statsDelegate;
     }
 
     @NonNull
@@ -56,9 +63,8 @@ public class MyProductAdapter extends RecyclerView.Adapter<MyProductAdapter.View
             holder.ivCover.setImageResource(R.drawable.ic_product_placeholder);
         }
 
-        DataManager dm = DataManager.getInstance(holder.itemView.getContext());
-        int orderCount = dm.getProductOrderCount(p.id);
-        double revenue = dm.getProductSalesRevenue(p.id);
+        int orderCount = statsDelegate.getProductOrderCount(p.id);
+        double revenue = statsDelegate.getProductSalesRevenue(p.id);
         holder.tvStats.setText(String.format("累计订单: %d  累计销售额: ¥%.2f", orderCount, revenue));
 
         holder.btnEdit.setOnClickListener(v -> {

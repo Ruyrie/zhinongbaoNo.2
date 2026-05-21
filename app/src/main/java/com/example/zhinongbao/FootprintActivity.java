@@ -11,18 +11,20 @@ import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 import androidx.annotation.NonNull;
-import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
-import com.example.zhinongbao.data.DataManager;
+import com.example.zhinongbao.base.BaseMvpActivity;
 import com.example.zhinongbao.model.Product;
+import com.example.zhinongbao.model.StoreFootprint;
+import com.example.zhinongbao.mvp.footprint.FootprintContract;
+import com.example.zhinongbao.mvp.footprint.FootprintPresenter;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
 
-public class FootprintActivity extends AppCompatActivity {
+public class FootprintActivity extends BaseMvpActivity<FootprintContract.Presenter> implements FootprintContract.View {
     private final List<Row> rows = new ArrayList<>();
     private FootprintAdapter adapter;
     private boolean storeMode = false;
@@ -54,6 +56,7 @@ public class FootprintActivity extends AppCompatActivity {
         rv.setLayoutManager(glm);
         adapter = new FootprintAdapter();
         rv.setAdapter(adapter);
+        new FootprintPresenter(this, this).start();
     }
 
     @Override
@@ -63,32 +66,49 @@ public class FootprintActivity extends AppCompatActivity {
     }
 
     private void loadRows() {
-        DataManager dm = DataManager.getInstance(this);
+        if (presenter == null) {
+            return;
+        }
+        if (storeMode) {
+            presenter.loadStores();
+        } else {
+            presenter.loadProducts();
+        }
+    }
+
+    @Override
+    public void showProductFootprints(List<Product> products) {
         rows.clear();
         String lastDate = "";
-        if (storeMode) {
-            List<DataManager.StoreFootprint> stores = dm.getStoreFootprints(dm.getLoggedUser());
-            for (DataManager.StoreFootprint store : stores) {
-                String date = formatDate(store.viewedAt);
-                if (!date.equals(lastDate)) {
-                    rows.add(Row.date(date));
-                    lastDate = date;
-                }
-                rows.add(Row.store(store));
+        for (Product product : products) {
+            String date = formatDate(product.viewedAt);
+            if (!date.equals(lastDate)) {
+                rows.add(Row.date(date));
+                lastDate = date;
             }
-            updateTitle(stores.size());
-        } else {
-            List<Product> products = dm.getProductFootprints(dm.getLoggedUser());
-            for (Product product : products) {
-                String date = formatDate(product.viewedAt);
-                if (!date.equals(lastDate)) {
-                    rows.add(Row.date(date));
-                    lastDate = date;
-                }
-                rows.add(Row.product(product));
-            }
-            updateTitle(products.size());
+            rows.add(Row.product(product));
         }
+        updateTitle(products.size());
+        renderRows();
+    }
+
+    @Override
+    public void showStoreFootprints(List<StoreFootprint> stores) {
+        rows.clear();
+        String lastDate = "";
+        for (StoreFootprint store : stores) {
+            String date = formatDate(store.viewedAt);
+            if (!date.equals(lastDate)) {
+                rows.add(Row.date(date));
+                lastDate = date;
+            }
+            rows.add(Row.store(store));
+        }
+        updateTitle(stores.size());
+        renderRows();
+    }
+
+    private void renderRows() {
         updateTabs();
         adapter.notifyDataSetChanged();
         boolean empty = rows.isEmpty();
@@ -127,7 +147,7 @@ public class FootprintActivity extends AppCompatActivity {
         int type;
         String date;
         Product product;
-        DataManager.StoreFootprint store;
+        StoreFootprint store;
 
         static Row date(String date) {
             Row row = new Row();
@@ -143,7 +163,7 @@ public class FootprintActivity extends AppCompatActivity {
             return row;
         }
 
-        static Row store(DataManager.StoreFootprint store) {
+        static Row store(StoreFootprint store) {
             Row row = new Row();
             row.type = TYPE_STORE;
             row.store = store;

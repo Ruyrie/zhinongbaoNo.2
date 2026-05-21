@@ -10,19 +10,21 @@ import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
-import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.graphics.ColorUtils;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentTransaction;
+import com.example.zhinongbao.base.BaseMvpActivity;
 import com.example.zhinongbao.fragment.HeadlineFragment;
 import com.example.zhinongbao.fragment.MallFragment;
 import com.example.zhinongbao.fragment.MineFragment;
+import com.example.zhinongbao.mvp.main.MainContract;
+import com.example.zhinongbao.mvp.main.MainPresenter;
 import com.example.zhinongbao.view.BlurBehindView;
 import java.io.IOException;
 import java.io.InputStream;
 
 /** 主界面：iOS 液态玻璃风格底部导航 */
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends BaseMvpActivity<MainContract.Presenter> implements MainContract.View {
 
     private static final int ACTIVE_COLOR = 0xFF2F80ED;
     private static final int INACTIVE_COLOR = 0xFF1F1F1F;
@@ -40,6 +42,7 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        new MainPresenter(this, this).start();
 
         View fragmentContainer = findViewById(R.id.fragmentContainer);
         BlurBehindView navBlur = findViewById(R.id.navBlur);
@@ -109,7 +112,7 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onResume() {
         super.onResume();
-        int role = com.example.zhinongbao.data.DataManager.getInstance(this).getActiveRole();
+        int role = presenter.getActiveRole();
         if (role != lastRole) {
             currentIndex = 0;
             refreshRoleTabs();
@@ -120,8 +123,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private boolean isSellerMode() {
-        return com.example.zhinongbao.data.DataManager.getInstance(this).getActiveRole()
-                == com.example.zhinongbao.model.User.ROLE_SELLER;
+        return presenter.isSellerMode();
     }
 
     private void refreshRoleTabs() {
@@ -129,7 +131,7 @@ public class MainActivity extends AppCompatActivity {
         labels[0].setText(sellerMode ? "我的店铺" : "首页");
         labels[1].setText(sellerMode ? "农友圈" : "农技学堂");
         loadRoleIcons(sellerMode);
-        lastRole = com.example.zhinongbao.data.DataManager.getInstance(this).getActiveRole();
+        lastRole = presenter.getActiveRole();
     }
 
     private void loadRoleIcons(boolean sellerMode) {
@@ -227,7 +229,7 @@ public class MainActivity extends AppCompatActivity {
         }
 
         currentIndex = idx;
-        int activeRole = com.example.zhinongbao.data.DataManager.getInstance(this).getActiveRole();
+        int activeRole = presenter.getActiveRole();
         boolean isSeller = activeRole == com.example.zhinongbao.model.User.ROLE_SELLER;
         Fragment f;
         if (idx == 0) {

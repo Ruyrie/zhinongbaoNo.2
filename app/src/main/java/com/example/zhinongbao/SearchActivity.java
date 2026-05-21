@@ -10,17 +10,19 @@ import android.view.inputmethod.InputMethodManager;
 import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.TextView;
-import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import com.example.zhinongbao.adapter.ArticleAdapter;
-import com.example.zhinongbao.data.DataManager;
+import com.example.zhinongbao.base.BaseMvpActivity;
 import com.example.zhinongbao.model.Article;
+import com.example.zhinongbao.mvp.search.SearchContract;
+import com.example.zhinongbao.mvp.search.SearchPresenter;
 import java.util.ArrayList;
 import java.util.List;
 
 /** iOS 风格全屏搜索界面 */
-public class SearchActivity extends AppCompatActivity {
+public class SearchActivity extends BaseMvpActivity<SearchContract.Presenter>
+        implements SearchContract.View {
 
     private List<Article>  allArticles;
     private List<Article>  results;
@@ -36,9 +38,7 @@ public class SearchActivity extends AppCompatActivity {
         setContentView(R.layout.activity_search);
         if (getSupportActionBar() != null) getSupportActionBar().hide();
 
-        DataManager dm          = DataManager.getInstance(this);
-        String      currentUser = dm.getLoggedUser();
-        allArticles = dm.getArticles();
+        allArticles = new ArrayList<>();
         results     = new ArrayList<>();
 
         // Views
@@ -55,7 +55,7 @@ public class SearchActivity extends AppCompatActivity {
             Intent i = new Intent(this, ArticleDetailActivity.class);
             i.putExtra("article_id", article.id);
             startActivity(i);
-        }, dm, currentUser);
+        });
         rvResults.setLayoutManager(new LinearLayoutManager(this));
         rvResults.setAdapter(searchAdapter);
 
@@ -96,6 +96,40 @@ public class SearchActivity extends AppCompatActivity {
         etQuery.requestFocus();
         InputMethodManager imm = (InputMethodManager) getSystemService(INPUT_METHOD_SERVICE);
         if (imm != null) imm.showSoftInput(etQuery, InputMethodManager.SHOW_IMPLICIT);
+
+        new SearchPresenter(this, this).start();
+    }
+
+    @Override
+    public void showAllArticles(List<Article> articles, String currentUser) {
+        allArticles.clear();
+        allArticles.addAll(articles);
+        searchAdapter = new ArticleAdapter(results, article -> {
+            Intent i = new Intent(this, ArticleDetailActivity.class);
+            i.putExtra("article_id", article.id);
+            startActivity(i);
+        }, new ArticleAdapter.ArticleInteractionDelegate() {
+            @Override
+            public int getArticleLikeCount(int articleId) {
+                return presenter.getArticleLikeCount(articleId);
+            }
+
+            @Override
+            public int getCommentCount(int articleId) {
+                return presenter.getCommentCount(articleId);
+            }
+
+            @Override
+            public boolean isArticleLiked(int articleId) {
+                return presenter.isArticleLiked(articleId);
+            }
+
+            @Override
+            public void toggleArticleLike(int articleId) {
+                presenter.toggleArticleLike(articleId);
+            }
+        }, currentUser);
+        rvResults.setAdapter(searchAdapter);
     }
 
     private void wireTag(int viewId, String query, EditText et) {

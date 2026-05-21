@@ -6,17 +6,20 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
 import androidx.annotation.NonNull;
-import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
-import com.example.zhinongbao.data.DataManager;
+import com.example.zhinongbao.base.BaseMvpActivity;
+import com.example.zhinongbao.mvp.followlist.FollowListContract;
+import com.example.zhinongbao.mvp.followlist.FollowListPresenter;
 import java.util.List;
 
 /**
  * 粉丝列表 / 关注列表通用界面。
  * 通过 Intent extra "type" ("followers" | "following") 和 "username" 传参。
  */
-public class FollowListActivity extends AppCompatActivity {
+public class FollowListActivity extends BaseMvpActivity<FollowListContract.Presenter> implements FollowListContract.View {
+
+    private RecyclerView rv;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -45,18 +48,15 @@ public class FollowListActivity extends AppCompatActivity {
         }
         findViewById(R.id.tvFollowBack).setOnClickListener(v -> finish());
 
-        DataManager dm = DataManager.getInstance(this);
-        String me = dm.getLoggedUser();
-        List<String> users;
-        if (isLikes) {
-            users = dm.getUsersWhoLikedMyArticles(username);
-        } else {
-            users = isFollowers ? dm.getFollowers(username) : dm.getFollowing(username);
-        }
-
-        RecyclerView rv = findViewById(R.id.rvFollowList);
+        rv = findViewById(R.id.rvFollowList);
         rv.setLayoutManager(new LinearLayoutManager(this));
-        rv.setAdapter(new FollowUserAdapter(users, me, dm));
+
+        new FollowListPresenter(this, this, type, username).start();
+    }
+
+    @Override
+    public void showUsers(List<String> users, String currentUser) {
+        rv.setAdapter(new FollowUserAdapter(users, currentUser, presenter));
     }
 
     // ─── Inner adapter ───────────────────────────────────────────────────────
@@ -65,12 +65,12 @@ public class FollowListActivity extends AppCompatActivity {
 
         private final List<String> users;
         private final String currentUser;
-        private final DataManager dm;
+        private final FollowListContract.Presenter presenter;
 
-        FollowUserAdapter(List<String> users, String currentUser, DataManager dm) {
+        FollowUserAdapter(List<String> users, String currentUser, FollowListContract.Presenter presenter) {
             this.users = users;
             this.currentUser = currentUser;
-            this.dm = dm;
+            this.presenter = presenter;
         }
 
         @NonNull
@@ -86,8 +86,8 @@ public class FollowListActivity extends AppCompatActivity {
             String username = users.get(position);
 
             // Fetch user info for avatar and nickname
-            String nickname = dm.getNickname(username);
-            String avatarUri = dm.getAvatarUri(username);
+            String nickname = presenter.getNickname(username);
+            String avatarUri = presenter.getAvatarUri(username);
 
             // Avatar initial
             String initial = (nickname != null && !nickname.isEmpty())
@@ -125,17 +125,13 @@ public class FollowListActivity extends AppCompatActivity {
             refreshToggle(h, username);
 
             h.tvToggle.setOnClickListener(v -> {
-                if (dm.isFollowing(currentUser, username)) {
-                    dm.unfollowUser(currentUser, username);
-                } else {
-                    dm.followUser(currentUser, username);
-                }
+                presenter.toggleFollow(username);
                 refreshToggle(h, username);
             });
         }
 
         private void refreshToggle(VH h, String username) {
-            boolean following = dm.isFollowing(currentUser, username);
+            boolean following = presenter.isFollowing(username);
             h.tvToggle.setText(following ? "已关注" : "关注");
             h.tvToggle.setTextColor(following ? 0xFF999999 : 0xFF2F80ED);
         }

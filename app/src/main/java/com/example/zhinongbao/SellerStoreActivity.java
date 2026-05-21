@@ -13,19 +13,18 @@ import android.widget.TextView;
 import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
-import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
-import com.example.zhinongbao.data.DataManager;
+import com.example.zhinongbao.base.BaseMvpActivity;
 import com.example.zhinongbao.model.Product;
+import com.example.zhinongbao.mvp.sellerstore.SellerStoreContract;
+import com.example.zhinongbao.mvp.sellerstore.SellerStorePresenter;
 import java.util.ArrayList;
 import java.util.List;
 
-public class SellerStoreActivity extends AppCompatActivity {
+public class SellerStoreActivity extends BaseMvpActivity<SellerStoreContract.Presenter> implements SellerStoreContract.View {
 
-    private DataManager dm;
     private String seller;
-    private String currentUser;
     private boolean isOwnStore;
     private final List<Product> products = new ArrayList<>();
     private StoreProductAdapter adapter;
@@ -36,42 +35,18 @@ public class SellerStoreActivity extends AppCompatActivity {
         setContentView(R.layout.activity_seller_store);
         if (getSupportActionBar() != null) getSupportActionBar().hide();
 
-        dm = DataManager.getInstance(this);
-        currentUser = dm.getLoggedUser();
+        new SellerStorePresenter(this, this);
         seller = getIntent().getStringExtra("seller");
-        if (seller == null || seller.isEmpty()) seller = currentUser;
-        isOwnStore = seller.equals(currentUser);
-        dm.recordStoreView(currentUser, seller);
-
-        // 标题
-        String nick = dm.getNickname(seller);
-        TextView tvStoreName = findViewById(R.id.tvStoreName);
-        tvStoreName.setText(isOwnStore ? "我的店铺" : dm.getStoreName(seller));
-        bindStoreInfo();
+        if (seller == null || seller.isEmpty()) seller = presenter.getCurrentUser();
 
         // 返回
         findViewById(R.id.ivBack).setOnClickListener(v -> finish());
 
-        // 上架按钮（仅自己）
         TextView tvAddProduct = findViewById(R.id.tvAddProduct);
-        if (isOwnStore) {
-            tvAddProduct.setVisibility(View.VISIBLE);
-            tvAddProduct.setOnClickListener(v ->
-                    startActivity(new Intent(this, AddProductActivity.class)));
-        }
+        tvAddProduct.setOnClickListener(v -> startActivity(new Intent(this, AddProductActivity.class)));
 
         TextView tvEditStoreInfo = findViewById(R.id.tvEditStoreInfo);
-        if (isOwnStore) {
-            tvEditStoreInfo.setVisibility(View.VISIBLE);
-            tvEditStoreInfo.setOnClickListener(v -> showEditStoreDialog());
-        }
-
-        // 销售统计（仅自己）
-        View llSalesStats = findViewById(R.id.llSalesStats);
-        if (isOwnStore) {
-            llSalesStats.setVisibility(View.VISIBLE);
-            refreshStats();
-        }
+        tvEditStoreInfo.setOnClickListener(v -> showEditStoreDialog());
 
         // 列表
         RecyclerView rv = findViewById(R.id.rvProducts);
@@ -87,29 +62,37 @@ public class SellerStoreActivity extends AppCompatActivity {
                     .setTitle("下架商品")
                     .setMessage("确认将\"" + product.name + "\"下架？下架后买家将无法购买。")
                     .setPositiveButton("确认下架", (d, w) -> {
-                        dm.deleteProduct(product.id);
-                        loadProducts();
-                        if (isOwnStore) refreshStats();
+                        presenter.deleteProduct(product.id);
                         Toast.makeText(this, "已下架", Toast.LENGTH_SHORT).show();
                     })
                     .setNegativeButton("取消", null)
                     .show();
-        });
+        }, presenter::getProductOrderCount);
         rv.setAdapter(adapter);
+        presenter.loadStore(seller);
     }
 
     @Override
     protected void onResume() {
         super.onResume();
-        loadProducts();
-        if (isOwnStore) refreshStats();
-        bindStoreInfo();
+        if (presenter != null && seller != null) {
+            presenter.loadStore(seller);
+        }
     }
 
-    private void bindStoreInfo() {
-        if (dm == null || seller == null) return;
-        ((TextView) findViewById(R.id.tvStoreDisplayName)).setText(dm.getStoreName(seller));
-        String phone = dm.getStorePhone(seller);
+    @Override
+    public void showStoreMeta(String seller, String storeName, String storePhone, boolean ownStore) {
+        this.seller = seller;
+        this.isOwnStore = ownStore;
+        findViewById(R.id.tvAddProduct).setVisibility(ownStore ? View.VISIBLE : View.GONE);
+        findViewById(R.id.tvEditStoreInfo).setVisibility(ownStore ? View.VISIBLE : View.GONE);
+        findViewById(R.id.llSalesStats).setVisibility(ownStore ? View.VISIBLE : View.GONE);
+        if (adapter != null) {
+            adapter.setOwnStore(ownStore);
+        }
+        ((TextView) findViewById(R.id.tvStoreName)).setText(ownStore ? "我的店铺" : storeName);
+        ((TextView) findViewById(R.id.tvStoreDisplayName)).setText(storeName);
+        String phone = storePhone;
         ((TextView) findViewById(R.id.tvStorePhone)).setText(
                 phone == null || phone.isEmpty() ? "电话：未填写" : "电话：" + phone);
     }
@@ -122,13 +105,14 @@ public class SellerStoreActivity extends AppCompatActivity {
 
         EditText etName = new EditText(this);
         etName.setHint("店铺名称");
-        etName.setText(dm.getStoreName(seller));
+        etName.setText(((TextView) findViewById(R.id.tvStoreDisplayName)).getText());
         box.addView(etName);
 
         EditText etPhone = new EditText(this);
         etPhone.setHint("商铺电话");
         etPhone.setInputType(android.text.InputType.TYPE_CLASS_PHONE);
-        etPhone.setText(dm.getStorePhone(seller));
+        String phoneText = ((TextView) findViewById(R.id.tvStorePhone)).getText().toString().replace("电话：", "");
+        etPhone.setText("未填写".equals(phoneText) ? "" : phoneText);
         box.addView(etPhone);
 
         new AlertDialog.Builder(this)
@@ -141,17 +125,14 @@ public class SellerStoreActivity extends AppCompatActivity {
                         Toast.makeText(this, "店铺名称和电话不能为空", Toast.LENGTH_SHORT).show();
                         return;
                     }
-                    dm.updateStoreInfo(seller, name, phone);
-                    ((TextView) findViewById(R.id.tvStoreName)).setText("我的店铺");
-                    bindStoreInfo();
-                    Toast.makeText(this, "店铺信息已更新", Toast.LENGTH_SHORT).show();
+                    presenter.updateStoreInfo(name, phone);
                 })
                 .setNegativeButton("取消", null)
                 .show();
     }
 
-    private void loadProducts() {
-        List<Product> fresh = dm.getProductsBySeller(seller);
+    @Override
+    public void showProducts(List<Product> fresh) {
         products.clear();
         products.addAll(fresh);
         if (adapter != null) adapter.notifyDataSetChanged();
@@ -163,12 +144,16 @@ public class SellerStoreActivity extends AppCompatActivity {
         tvEmpty.setVisibility(empty ? View.VISIBLE : View.GONE);
     }
 
-    private void refreshStats() {
-        int totalOrders = dm.getTotalOrderCountForSeller(seller);
-        double totalRevenue = dm.getTotalRevenueForSeller(seller);
+    @Override
+    public void showStats(int totalOrders, double totalRevenue) {
         ((TextView) findViewById(R.id.tvTotalOrders)).setText(String.valueOf(totalOrders));
         ((TextView) findViewById(R.id.tvTotalRevenue)).setText(
                 String.format("¥%.2f", totalRevenue));
+    }
+
+    @Override
+    public void showToast(String message) {
+        Toast.makeText(this, message, Toast.LENGTH_SHORT).show();
     }
 
     // ── 内部 Adapter ──
@@ -177,16 +162,32 @@ public class SellerStoreActivity extends AppCompatActivity {
 
     static class StoreProductAdapter extends RecyclerView.Adapter<StoreProductAdapter.VH> {
         private final List<Product> items;
-        private final boolean isOwn;
+        private boolean isOwn;
         private final OnProductClick clickListener;
         private final OnProductClick delistListener;
+        private final ProductSalesResolver salesResolver;
+
+        interface ProductSalesResolver {
+            int getProductOrderCount(int productId);
+        }
 
         StoreProductAdapter(List<Product> items, boolean isOwn,
                 OnProductClick click, OnProductClick delist) {
+            this(items, isOwn, click, delist, productId -> 0);
+        }
+
+        StoreProductAdapter(List<Product> items, boolean isOwn,
+                OnProductClick click, OnProductClick delist, ProductSalesResolver salesResolver) {
             this.items = items;
             this.isOwn = isOwn;
             this.clickListener = click;
             this.delistListener = delist;
+            this.salesResolver = salesResolver;
+        }
+
+        void setOwnStore(boolean ownStore) {
+            this.isOwn = ownStore;
+            notifyDataSetChanged();
         }
 
         @NonNull
@@ -203,8 +204,7 @@ public class SellerStoreActivity extends AppCompatActivity {
             h.tvName.setText(p.name);
             h.tvPrice.setText(String.format("¥%.2f", p.price));
 
-            DataManager dm = DataManager.getInstance(h.itemView.getContext());
-            int orderCount = dm.getProductOrderCount(p.id);
+            int orderCount = salesResolver.getProductOrderCount(p.id);
             h.tvSales.setText("已售 " + orderCount + " 件");
 
             // 封面图

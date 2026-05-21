@@ -5,16 +5,18 @@ import android.os.Bundle;
 import android.view.View;
 import android.widget.LinearLayout;
 import android.widget.TextView;
-import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import com.example.zhinongbao.adapter.ArticleAdapter;
-import com.example.zhinongbao.data.DataManager;
+import com.example.zhinongbao.base.BaseMvpActivity;
 import com.example.zhinongbao.model.Article;
+import com.example.zhinongbao.mvp.myarticles.MyArticlesContract;
+import com.example.zhinongbao.mvp.myarticles.MyArticlesPresenter;
 import java.util.List;
 
 /** 我的文章界面：复用文章列表，仅显示当前账号发布的文章 */
-public class MyArticlesActivity extends AppCompatActivity {
+public class MyArticlesActivity extends BaseMvpActivity<MyArticlesContract.Presenter>
+        implements MyArticlesContract.View {
 
     private RecyclerView rv;
     private LinearLayout llEmptyState;
@@ -36,19 +38,20 @@ public class MyArticlesActivity extends AppCompatActivity {
         View.OnClickListener goAdd = v -> startActivity(new Intent(this, AddArticleActivity.class));
         btnAddArticle.setOnClickListener(goAdd);
         ivAddArticleIcon.setOnClickListener(goAdd);
+
+        new MyArticlesPresenter(this, this).start();
     }
 
     @Override
     protected void onResume() {
         super.onResume();
-        loadData();
+        if (presenter != null) {
+            presenter.refresh();
+        }
     }
 
-    private void loadData() {
-        DataManager dm = DataManager.getInstance(this);
-        String username = dm.getLoggedUser();
-        List<Article> articles = dm.getArticlesByAuthor(username);
-
+    @Override
+    public void showArticles(List<Article> articles, String currentUser) {
         if (articles == null || articles.isEmpty()) {
             rv.setVisibility(View.GONE);
             llEmptyState.setVisibility(View.VISIBLE);
@@ -56,11 +59,35 @@ public class MyArticlesActivity extends AppCompatActivity {
             rv.setVisibility(View.VISIBLE);
             llEmptyState.setVisibility(View.GONE);
             rv.setLayoutManager(new LinearLayoutManager(this));
-            rv.setAdapter(new ArticleAdapter(articles, article -> {
-                Intent intent = new Intent(this, ArticleDetailActivity.class);
-                intent.putExtra("article_id", article.id);
-                startActivity(intent);
-            }, dm, username));
+            rv.setAdapter(new ArticleAdapter(articles, article -> openArticleDetail(article.id),
+                    new ArticleAdapter.ArticleInteractionDelegate() {
+                        @Override
+                        public int getArticleLikeCount(int articleId) {
+                            return presenter.getArticleLikeCount(articleId);
+                        }
+
+                        @Override
+                        public int getCommentCount(int articleId) {
+                            return presenter.getCommentCount(articleId);
+                        }
+
+                        @Override
+                        public boolean isArticleLiked(int articleId) {
+                            return presenter.isArticleLiked(articleId);
+                        }
+
+                        @Override
+                        public void toggleArticleLike(int articleId) {
+                            presenter.toggleArticleLike(articleId);
+                        }
+                    }, currentUser));
         }
+    }
+
+    @Override
+    public void openArticleDetail(int articleId) {
+        Intent intent = new Intent(this, ArticleDetailActivity.class);
+        intent.putExtra("article_id", articleId);
+        startActivity(intent);
     }
 }

@@ -10,7 +10,6 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 import com.example.zhinongbao.R;
-import com.example.zhinongbao.data.DataManager;
 import com.example.zhinongbao.model.Order;
 import com.example.zhinongbao.model.Product;
 import java.util.List;
@@ -19,6 +18,7 @@ public class SellerOrderAdapter extends RecyclerView.Adapter<SellerOrderAdapter.
 
     private final List<Order> list;
     private final OnOrderActionListener listener;
+    private final ProductResolver productResolver;
 
     public interface OnOrderActionListener {
         void onShip(Order o);
@@ -30,9 +30,14 @@ public class SellerOrderAdapter extends RecyclerView.Adapter<SellerOrderAdapter.
         void onContactBuyer(Order o);
     }
 
-    public SellerOrderAdapter(List<Order> list, OnOrderActionListener listener) {
+    public interface ProductResolver {
+        Product getProductById(int productId);
+    }
+
+    public SellerOrderAdapter(List<Order> list, OnOrderActionListener listener, ProductResolver productResolver) {
         this.list = list;
         this.listener = listener;
+        this.productResolver = productResolver;
     }
 
     @NonNull
@@ -55,8 +60,7 @@ public class SellerOrderAdapter extends RecyclerView.Adapter<SellerOrderAdapter.
             holder.tvOrderType.setTextColor(0xFF007AFF);
         }
 
-        DataManager dm = DataManager.getInstance(holder.itemView.getContext());
-        Product p = dm.getProductById(o.productId);
+        Product p = productResolver.getProductById(o.productId);
         int defaultRes = getDefaultProductImageRes(o.productId);
         if (defaultRes != 0) {
             holder.ivCover.setImageResource(defaultRes);

@@ -11,19 +11,22 @@ import android.widget.Toast;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.appcompat.app.AlertDialog;
-import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.content.FileProvider;
-import com.example.zhinongbao.data.DataManager;
+import com.example.zhinongbao.base.BaseMvpActivity;
+import com.example.zhinongbao.mvp.profileedit.ProfileEditContract;
+import com.example.zhinongbao.mvp.profileedit.ProfileEditPresenter;
 import java.io.File;
 
-public class ProfileEditActivity extends AppCompatActivity {
+public class ProfileEditActivity extends BaseMvpActivity<ProfileEditContract.Presenter>
+        implements ProfileEditContract.View {
 
-    private DataManager dm;
-    private String username;
     private String pendingAvatarUri;
     private String pendingAvatarBase64;
     private TextView tvPhone;
     private TextView tvBindPhoneBtn;
+    private EditText etNickname;
+    private EditText etSignature;
+    private ImageView ivAvatar;
 
     private Uri currentCameraUri;
 
@@ -99,70 +102,23 @@ public class ProfileEditActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_profile_edit);
 
-        dm = DataManager.getInstance(this);
-        username = dm.getLoggedUser();
-
-        EditText etNickname = findViewById(R.id.etNickname);
-        EditText etSignature = findViewById(R.id.etSignature);
-        ImageView ivAvatar = findViewById(R.id.ivAvatarPreview);
+        etNickname = findViewById(R.id.etNickname);
+        etSignature = findViewById(R.id.etSignature);
+        ivAvatar = findViewById(R.id.ivAvatarPreview);
         ImageView tvBack = findViewById(R.id.tvBack);
         TextView tvSave = findViewById(R.id.tvSave);
         tvPhone = findViewById(R.id.tvPhone);
         tvBindPhoneBtn = findViewById(R.id.tvBindPhoneBtn);
 
-        etNickname.setText(dm.getNickname(username));
-        etSignature.setText(dm.getSignature(username));
-
-        refreshPhoneDisplay();
-
-        String existingUri = dm.getAvatarUri(username);
-        if (existingUri != null) {
-            try {
-                if (existingUri.startsWith("data:image")) {
-                    com.example.zhinongbao.utils.ImageUtils.setAvatarFromBase64(ivAvatar, existingUri);
-                } else {
-                    ivAvatar.setImageURI(Uri.parse(existingUri));
-                }
-                ivAvatar.setBackground(null);
-            } catch (Exception ignored) {
-            }
-        }
+        new ProfileEditPresenter(this, this).start();
 
         tvBack.setOnClickListener(v -> finish());
 
         tvSave.setOnClickListener(v -> {
             String nick = etNickname.getText().toString().trim();
             String sig = etSignature.getText().toString().trim();
-            if (nick.isEmpty()) {
-                Toast.makeText(this, "昵称不能为空", Toast.LENGTH_SHORT).show();
-                return;
-            }
-            if (nick.length() > 12) {
-                Toast.makeText(this, "昵称不能超过12个字符", Toast.LENGTH_SHORT).show();
-                return;
-            }
-
-            boolean success = true;
-
-            // 只有发生了变化，或者用户上传了新头像，才去更新那单独的一项
-            if (!nick.equals(dm.getNickname(username))) {
-                success &= dm.setNickname(username, nick);
-            }
-            if (!sig.equals(dm.getSignature(username))) {
-                success &= dm.updateSignature(username, sig);
-            }
-            if (pendingAvatarBase64 != null) {
-                success &= dm.setAvatarUri(username, pendingAvatarBase64);
-            } else if (pendingAvatarUri != null) {
-                success &= dm.setAvatarUri(username, pendingAvatarUri);
-            }
-
-            if (success) {
-                Toast.makeText(this, "保存成功", Toast.LENGTH_SHORT).show();
-                finish();
-            } else {
-                Toast.makeText(this, "保存失败，该账号状态异常，请重新登录", Toast.LENGTH_LONG).show();
-            }
+            String avatar = pendingAvatarBase64 != null ? pendingAvatarBase64 : pendingAvatarUri;
+            presenter.saveProfile(nick, sig, avatar);
         });
 
         findViewById(R.id.layoutAvatar).setOnClickListener(v -> showAvatarPreviewDialog());
@@ -177,7 +133,7 @@ public class ProfileEditActivity extends AppCompatActivity {
         ImageView ivPreview = dialog.findViewById(R.id.ivFullscreenAvatar);
         // 加载当前显示的头像（与主界面一致）
         String currentUri = pendingAvatarBase64 != null ? pendingAvatarBase64
-                : (pendingAvatarUri != null ? pendingAvatarUri : dm.getAvatarUri(username));
+                : (pendingAvatarUri != null ? pendingAvatarUri : presenter.getCurrentAvatarUri());
 
         if (currentUri != null) {
             try {
@@ -228,8 +184,26 @@ public class ProfileEditActivity extends AppCompatActivity {
                 });
     }
 
-    private void refreshPhoneDisplay() {
-        String phone = dm.getPhone(username);
+    @Override
+    public void showProfile(String nickname, String signature, String avatarUri, String phone) {
+        etNickname.setText(nickname);
+        etSignature.setText(signature);
+        if (avatarUri != null) {
+            try {
+                if (avatarUri.startsWith("data:image")) {
+                    com.example.zhinongbao.utils.ImageUtils.setAvatarFromBase64(ivAvatar, avatarUri);
+                } else {
+                    ivAvatar.setImageURI(Uri.parse(avatarUri));
+                }
+                ivAvatar.setBackground(null);
+            } catch (Exception ignored) {
+            }
+        }
+        showPhone(phone);
+    }
+
+    @Override
+    public void showPhone(String phone) {
         if (phone != null && !phone.isEmpty()) {
             tvPhone.setText(phone);
             tvBindPhoneBtn.setText("修改绑定");
@@ -237,6 +211,16 @@ public class ProfileEditActivity extends AppCompatActivity {
             tvPhone.setText("未绑定");
             tvBindPhoneBtn.setText("去绑定");
         }
+    }
+
+    @Override
+    public void showToast(String message) {
+        Toast.makeText(this, message, Toast.LENGTH_SHORT).show();
+    }
+
+    @Override
+    public void closePage() {
+        finish();
     }
 
     private void showBindPhoneDialog() {
@@ -261,14 +245,8 @@ public class ProfileEditActivity extends AppCompatActivity {
                 Toast.makeText(this, "请输入有效的11位手机号", Toast.LENGTH_SHORT).show();
                 return;
             }
-            boolean ok = dm.updatePhone(username, phone);
-            if (ok) {
-                Toast.makeText(this, "绑定成功", Toast.LENGTH_SHORT).show();
-                refreshPhoneDisplay();
-                dialog.dismiss();
-            } else {
-                Toast.makeText(this, "该手机号已被其他账号绑定，请更换手机号", Toast.LENGTH_SHORT).show();
-            }
+            presenter.bindPhone(phone);
+            dialog.dismiss();
         });
         dialog.show();
     }

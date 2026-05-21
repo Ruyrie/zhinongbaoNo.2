@@ -7,7 +7,6 @@ import android.view.View;
 import android.view.ViewGroup;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import com.example.zhinongbao.AddArticleActivity;
@@ -15,13 +14,16 @@ import com.example.zhinongbao.ArticleDetailActivity;
 import com.example.zhinongbao.R;
 import com.example.zhinongbao.SearchActivity;
 import com.example.zhinongbao.adapter.ArticleAdapter;
-import com.example.zhinongbao.data.DataManager;
+import com.example.zhinongbao.base.BaseMvpFragment;
 import com.example.zhinongbao.model.Article;
+import com.example.zhinongbao.mvp.headline.HeadlineContract;
+import com.example.zhinongbao.mvp.headline.HeadlinePresenter;
 import com.google.android.material.tabs.TabLayout;
 import java.util.ArrayList;
 import java.util.List;
 
-public class HeadlineFragment extends Fragment {
+public class HeadlineFragment extends BaseMvpFragment<HeadlineContract.Presenter>
+        implements HeadlineContract.View {
 
     private static final String[] CATEGORIES = { "热点新闻", "专家咨询", "支农宝新闻", "创业项目" };
 
@@ -40,9 +42,8 @@ public class HeadlineFragment extends Fragment {
 
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
-        DataManager dm = DataManager.getInstance(requireContext());
-        allArticles = dm.getArticles();
-        displayed = new ArrayList<>(allArticles);
+        allArticles = new ArrayList<>();
+        displayed = new ArrayList<>();
 
         RecyclerView rv = view.findViewById(R.id.rvArticles);
         rv.setLayoutManager(new LinearLayoutManager(getContext()));
@@ -50,7 +51,7 @@ public class HeadlineFragment extends Fragment {
             Intent intent = new Intent(getContext(), ArticleDetailActivity.class);
             intent.putExtra("article_id", article.id);
             startActivity(intent);
-        }, dm, dm.getLoggedUser());
+        });
         rv.setAdapter(adapter);
 
         view.findViewById(R.id.btnOpenSearch)
@@ -60,6 +61,41 @@ public class HeadlineFragment extends Fragment {
                 .setOnClickListener(v -> startActivity(new Intent(getContext(), AddArticleActivity.class)));
 
         setupCategoryTabs(view);
+        new HeadlinePresenter(requireContext(), this).start();
+    }
+
+    @Override
+    public void showArticles(List<Article> articles, String currentUser) {
+        allArticles.clear();
+        allArticles.addAll(articles);
+        adapter = new ArticleAdapter(displayed, article -> {
+            Intent intent = new Intent(getContext(), ArticleDetailActivity.class);
+            intent.putExtra("article_id", article.id);
+            startActivity(intent);
+        }, new ArticleAdapter.ArticleInteractionDelegate() {
+            @Override
+            public int getArticleLikeCount(int articleId) {
+                return presenter.getArticleLikeCount(articleId);
+            }
+
+            @Override
+            public int getCommentCount(int articleId) {
+                return presenter.getCommentCount(articleId);
+            }
+
+            @Override
+            public boolean isArticleLiked(int articleId) {
+                return presenter.isArticleLiked(articleId);
+            }
+
+            @Override
+            public void toggleArticleLike(int articleId) {
+                presenter.toggleArticleLike(articleId);
+            }
+        }, currentUser);
+        RecyclerView rv = requireView().findViewById(R.id.rvArticles);
+        rv.setAdapter(adapter);
+        filterByCategory();
     }
 
     private void setupCategoryTabs(View view) {
@@ -103,11 +139,8 @@ public class HeadlineFragment extends Fragment {
     @Override
     public void onResume() {
         super.onResume();
-        if (adapter != null) {
-            DataManager dm = DataManager.getInstance(requireContext());
-            allArticles.clear();
-            allArticles.addAll(dm.getArticles());
-            filterByCategory();
+        if (presenter != null) {
+            presenter.refresh();
         }
     }
 }

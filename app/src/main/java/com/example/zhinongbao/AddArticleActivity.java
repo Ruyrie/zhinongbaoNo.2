@@ -14,12 +14,14 @@ import android.widget.TextView;
 import android.widget.Toast;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
-import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.content.FileProvider;
-import com.example.zhinongbao.data.DataManager;
+import com.example.zhinongbao.base.BaseMvpActivity;
+import com.example.zhinongbao.mvp.addarticle.AddArticleContract;
+import com.example.zhinongbao.mvp.addarticle.AddArticlePresenter;
 import java.io.File;
 
-public class AddArticleActivity extends AppCompatActivity {
+public class AddArticleActivity extends BaseMvpActivity<AddArticleContract.Presenter>
+        implements AddArticleContract.View {
 
     private static final String[] CATEGORIES = { "热点新闻", "专家咨询", "支农宝新闻", "创业项目" };
 
@@ -91,6 +93,8 @@ public class AddArticleActivity extends AppCompatActivity {
         if (getSupportActionBar() != null)
             getSupportActionBar().hide();
 
+        new AddArticlePresenter(this, this).start();
+
         etTitle = findViewById(R.id.etArticleTitle);
         etContent = findViewById(R.id.etArticleContent);
         ivCover = findViewById(R.id.ivCover);
@@ -121,10 +125,18 @@ public class AddArticleActivity extends AppCompatActivity {
                 return;
             }
             String cover = coverUri != null ? coverUri.toString() : null;
-            DataManager.getInstance(this).addArticle(title, content, cover, selectedCategory);
-            Toast.makeText(this, "文章发布成功", Toast.LENGTH_SHORT).show();
-            finish();
+            presenter.submit(title, content, cover, selectedCategory);
         });
+    }
+
+    @Override
+    public void showToast(String message) {
+        Toast.makeText(this, message, Toast.LENGTH_SHORT).show();
+    }
+
+    @Override
+    public void closePage() {
+        finish();
     }
 
     private void setupCategoryPicker() {

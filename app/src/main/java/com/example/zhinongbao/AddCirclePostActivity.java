@@ -9,15 +9,17 @@ import android.widget.TextView;
 import android.widget.Toast;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
-import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.content.FileProvider;
-import com.example.zhinongbao.data.DataManager;
+import com.example.zhinongbao.base.BaseMvpActivity;
+import com.example.zhinongbao.mvp.addcirclepost.AddCirclePostContract;
+import com.example.zhinongbao.mvp.addcirclepost.AddCirclePostPresenter;
 import com.example.zhinongbao.utils.ImageUtils;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
-public class AddCirclePostActivity extends AppCompatActivity {
+public class AddCirclePostActivity extends BaseMvpActivity<AddCirclePostContract.Presenter>
+        implements AddCirclePostContract.View {
 
     private android.widget.EditText etContent;
     private ImageView ivPreview;
@@ -71,6 +73,7 @@ public class AddCirclePostActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_add_circle_post);
         if (getSupportActionBar() != null) getSupportActionBar().hide();
+        new AddCirclePostPresenter(this, this).start();
 
         etContent = findViewById(R.id.etCircleContent);
         ivPreview = findViewById(R.id.ivCircleSelectedImage);
@@ -128,8 +131,16 @@ public class AddCirclePostActivity extends AppCompatActivity {
         } else if (selectedImageUri != null) {
             imgUri = selectedImageUri.toString();
         }
-        DataManager.getInstance(this).addCirclePost(content, imgUri);
-        Toast.makeText(this, "发布成功！", Toast.LENGTH_SHORT).show();
+        presenter.submit(content, imgUri);
+    }
+
+    @Override
+    public void showToast(String message) {
+        Toast.makeText(this, message, Toast.LENGTH_SHORT).show();
+    }
+
+    @Override
+    public void closePage() {
         finish();
     }
 }

@@ -7,15 +7,16 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.Toast;
-import androidx.appcompat.app.AppCompatActivity;
-import com.example.zhinongbao.data.DataManager;
+import com.example.zhinongbao.base.BaseMvpActivity;
+import com.example.zhinongbao.mvp.password.ForgotPasswordContract;
+import com.example.zhinongbao.mvp.password.ForgotPasswordPresenter;
 import com.example.zhinongbao.utils.CaptchaUtils;
 
-public class ForgotPasswordActivity extends AppCompatActivity {
+public class ForgotPasswordActivity extends BaseMvpActivity<ForgotPasswordContract.Presenter>
+        implements ForgotPasswordContract.View {
 
     private EditText etAccount, etCaptcha;
     private ImageView ivCaptcha;
-    private DataManager dm;
     private String realCaptcha;
 
     @Override
@@ -23,7 +24,7 @@ public class ForgotPasswordActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_forgot_password);
 
-        dm = DataManager.getInstance(this);
+        new ForgotPasswordPresenter(this, this).start();
 
         etAccount = findViewById(R.id.etForgotAccount);
         etCaptcha = findViewById(R.id.etForgotCaptcha);
@@ -37,7 +38,8 @@ public class ForgotPasswordActivity extends AppCompatActivity {
         btnNextStep.setOnClickListener(v -> doNextStep());
     }
 
-    private void refreshCaptcha() {
+    @Override
+    public void refreshCaptcha() {
         CaptchaUtils utils = CaptchaUtils.getInstance();
         Bitmap bitmap = utils.createBitmap();
         realCaptcha = utils.getCode();
@@ -47,35 +49,24 @@ public class ForgotPasswordActivity extends AppCompatActivity {
     private void doNextStep() {
         String account = etAccount.getText().toString().trim();
         String inputCaptcha = etCaptcha.getText().toString().trim();
+        presenter.nextStep(account, inputCaptcha, realCaptcha);
+    }
 
-        if (account.isEmpty()) {
-            Toast.makeText(this, "请输入用户名或手机号", Toast.LENGTH_SHORT).show();
-            return;
-        }
+    @Override
+    public void showToast(String message) {
+        Toast.makeText(this, message, Toast.LENGTH_SHORT).show();
+    }
 
-        if (inputCaptcha.isEmpty()) {
-            Toast.makeText(this, "请输入验证码", Toast.LENGTH_SHORT).show();
-            return;
-        }
+    @Override
+    public void clearCaptchaInput() {
+        etCaptcha.setText("");
+    }
 
-        if (!inputCaptcha.equalsIgnoreCase(realCaptcha)) {
-            Toast.makeText(this, "验证码错误，请重新输入", Toast.LENGTH_SHORT).show();
-            refreshCaptcha();
-            etCaptcha.setText("");
-            return;
-        }
-
-        String targetUsername = dm.findUsernameByAccount(account);
-        if (targetUsername == null || targetUsername.isEmpty()) {
-            Toast.makeText(this, "未找到该用户，请检查输入的用户名或手机号", Toast.LENGTH_SHORT).show();
-            refreshCaptcha();
-            return;
-        }
-
-        // 验证通过，进入下一个页面
+    @Override
+    public void openResetPassword(String username, String displayAccount) {
         Intent intent = new Intent(this, ResetPasswordActivity.class);
-        intent.putExtra("username", targetUsername);
-        intent.putExtra("display_account", account);
+        intent.putExtra("username", username);
+        intent.putExtra("display_account", displayAccount);
         startActivity(intent);
         finish();
     }

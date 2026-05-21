@@ -4,19 +4,19 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.widget.Toast;
 import androidx.appcompat.app.AlertDialog;
-import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import com.example.zhinongbao.adapter.ArticleAdapter;
-import com.example.zhinongbao.data.DataManager;
+import com.example.zhinongbao.base.BaseMvpActivity;
 import com.example.zhinongbao.model.Article;
+import com.example.zhinongbao.mvp.myfavorites.MyFavoritesContract;
+import com.example.zhinongbao.mvp.myfavorites.MyFavoritesPresenter;
 import java.util.List;
 
 /** 我的收藏：展示当前用户点赞（收藏）的文章 */
-public class MyFavoritesActivity extends AppCompatActivity {
+public class MyFavoritesActivity extends BaseMvpActivity<MyFavoritesContract.Presenter>
+        implements MyFavoritesContract.View {
 
-    private DataManager dm;
-    private String username;
     private RecyclerView rv;
     private ArticleAdapter adapter;
 
@@ -29,13 +29,10 @@ public class MyFavoritesActivity extends AppCompatActivity {
 
         findViewById(R.id.tvFavBack).setOnClickListener(v -> finish());
 
-        dm = DataManager.getInstance(this);
-        username = dm.getLoggedUser();
-
         rv = findViewById(R.id.rvArticles);
         rv.setLayoutManager(new LinearLayoutManager(this));
 
-        loadData();
+        new MyFavoritesPresenter(this, this).start();
 
         findViewById(R.id.tvClearInvalid).setOnClickListener(v -> {
             android.view.View view = getLayoutInflater().inflate(R.layout.dialog_confirm, null);
@@ -55,13 +52,7 @@ public class MyFavoritesActivity extends AppCompatActivity {
             view.findViewById(R.id.btnDialogCancel).setOnClickListener(btn -> dialog.dismiss());
             view.findViewById(R.id.btnDialogConfirm).setOnClickListener(btn -> {
                 dialog.dismiss();
-                int cleared = dm.clearInvalidLikedArticles(username);
-                if (cleared > 0) {
-                    Toast.makeText(this, "成功清理 " + cleared + " 篇失效文章", Toast.LENGTH_SHORT).show();
-                    loadData();
-                } else {
-                    Toast.makeText(this, "没有需要清理的失效文章", Toast.LENGTH_SHORT).show();
-                }
+                presenter.clearInvalidArticles();
             });
             dialog.show();
         });
@@ -70,16 +61,47 @@ public class MyFavoritesActivity extends AppCompatActivity {
     @Override
     protected void onResume() {
         super.onResume();
-        loadData();
+        if (presenter != null) {
+            presenter.refresh();
+        }
     }
 
-    private void loadData() {
-        List<Article> articles = dm.getLikedArticles(username);
-        adapter = new ArticleAdapter(articles, article -> {
-            Intent intent = new Intent(this, ArticleDetailActivity.class);
-            intent.putExtra("article_id", article.id);
-            startActivity(intent);
-        }, dm, username);
+    @Override
+    public void showArticles(List<Article> articles, String currentUser) {
+        adapter = new ArticleAdapter(articles, article -> openArticleDetail(article.id),
+                new ArticleAdapter.ArticleInteractionDelegate() {
+                    @Override
+                    public int getArticleLikeCount(int articleId) {
+                        return presenter.getArticleLikeCount(articleId);
+                    }
+
+                    @Override
+                    public int getCommentCount(int articleId) {
+                        return presenter.getCommentCount(articleId);
+                    }
+
+                    @Override
+                    public boolean isArticleLiked(int articleId) {
+                        return presenter.isArticleLiked(articleId);
+                    }
+
+                    @Override
+                    public void toggleArticleLike(int articleId) {
+                        presenter.toggleArticleLike(articleId);
+                    }
+                }, currentUser);
         rv.setAdapter(adapter);
+    }
+
+    @Override
+    public void showToast(String message) {
+        Toast.makeText(this, message, Toast.LENGTH_SHORT).show();
+    }
+
+    @Override
+    public void openArticleDetail(int articleId) {
+        Intent intent = new Intent(this, ArticleDetailActivity.class);
+        intent.putExtra("article_id", articleId);
+        startActivity(intent);
     }
 }

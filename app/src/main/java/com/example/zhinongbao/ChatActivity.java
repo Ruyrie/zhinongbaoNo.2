@@ -7,24 +7,21 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
-import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import com.example.zhinongbao.adapter.ChatAdapter;
-import com.example.zhinongbao.data.DataManager;
+import com.example.zhinongbao.base.BaseMvpActivity;
 import com.example.zhinongbao.model.ChatMessage;
+import com.example.zhinongbao.mvp.chat.ChatContract;
+import com.example.zhinongbao.mvp.chat.ChatPresenter;
 import java.util.List;
 
-public class ChatActivity extends AppCompatActivity {
+public class ChatActivity extends BaseMvpActivity<ChatContract.Presenter>
+        implements ChatContract.View {
 
     /** 默认客服账号（商家） */
     public static final String SHOP_USERNAME = "admin";
 
-    private DataManager dm;
-    private String currentUser;
-    private String currentNickname;
-    private String otherUser;
-    private String otherNickname;
     private RecyclerView rvMessages;
     private ChatAdapter adapter;
     private List<ChatMessage> messages;
@@ -36,26 +33,9 @@ public class ChatActivity extends AppCompatActivity {
         setContentView(R.layout.activity_chat);
         if (getSupportActionBar() != null) getSupportActionBar().hide();
 
-        dm = DataManager.getInstance(this);
-        currentUser = dm.getLoggedUser();
-        otherUser = getIntent().getStringExtra("other_user");
+        String otherUser = getIntent().getStringExtra("other_user");
         if (otherUser == null) otherUser = SHOP_USERNAME;
-        if (currentUser == null || currentUser.equals(otherUser)) {
-            Toast.makeText(this, "不能给自己发送消息", Toast.LENGTH_SHORT).show();
-            finish();
-            return;
-        }
-
         String productName = getIntent().getStringExtra("product_name");
-        currentNickname = dm.getNickname(currentUser);
-        if (currentNickname == null || currentNickname.isEmpty()) currentNickname = currentUser;
-        otherNickname = dm.getNickname(otherUser);
-        if (otherNickname == null || otherNickname.isEmpty()) otherNickname = otherUser;
-        String title = otherNickname;
-        if (productName != null && !productName.isEmpty()) {
-            title = title + " · " + productName;
-        }
-        ((TextView) findViewById(R.id.tvChatTitle)).setText(title);
 
         findViewById(R.id.ivChatBack).setOnClickListener(v -> finish());
 
@@ -65,8 +45,6 @@ public class ChatActivity extends AppCompatActivity {
         etInput = findViewById(R.id.etChatInput);
         Button btnSend = findViewById(R.id.btnChatSend);
 
-        loadMessages();
-
         btnSend.setOnClickListener(v -> sendMessage());
         etInput.setOnEditorActionListener((v, actionId, event) -> {
             if (actionId == EditorInfo.IME_ACTION_SEND) {
@@ -75,18 +53,27 @@ public class ChatActivity extends AppCompatActivity {
             }
             return false;
         });
+
+        new ChatPresenter(this, this, otherUser, productName).start();
     }
 
     @Override
     protected void onResume() {
         super.onResume();
-        // Mark messages from other user as read
-        dm.markMessagesRead(otherUser, currentUser);
-        loadMessages();
+        if (presenter != null) {
+            presenter.markRead();
+            presenter.refresh();
+        }
     }
 
-    private void loadMessages() {
-        List<ChatMessage> newMessages = dm.getMessages(currentUser, otherUser);
+    @Override
+    public void showTitle(String title) {
+        ((TextView) findViewById(R.id.tvChatTitle)).setText(title);
+    }
+
+    @Override
+    public void showMessages(List<ChatMessage> newMessages, String currentUser,
+            String currentNickname, String otherNickname) {
         if (adapter == null) {
             messages = newMessages;
             adapter = new ChatAdapter(messages, currentUser, currentNickname, otherNickname);
@@ -105,8 +92,21 @@ public class ChatActivity extends AppCompatActivity {
         String text = etInput.getText().toString().trim();
         if (TextUtils.isEmpty(text)) return;
 
-        dm.sendMessage(currentUser, otherUser, text);
+        presenter.sendMessage(text);
+    }
+
+    @Override
+    public void clearInput() {
         etInput.setText("");
-        loadMessages();
+    }
+
+    @Override
+    public void showToast(String message) {
+        Toast.makeText(this, message, Toast.LENGTH_SHORT).show();
+    }
+
+    @Override
+    public void closePage() {
+        finish();
     }
 }

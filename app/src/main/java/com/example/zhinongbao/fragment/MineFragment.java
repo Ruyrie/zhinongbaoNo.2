@@ -12,7 +12,6 @@ import android.widget.ImageView;
 import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.fragment.app.Fragment;
 import com.example.zhinongbao.CartActivity;
 import com.example.zhinongbao.FollowListActivity;
 import com.example.zhinongbao.FootprintActivity;
@@ -24,11 +23,13 @@ import com.example.zhinongbao.ProductFavoritesActivity;
 import com.example.zhinongbao.ProfileEditActivity;
 import com.example.zhinongbao.R;
 import com.example.zhinongbao.SettingsActivity;
-import com.example.zhinongbao.data.DataManager;
+import com.example.zhinongbao.base.BaseMvpFragment;
+import com.example.zhinongbao.mvp.mine.MineContract;
+import com.example.zhinongbao.mvp.mine.MinePresenter;
 import java.io.IOException;
 import java.io.InputStream;
 
-public class MineFragment extends Fragment {
+public class MineFragment extends BaseMvpFragment<MineContract.Presenter> implements MineContract.View {
 
         @Nullable
         @Override
@@ -40,28 +41,62 @@ public class MineFragment extends Fragment {
 
         @Override
         public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
-                bindViews(view);
+                bindStaticViews(view);
+                new MinePresenter(requireContext(), this).start();
         }
 
         @Override
         public void onResume() {
                 super.onResume();
                 if (getView() != null)
-                        bindViews(getView());
+                        presenter.start();
         }
 
-        private void bindViews(View view) {
-                DataManager dm = DataManager.getInstance(requireContext());
-                String username = dm.getLoggedUser();
+        private void bindStaticViews(View view) {
+                loadAssetImage(view.findViewById(R.id.ivOrderPending), "daifukuan.png");
+                loadAssetImage(view.findViewById(R.id.ivOrderShipping), "daifahuo.png");
+                loadAssetImage(view.findViewById(R.id.ivOrderReceiving), "daishouhuo.png");
+                loadAssetImage(view.findViewById(R.id.ivOrderReviewing), "daipingjia.png");
+                loadAssetImage(view.findViewById(R.id.ivOrderRefund), "tuikuanshouhou.png");
+                loadAssetImage(view.findViewById(R.id.ivFootprintIcon), "zuji.png");
+
+                view.findViewById(R.id.layoutProfile).setOnClickListener(
+                                v -> startActivity(new Intent(getContext(), ProfileEditActivity.class)));
+                view.findViewById(R.id.quickCart).setOnClickListener(
+                                v -> startActivity(new Intent(getContext(), CartActivity.class)));
+                view.findViewById(R.id.quickFavorites).setOnClickListener(
+                                v -> startActivity(new Intent(getContext(), ProductFavoritesActivity.class)));
+                view.findViewById(R.id.quickFootprint).setOnClickListener(
+                                v -> startActivity(new Intent(getContext(), FootprintActivity.class)));
+                view.findViewById(R.id.tvAllOrders).setOnClickListener(
+                                v -> startActivity(new Intent(getContext(), MyOrdersActivity.class)));
+                view.findViewById(R.id.orderPending).setOnClickListener(v -> openOrders("pending"));
+                view.findViewById(R.id.orderShipping).setOnClickListener(v -> openOrders("shipping"));
+                view.findViewById(R.id.orderReceiving).setOnClickListener(v -> openOrders("receiving"));
+                view.findViewById(R.id.orderReviewing).setOnClickListener(v -> openOrders("reviewing"));
+                view.findViewById(R.id.orderRefund).setOnClickListener(v -> openOrders("refund"));
+                view.findViewById(R.id.tvMyArticles).setOnClickListener(
+                                v -> startActivity(new Intent(getContext(), MyArticlesActivity.class)));
+                view.findViewById(R.id.tvMyFavorites).setOnClickListener(
+                                v -> startActivity(new Intent(getContext(), MyFavoritesActivity.class)));
+                view.findViewById(R.id.tvSettings).setOnClickListener(
+                                v -> startActivity(new Intent(getContext(), SettingsActivity.class)));
+        }
+
+        @Override
+        public void renderUser(String username, String nickname, String signature, String avatarUri,
+                        int followers, int following, int likes, boolean sellerActive) {
+                View view = getView();
+                if (view == null)
+                        return;
 
                 ((TextView) view.findViewById(R.id.tvMineUsername)).setText("用户名： " + username);
-                ((TextView) view.findViewById(R.id.tvMineNickname)).setText(dm.getNickname(username));
-                ((TextView) view.findViewById(R.id.tvMineSignature)).setText(dm.getSignature(username));
+                ((TextView) view.findViewById(R.id.tvMineNickname)).setText(nickname);
+                ((TextView) view.findViewById(R.id.tvMineSignature)).setText(signature);
 
                 // Avatar
                 ImageView ivAvatar = view.findViewById(R.id.ivMineAvatar);
                 TextView tvInitial = view.findViewById(R.id.tvAvatarInitial);
-                String avatarUri = dm.getAvatarUri(username);
                 if (avatarUri != null) {
                         try {
                                 if (avatarUri.startsWith("data:image")) {
@@ -87,105 +122,51 @@ public class MineFragment extends Fragment {
 
                 // Stats: 粉丝 / 关注 / 获赞
                 ((TextView) view.findViewById(R.id.tvStatFollowers))
-                                .setText(String.valueOf(dm.getFollowersCount(username)));
+                                .setText(String.valueOf(followers));
                 ((TextView) view.findViewById(R.id.tvStatFollowing))
-                                .setText(String.valueOf(dm.getFollowingCount(username)));
+                                .setText(String.valueOf(following));
                 ((TextView) view.findViewById(R.id.tvStatLikes))
-                                .setText(String.valueOf(dm.getTotalLikesReceived(username)));
-
-                // Load order status icons from assets
-                loadAssetImage(view.findViewById(R.id.ivOrderPending), "daifukuan.png");
-                loadAssetImage(view.findViewById(R.id.ivOrderShipping), "daifahuo.png");
-                loadAssetImage(view.findViewById(R.id.ivOrderReceiving), "daishouhuo.png");
-                loadAssetImage(view.findViewById(R.id.ivOrderReviewing), "daipingjia.png");
-                loadAssetImage(view.findViewById(R.id.ivOrderRefund), "tuikuanshouhou.png");
-
-                // Load footprint icon from assets
-                loadAssetImage(view.findViewById(R.id.ivFootprintIcon), "zuji.png");
+                                .setText(String.valueOf(likes));
 
                 // Role switch button
                 TextView btnSwitch = view.findViewById(R.id.btnSwitchToSeller);
-                boolean sellerActive = dm.getActiveRole() == com.example.zhinongbao.model.User.ROLE_SELLER;
                 btnSwitch.setText(sellerActive ? "切换到买家" : "切换到卖家");
                 btnSwitch.setVisibility(View.VISIBLE);
-                btnSwitch.setOnClickListener(v -> {
-                        boolean activeSellerNow = dm.getActiveRole() == com.example.zhinongbao.model.User.ROLE_SELLER;
-                        dm.setActiveRole(activeSellerNow
-                                        ? com.example.zhinongbao.model.User.ROLE_BUYER
-                                        : com.example.zhinongbao.model.User.ROLE_SELLER);
-                        Intent intent = new Intent(requireContext(), MainActivity.class);
-                        intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK | Intent.FLAG_ACTIVITY_NEW_TASK);
-                        startActivity(intent);
-                });
-
-                // Profile click
-                view.findViewById(R.id.layoutProfile).setOnClickListener(
-                                v -> startActivity(new Intent(getContext(), ProfileEditActivity.class)));
-
-                // Quick action row
-                view.findViewById(R.id.quickCart).setOnClickListener(
-                                v -> startActivity(new Intent(getContext(), CartActivity.class)));
-                view.findViewById(R.id.quickFavorites).setOnClickListener(
-                                v -> startActivity(new Intent(getContext(), ProductFavoritesActivity.class)));
-                view.findViewById(R.id.quickFootprint).setOnClickListener(
-                                v -> startActivity(new Intent(getContext(), FootprintActivity.class)));
-
-                // Orders card: all status icons → MyOrdersActivity with filter
-                view.findViewById(R.id.tvAllOrders).setOnClickListener(
-                                v -> startActivity(new Intent(getContext(), MyOrdersActivity.class)));
-                view.findViewById(R.id.orderPending).setOnClickListener(v -> {
-                        Intent i = new Intent(getContext(), MyOrdersActivity.class);
-                        i.putExtra("filter", "pending");
-                        startActivity(i);
-                });
-                view.findViewById(R.id.orderShipping).setOnClickListener(v -> {
-                        Intent i = new Intent(getContext(), MyOrdersActivity.class);
-                        i.putExtra("filter", "shipping");
-                        startActivity(i);
-                });
-                view.findViewById(R.id.orderReceiving).setOnClickListener(v -> {
-                        Intent i = new Intent(getContext(), MyOrdersActivity.class);
-                        i.putExtra("filter", "receiving");
-                        startActivity(i);
-                });
-                view.findViewById(R.id.orderReviewing).setOnClickListener(v -> {
-                        Intent i = new Intent(getContext(), MyOrdersActivity.class);
-                        i.putExtra("filter", "reviewing");
-                        startActivity(i);
-                });
-                view.findViewById(R.id.orderRefund).setOnClickListener(v -> {
-                        Intent i = new Intent(getContext(), MyOrdersActivity.class);
-                        i.putExtra("filter", "refund");
-                        startActivity(i);
-                });
+                btnSwitch.setOnClickListener(v -> presenter.switchRole());
 
                 // Stats row click handlers
                 view.findViewById(R.id.statFollowers).setOnClickListener(v -> {
                         Intent i = new Intent(getContext(), FollowListActivity.class);
                         i.putExtra("type", "followers");
-                        i.putExtra("username", username);
+                        i.putExtra("username", presenter.getCurrentUser());
                         startActivity(i);
                 });
                 view.findViewById(R.id.statFollowing).setOnClickListener(v -> {
                         Intent i = new Intent(getContext(), FollowListActivity.class);
                         i.putExtra("type", "following");
-                        i.putExtra("username", username);
+                        i.putExtra("username", presenter.getCurrentUser());
                         startActivity(i);
                 });
                 view.findViewById(R.id.statLikes).setOnClickListener(v -> {
                         Intent i = new Intent(getContext(), FollowListActivity.class);
                         i.putExtra("type", "likes");
-                        i.putExtra("username", username);
+                        i.putExtra("username", presenter.getCurrentUser());
                         startActivity(i);
                 });
 
-                // Menu items
-                view.findViewById(R.id.tvMyArticles).setOnClickListener(
-                                v -> startActivity(new Intent(getContext(), MyArticlesActivity.class)));
-                view.findViewById(R.id.tvMyFavorites).setOnClickListener(
-                                v -> startActivity(new Intent(getContext(), MyFavoritesActivity.class)));
-                view.findViewById(R.id.tvSettings).setOnClickListener(
-                                v -> startActivity(new Intent(getContext(), SettingsActivity.class)));
+        }
+
+        @Override
+        public void restartMain() {
+                Intent intent = new Intent(requireContext(), MainActivity.class);
+                intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK | Intent.FLAG_ACTIVITY_NEW_TASK);
+                startActivity(intent);
+        }
+
+        private void openOrders(String filter) {
+                Intent i = new Intent(getContext(), MyOrdersActivity.class);
+                i.putExtra("filter", filter);
+                startActivity(i);
         }
 
         private void loadAssetImage(ImageView iv, String filename) {

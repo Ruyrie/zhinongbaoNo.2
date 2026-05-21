@@ -9,10 +9,12 @@ import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.fragment.app.Fragment;
+import com.example.zhinongbao.base.BaseMvpFragment;
 import com.example.zhinongbao.R;
+import com.example.zhinongbao.mvp.agritech.AgriTechContract;
+import com.example.zhinongbao.mvp.agritech.AgriTechPresenter;
 
-public class AgriTechFragment extends Fragment {
+public class AgriTechFragment extends BaseMvpFragment<AgriTechContract.Presenter> implements AgriTechContract.View {
 
     private WebView webView;
 
@@ -36,6 +38,11 @@ public class AgriTechFragment extends Fragment {
         webSettings.setLoadWithOverviewMode(true);
 
         webView.setWebViewClient(new WebViewClient());
-        webView.loadUrl("file:///android_asset/agritech.html");
+        new AgriTechPresenter(this).start();
+    }
+
+    @Override
+    public void loadAgriTechPage(String url) {
+        webView.loadUrl(url);
     }
 }

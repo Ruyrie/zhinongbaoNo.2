@@ -16,32 +16,32 @@ import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 import androidx.annotation.NonNull;
-import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import com.example.zhinongbao.adapter.ProductListAdapter;
 import com.example.zhinongbao.adapter.PurchaseRequestAdapter;
-import com.example.zhinongbao.data.DataManager;
+import com.example.zhinongbao.base.BaseMvpActivity;
 import com.example.zhinongbao.model.Product;
 import com.example.zhinongbao.model.PurchaseRequest;
-import com.example.zhinongbao.model.User;
+import com.example.zhinongbao.model.StoreSearchResult;
+import com.example.zhinongbao.mvp.productsearch.ProductSearchContract;
+import com.example.zhinongbao.mvp.productsearch.ProductSearchPresenter;
 import com.google.android.material.tabs.TabLayout;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 
-public class ProductSearchActivity extends AppCompatActivity {
+public class ProductSearchActivity extends BaseMvpActivity<ProductSearchContract.Presenter> implements ProductSearchContract.View {
 
     private static final int TAB_PRODUCTS = 0;
     private static final int TAB_PURCHASES = 1;
     private static final int TAB_STORES = 2;
 
-    private DataManager dm;
     private List<Product> allProducts;
     private List<PurchaseRequest> allPurchaseRequests;
     private final List<Product> displayedProducts = new ArrayList<>();
     private final List<PurchaseRequest> displayedPurchaseRequests = new ArrayList<>();
-    private final List<DataManager.StoreSearchResult> displayedStores = new ArrayList<>();
+    private final List<StoreSearchResult> displayedStores = new ArrayList<>();
     private ProductListAdapter productAdapter;
     private PurchaseRequestAdapter purchaseAdapter;
     private StoreSearchAdapter storeAdapter;
@@ -64,9 +64,7 @@ public class ProductSearchActivity extends AppCompatActivity {
             getSupportActionBar().hide();
         }
 
-        dm = DataManager.getInstance(this);
-        allProducts = dm.getProducts();
-        allPurchaseRequests = dm.getPurchaseRequests();
+        new ProductSearchPresenter(this, this).start();
 
         ImageView ivBack = findViewById(R.id.ivBack);
         etSearchInput = findViewById(R.id.etSearchInput);
@@ -107,8 +105,8 @@ public class ProductSearchActivity extends AppCompatActivity {
             intent.putExtra("product_id", product.id);
             startActivity(intent);
         });
-        purchaseAdapter = new PurchaseRequestAdapter(displayedPurchaseRequests, dm.getLoggedUser(),
-                dm.getActiveRole() == User.ROLE_SELLER, new PurchaseRequestAdapter.OnActionListener() {
+        purchaseAdapter = new PurchaseRequestAdapter(displayedPurchaseRequests, currentUser,
+                sellerMode, new PurchaseRequestAdapter.OnActionListener() {
             @Override
             public void onQuoteClick(PurchaseRequest req) {
                 openPurchaseMarket();
@@ -235,8 +233,7 @@ public class ProductSearchActivity extends AppCompatActivity {
             purchaseAdapter.notifyDataSetChanged();
             updateResultState(displayedPurchaseRequests.isEmpty(), "未找到\"" + currentQuery + "\"的相关采购信息");
         } else {
-            displayedStores.clear();
-            displayedStores.addAll(dm.searchStores(currentQuery));
+            presenter.searchStores(currentQuery);
             storeAdapter.setQuery(currentQuery);
             rvSearchResults.setAdapter(storeAdapter);
             storeAdapter.notifyDataSetChanged();
@@ -254,7 +251,7 @@ public class ProductSearchActivity extends AppCompatActivity {
     }
 
     private void searchPurchases(String query) {
-        allPurchaseRequests = dm.getPurchaseRequests();
+        allPurchaseRequests = presenter.getPurchaseRequests();
         displayedPurchaseRequests.clear();
         for (PurchaseRequest req : allPurchaseRequests) {
             if (contains(req.productName, query) || contains(req.description, query)
@@ -286,22 +283,40 @@ public class ProductSearchActivity extends AppCompatActivity {
         startActivity(new Intent(this, PurchaseMarketActivity.class));
     }
 
+    private String currentUser;
+    private boolean sellerMode;
+
+    @Override
+    public void showInitialData(List<Product> products, List<PurchaseRequest> purchaseRequests, String currentUser,
+            boolean sellerMode) {
+        this.allProducts = products;
+        this.allPurchaseRequests = purchaseRequests;
+        this.currentUser = currentUser;
+        this.sellerMode = sellerMode;
+    }
+
+    @Override
+    public void showStoreResults(List<StoreSearchResult> stores) {
+        displayedStores.clear();
+        displayedStores.addAll(stores);
+    }
+
     private static class StoreSearchAdapter extends RecyclerView.Adapter<StoreSearchAdapter.VH> {
         interface OnStoreClickListener {
-            void onStoreClick(DataManager.StoreSearchResult store);
+            void onStoreClick(StoreSearchResult store);
         }
 
         interface OnProductClickListener {
             void onProductClick(Product product);
         }
 
-        private final List<DataManager.StoreSearchResult> stores;
+        private final List<StoreSearchResult> stores;
         private final List<Product> products;
         private final OnStoreClickListener listener;
         private final OnProductClickListener productListener;
         private String query = "";
 
-        StoreSearchAdapter(List<DataManager.StoreSearchResult> stores, List<Product> products,
+        StoreSearchAdapter(List<StoreSearchResult> stores, List<Product> products,
                 OnStoreClickListener listener, OnProductClickListener productListener) {
             this.stores = stores;
             this.products = products;
@@ -323,7 +338,7 @@ public class ProductSearchActivity extends AppCompatActivity {
 
         @Override
         public void onBindViewHolder(@NonNull VH holder, int position) {
-            DataManager.StoreSearchResult store = stores.get(position);
+            StoreSearchResult store = stores.get(position);
             holder.tvStoreName.setText(store.storeName);
             holder.tvStoreMeta.setText("账号：" + store.seller + "  商品：" + store.productCount + " 个");
             holder.tvStorePhone.setText(store.storePhone == null || store.storePhone.isEmpty()

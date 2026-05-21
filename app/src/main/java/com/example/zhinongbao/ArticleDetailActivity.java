@@ -12,21 +12,22 @@ import android.widget.TextView;
 import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
-import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.widget.NestedScrollView;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import com.example.zhinongbao.adapter.CommentAdapter;
-import com.example.zhinongbao.data.DataManager;
+import com.example.zhinongbao.base.BaseMvpActivity;
 import com.example.zhinongbao.model.Article;
 import com.example.zhinongbao.model.Comment;
+import com.example.zhinongbao.mvp.articledetail.ArticleDetailContract;
+import com.example.zhinongbao.mvp.articledetail.ArticleDetailPresenter;
 import java.util.List;
 
-public class ArticleDetailActivity extends AppCompatActivity {
+public class ArticleDetailActivity extends BaseMvpActivity<ArticleDetailContract.Presenter>
+        implements ArticleDetailContract.View {
 
     private int articleId;
     private Article article;
-    private DataManager dm;
     private String currentUser;
     private List<Comment> comments;
     private CommentAdapter commentAdapter;
@@ -44,31 +45,16 @@ public class ArticleDetailActivity extends AppCompatActivity {
         if (getSupportActionBar() != null)
             getSupportActionBar().hide();
 
-        dm = DataManager.getInstance(this);
-        currentUser = dm.getLoggedUser();
         articleId = getIntent().getIntExtra("article_id", -1);
-
-        dm.incrementReadCount(articleId);
-
-        for (Article a : dm.getArticles()) {
-            if (a.id == articleId) {
-                article = a;
-                break;
-            }
-        }
-        if (article == null) {
-            finish();
-            return;
-        }
-
-        bindViews();
-        setupComments();
-        setupBottomBar();
+        new ArticleDetailPresenter(this, this, articleId).start();
     }
 
     // ─── Article binding ─────────────────────────────────────────────────────
 
-    private void bindViews() {
+    @Override
+    public void showArticle(Article article, String currentUser, boolean following) {
+        this.article = article;
+        this.currentUser = currentUser;
         nestedScroll = findViewById(R.id.nestedScroll);
 
         // Toolbar
@@ -100,9 +86,7 @@ public class ArticleDetailActivity extends AppCompatActivity {
                 view.findViewById(R.id.btnDialogCancel).setOnClickListener(btn -> dialog.dismiss());
                 btnConfirm.setOnClickListener(btn -> {
                     dialog.dismiss();
-                    dm.deleteArticle(articleId);
-                    Toast.makeText(this, "作品已删除", Toast.LENGTH_SHORT).show();
-                    finish();
+                    presenter.deleteArticle();
                 });
                 dialog.show();
             });
@@ -126,7 +110,6 @@ public class ArticleDetailActivity extends AppCompatActivity {
         }
 
         boolean showFollow = (currentUser != null && !article.author.equals(currentUser));
-        boolean following = showFollow && dm.isFollowing(currentUser, article.author);
 
         String followHtml = "";
         if (showFollow) {
@@ -217,40 +200,38 @@ public class ArticleDetailActivity extends AppCompatActivity {
                 .append("</body></html>");
 
         webView.loadDataWithBaseURL("file:///android_asset/", htmlBuilder.toString(), "text/html", "UTF-8", null);
+        setupBottomBar();
     }
 
     private class WebAppInterface {
         @android.webkit.JavascriptInterface
         public void toggleFollow() {
-            runOnUiThread(() -> {
-                if (currentUser == null) {
-                    Toast.makeText(ArticleDetailActivity.this, "请先登录", Toast.LENGTH_SHORT).show();
-                    return;
-                }
-                boolean following = dm.isFollowing(currentUser, article.author);
-                if (following) {
-                    dm.unfollowUser(currentUser, article.author);
-                } else {
-                    dm.followUser(currentUser, article.author);
-                }
-                boolean newFollowing = dm.isFollowing(currentUser, article.author);
-                android.webkit.WebView webView = findViewById(R.id.webViewContent);
-                webView.evaluateJavascript("javascript:updateFollowBtn(" + newFollowing + ")", null);
-            });
+            runOnUiThread(() -> presenter.toggleFollow());
         }
     }
 
     // ─── Comments ────────────────────────────────────────────────────────────
 
-    private void setupComments() {
+    private void setupComments(List<Comment> comments) {
         tvCommentCount = findViewById(R.id.tvCommentCount);
         tvCommentCountBar = findViewById(R.id.tvCommentCountBar);
         llNoComments = findViewById(R.id.llNoComments);
 
-        comments = dm.getComments(articleId, currentUser != null ? currentUser : "");
+        this.comments = comments;
         updateCommentCountUI();
 
-        commentAdapter = new CommentAdapter(comments, currentUser, article.author, dm);
+        commentAdapter = new CommentAdapter(comments, currentUser, article.author,
+                new CommentAdapter.CommentInteractionDelegate() {
+                    @Override
+                    public void likeComment(int commentId) {
+                        presenter.likeComment(commentId);
+                    }
+
+                    @Override
+                    public void unlikeComment(int commentId) {
+                        presenter.unlikeComment(commentId);
+                    }
+                });
         commentAdapter.setOnDeleteListener(comment -> {
             android.view.View view = getLayoutInflater().inflate(R.layout.dialog_confirm, null);
             android.widget.TextView tvTitle = view.findViewById(R.id.tvDialogTitle);
@@ -273,10 +254,7 @@ public class ArticleDetailActivity extends AppCompatActivity {
             view.findViewById(R.id.btnDialogCancel).setOnClickListener(btn -> dialog.dismiss());
             btnConfirm.setOnClickListener(btn -> {
                 dialog.dismiss();
-                dm.deleteComment(comment.id);
-                comments.remove(comment);
-                commentAdapter.notifyDataSetChanged();
-                updateCommentCountUI();
+                presenter.deleteComment(comment);
             });
             dialog.show();
         });
@@ -285,6 +263,18 @@ public class ArticleDetailActivity extends AppCompatActivity {
         rv.setLayoutManager(new LinearLayoutManager(this));
         rv.setNestedScrollingEnabled(false);
         rv.setAdapter(commentAdapter);
+    }
+
+    @Override
+    public void showComments(List<Comment> comments) {
+        if (commentAdapter == null) {
+            setupComments(comments);
+            return;
+        }
+        this.comments.clear();
+        this.comments.addAll(comments);
+        commentAdapter.notifyDataSetChanged();
+        updateCommentCountUI();
     }
 
     private void updateCommentCountUI() {
@@ -303,21 +293,14 @@ public class ArticleDetailActivity extends AppCompatActivity {
 
         // Like toggle
         findViewById(R.id.layoutLike).setOnClickListener(v -> {
-            if (currentUser == null) {
-                Toast.makeText(this, "请先登录", Toast.LENGTH_SHORT).show();
-                return;
-            }
-            boolean nowLiked = dm.isArticleLiked(currentUser, articleId);
-            if (nowLiked) {
-                dm.unlikeArticle(currentUser, articleId);
-            } else {
-                dm.likeArticle(currentUser, articleId);
+            boolean wasLiked = currentUser != null && presenter != null;
+            presenter.toggleArticleLike();
+            if (wasLiked) {
                 // Heart-beat animation
                 ivLikeBtn.animate().scaleX(1.35f).scaleY(1.35f).setDuration(130)
                         .withEndAction(() -> ivLikeBtn.animate().scaleX(1f).scaleY(1f).setDuration(100).start())
                         .start();
             }
-            refreshLikeUI();
         });
 
         // Comment submit via keyboard "Send" action
@@ -342,37 +325,50 @@ public class ArticleDetailActivity extends AppCompatActivity {
     }
 
     private void refreshLikeUI() {
-        boolean liked = currentUser != null && dm.isArticleLiked(currentUser, articleId);
-        int count = dm.getArticleLikeCount(articleId);
+        if (presenter != null) {
+            presenter.refreshLikeState();
+        }
+    }
+
+    @Override
+    public void showLikeState(boolean liked, int likeCount) {
+        if (ivLikeBtn == null || tvLikeCount == null) {
+            return;
+        }
         ivLikeBtn.setImageResource(liked ? R.mipmap.dianzan : R.mipmap.weidianzan);
-        tvLikeCount.setText(count > 0 ? String.valueOf(count) : "");
+        tvLikeCount.setText(likeCount > 0 ? String.valueOf(likeCount) : "");
+    }
+
+    @Override
+    public void showFollowState(boolean following) {
+        android.webkit.WebView webView = findViewById(R.id.webViewContent);
+        webView.evaluateJavascript("javascript:updateFollowBtn(" + following + ")", null);
     }
 
     private void submitComment(EditText et) {
-        if (currentUser == null) {
-            Toast.makeText(this, "请先登录", Toast.LENGTH_SHORT).show();
-            return;
-        }
         String text = et.getText().toString().trim();
         if (text.isEmpty())
             return;
 
-        Comment c = dm.addComment(articleId, currentUser, text);
-        c.nickname = dm.getNickname(currentUser);
-        c.isLikedByMe = false;
-        comments.add(c);
-        commentAdapter.notifyItemInserted(comments.size() - 1);
+        presenter.submitComment(text);
         et.setText("");
 
         // Hide keyboard
         InputMethodManager imm = (InputMethodManager) getSystemService(INPUT_METHOD_SERVICE);
         if (imm != null)
             imm.hideSoftInputFromWindow(et.getWindowToken(), 0);
-
-        updateCommentCountUI();
-
         // Scroll to new comment
         nestedScroll.post(() -> nestedScroll.fullScroll(View.FOCUS_DOWN));
+    }
+
+    @Override
+    public void showToast(String message) {
+        Toast.makeText(this, message, Toast.LENGTH_SHORT).show();
+    }
+
+    @Override
+    public void closePage() {
+        finish();
     }
 
     @Override
@@ -381,11 +377,8 @@ public class ArticleDetailActivity extends AppCompatActivity {
         if (ivLikeBtn != null) {
             refreshLikeUI();
         }
-        if (comments != null && commentAdapter != null) {
-            comments.clear();
-            comments.addAll(dm.getComments(articleId, currentUser != null ? currentUser : ""));
-            commentAdapter.notifyDataSetChanged();
-            updateCommentCountUI();
+        if (presenter != null && comments != null && commentAdapter != null) {
+            presenter.refreshComments();
         }
     }
 }

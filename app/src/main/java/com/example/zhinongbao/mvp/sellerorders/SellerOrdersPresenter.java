@@ -3,13 +3,16 @@ package com.example.zhinongbao.mvp.sellerorders;
 import android.content.Context;
 
 import com.example.zhinongbao.model.Order;
+import com.example.zhinongbao.model.Product;
 import com.example.zhinongbao.repository.OrderRepository;
+import com.example.zhinongbao.repository.ProductRepository;
 
 import java.util.ArrayList;
 
 public class SellerOrdersPresenter implements SellerOrdersContract.Presenter {
     private final SellerOrdersContract.View view;
     private final OrderRepository repository;
+    private final ProductRepository productRepository;
     private final String seller;
     private String currentFilter;
     private String salesScope;
@@ -18,6 +21,7 @@ public class SellerOrdersPresenter implements SellerOrdersContract.Presenter {
     public SellerOrdersPresenter(Context context, SellerOrdersContract.View view, String currentFilter, String salesScope) {
         this.view = view;
         this.repository = new OrderRepository(context.getApplicationContext());
+        this.productRepository = new ProductRepository(context.getApplicationContext());
         this.seller = repository.getLoggedUser();
         this.currentFilter = currentFilter == null ? "all" : currentFilter;
         this.salesScope = salesScope;
@@ -99,5 +103,10 @@ public class SellerOrdersPresenter implements SellerOrdersContract.Presenter {
         repository.processRefund(order.orderId, amount, reason, approve);
         view.showToast(approve ? "已同意退款" : "已拒绝退款，恢复为发货状态");
         refresh();
+    }
+
+    @Override
+    public Product getProductById(int productId) {
+        return productRepository.getProductById(productId);
     }
 }

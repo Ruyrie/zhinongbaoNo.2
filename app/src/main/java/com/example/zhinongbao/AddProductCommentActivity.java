@@ -8,18 +8,20 @@ import android.widget.TextView;
 import android.widget.Toast;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
-import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.content.FileProvider;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import com.example.zhinongbao.adapter.ImagePickerAdapter;
-import com.example.zhinongbao.data.DataManager;
+import com.example.zhinongbao.base.BaseMvpActivity;
+import com.example.zhinongbao.mvp.addproductcomment.AddProductCommentContract;
+import com.example.zhinongbao.mvp.addproductcomment.AddProductCommentPresenter;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
-public class AddProductCommentActivity extends AppCompatActivity {
+public class AddProductCommentActivity extends BaseMvpActivity<AddProductCommentContract.Presenter>
+        implements AddProductCommentContract.View {
 
     private int productId;
     private List<Uri> imageUris = new ArrayList<>();
@@ -84,9 +86,8 @@ public class AddProductCommentActivity extends AppCompatActivity {
         });
         rvCommentImages.setAdapter(adapter);
 
-        DataManager dm = DataManager.getInstance(this);
-        String username = dm.getLoggedUser();
-        if (!dm.hasPurchasedProduct(username, productId) && !"admin".equals(username)) {
+        new AddProductCommentPresenter(this, this, productId).start();
+        if (!presenter.canComment()) {
             Toast.makeText(this, "确认收货后才能评价该商品", Toast.LENGTH_SHORT).show();
             finish();
             return;
@@ -102,10 +103,18 @@ public class AddProductCommentActivity extends AppCompatActivity {
             if (!imageUris.isEmpty()) {
                 images = imageUris.stream().map(Uri::toString).collect(Collectors.joining(","));
             }
-            dm.addProductComment(productId, username, content, images);
-            Toast.makeText(this, "评价发布成功", Toast.LENGTH_SHORT).show();
-            finish();
+            presenter.submit(content, images);
         });
+    }
+
+    @Override
+    public void showToast(String message) {
+        Toast.makeText(this, message, Toast.LENGTH_SHORT).show();
+    }
+
+    @Override
+    public void closePage() {
+        finish();
     }
 
     private Uri createImageFile() {

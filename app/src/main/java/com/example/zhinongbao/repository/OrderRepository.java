@@ -113,6 +113,33 @@ public class OrderRepository {
         return Math.max(0, total);
     }
 
+    public int getTotalOrderCountForSeller(String seller) {
+        try (Cursor cursor = resolver.query(
+                ZhiNongBaoProvider.CONTENT_URI_ORDERS,
+                new String[] { "id" },
+                "seller=?",
+                new String[] { seller },
+                null)) {
+            return cursor == null ? 0 : cursor.getCount();
+        }
+    }
+
+    public double getTotalRevenueForSeller(String seller) {
+        double revenue = 0;
+        for (Order order : getSellerSoldOrdersByStatus(seller, Order.STATUS_COMPLETED)) {
+            revenue += Math.max(0, getOrderPaidAmount(order) - order.refundAmount);
+        }
+        return revenue;
+    }
+
+    public double getRevenueForSeller(String seller, String scope) {
+        double revenue = 0;
+        for (Order order : getSellerSalesOrders(seller, scope)) {
+            revenue += Math.max(0, getOrderPaidAmount(order) - order.refundAmount);
+        }
+        return revenue;
+    }
+
     public void updateOrderStatus(String username, String orderId, String status) {
         ContentValues values = new ContentValues();
         values.put("status", status);

@@ -11,12 +11,14 @@ import android.widget.TextView;
 import android.widget.Toast;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
-import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.content.FileProvider;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import com.example.zhinongbao.adapter.ImagePickerAdapter;
-import com.example.zhinongbao.data.DataManager;
+import com.example.zhinongbao.base.BaseMvpActivity;
+import com.example.zhinongbao.model.Product;
+import com.example.zhinongbao.mvp.addproduct.AddProductContract;
+import com.example.zhinongbao.mvp.addproduct.AddProductPresenter;
 import com.example.zhinongbao.utils.ImageUtils;
 import java.io.File;
 import java.util.ArrayList;
@@ -24,7 +26,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-public class AddProductActivity extends AppCompatActivity {
+public class AddProductActivity extends BaseMvpActivity<AddProductContract.Presenter> implements AddProductContract.View {
 
     private static final String[] CATEGORIES = { "推荐", "水果蔬菜", "米面粮油", "农资农具" };
     private Set<String> selectedCategories = new HashSet<>();
@@ -79,10 +81,7 @@ public class AddProductActivity extends AppCompatActivity {
         etPrice = findViewById(R.id.etProductPrice);
         etStorePhone = findViewById(R.id.etStorePhone);
         rvImages = findViewById(R.id.rvProductImages);
-        String user = DataManager.getInstance(this).getLoggedUser();
-        if (user != null) {
-            etStorePhone.setText(DataManager.getInstance(this).getStorePhone(user));
-        }
+        new AddProductPresenter(this, this).start();
 
         editProductId = getIntent().getIntExtra("product_id", -1);
 
@@ -135,8 +134,16 @@ public class AddProductActivity extends AppCompatActivity {
     }
 
     private void loadExistingProduct() {
-        DataManager dm = DataManager.getInstance(this);
-        com.example.zhinongbao.model.Product p = dm.getProductById(editProductId);
+        presenter.loadProduct(editProductId);
+    }
+
+    @Override
+    public void showStorePhone(String phone) {
+        etStorePhone.setText(phone == null ? "" : phone);
+    }
+
+    @Override
+    public void showExistingProduct(Product p) {
         if (p == null)
             return;
         etName.setText(p.name);
@@ -165,6 +172,16 @@ public class AddProductActivity extends AppCompatActivity {
         if (selectedCategories.isEmpty())
             selectedCategories.add("推荐");
         refreshCategoryChips();
+    }
+
+    @Override
+    public void showToast(String message, boolean longToast) {
+        Toast.makeText(this, message, longToast ? Toast.LENGTH_LONG : Toast.LENGTH_SHORT).show();
+    }
+
+    @Override
+    public void closePage() {
+        finish();
     }
 
     private void setupCategoryPicker() {
@@ -283,28 +300,10 @@ public class AddProductActivity extends AppCompatActivity {
             }
         }
 
-        DataManager dm = DataManager.getInstance(this);
         String coverUri = uriBuilder.length() > 0 ? uriBuilder.toString() : null;
         if (editProductId > 0 && coverUri == null) {
             coverUri = existingCoverUri;
         }
-        String user = dm.getLoggedUser();
-        if (user != null) {
-            dm.updateStoreInfo(user, dm.getStoreName(user), storePhone);
-        }
-
-        if (editProductId > 0) {
-            dm.updateProduct(editProductId, name, desc, price, coverUri, catBuilder.toString());
-            Toast.makeText(this, "货品信息已更新", Toast.LENGTH_SHORT).show();
-        } else {
-            dm.addProduct(name, desc, price, coverUri != null ? coverUri : "", catBuilder.toString());
-            if (user != null && dm.getUserRole(user) == com.example.zhinongbao.model.User.ROLE_BUYER) {
-                dm.updateUserRole(user, com.example.zhinongbao.model.User.ROLE_BOTH);
-                Toast.makeText(this, "商品发布成功！您已获得卖家身份，下次登录可选择身份", Toast.LENGTH_LONG).show();
-            } else {
-                Toast.makeText(this, "商品发布成功", Toast.LENGTH_SHORT).show();
-            }
-        }
-        finish();
+        presenter.submitProduct(editProductId, name, desc, price, coverUri, catBuilder.toString(), storePhone);
     }
 }

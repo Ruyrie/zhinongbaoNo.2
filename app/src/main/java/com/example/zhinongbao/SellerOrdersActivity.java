@@ -101,6 +101,7 @@ public class SellerOrdersActivity extends BaseMvpActivity<SellerOrdersContract.P
 
         rvOrders = findViewById(R.id.rvSellerOrders);
         rvOrders.setLayoutManager(new LinearLayoutManager(this));
+        new SellerOrdersPresenter(this, this, currentFilter, salesScope);
 
         adapter = new SellerOrderAdapter(orderList, new SellerOrderAdapter.OnOrderActionListener() {
             @Override
@@ -122,10 +123,10 @@ public class SellerOrdersActivity extends BaseMvpActivity<SellerOrdersContract.P
             public void onContactBuyer(Order o) {
                 presenter.onContactBuyer(o);
             }
-        });
+        }, productId -> presenter.getProductById(productId));
         rvOrders.setAdapter(adapter);
 
-        new SellerOrdersPresenter(this, this, currentFilter, salesScope).start();
+        presenter.start();
         updateTabStyles();
     }
 

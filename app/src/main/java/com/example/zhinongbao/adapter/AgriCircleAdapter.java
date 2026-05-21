@@ -9,7 +9,6 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 import com.example.zhinongbao.R;
-import com.example.zhinongbao.data.DataManager;
 import com.example.zhinongbao.model.Article;
 import com.example.zhinongbao.model.User;
 import java.util.List;
@@ -24,16 +23,24 @@ public class AgriCircleAdapter extends RecyclerView.Adapter<AgriCircleAdapter.Vi
         void onFollow(Article article, int position);
     }
 
+    public interface CircleInteractionDelegate {
+        int getArticleLikeCount(int articleId);
+        int getCommentCount(int articleId);
+        boolean isArticleLiked(int articleId);
+        boolean isFollowing(String author);
+        int getUserRole(String username);
+    }
+
     private final List<Article> items;
     private final String currentUser;
-    private final DataManager dm;
+    private final CircleInteractionDelegate interactionDelegate;
     private final OnActionListener listener;
 
     public AgriCircleAdapter(List<Article> items, String currentUser,
-            DataManager dm, OnActionListener listener) {
+            CircleInteractionDelegate interactionDelegate, OnActionListener listener) {
         this.items = items;
         this.currentUser = currentUser;
-        this.dm = dm;
+        this.interactionDelegate = interactionDelegate;
         this.listener = listener;
     }
 
@@ -99,17 +106,17 @@ public class AgriCircleAdapter extends RecyclerView.Adapter<AgriCircleAdapter.Vi
         }
 
         // 点赞
-        int likeCount = dm.getArticleLikeCount(a.id);
-        boolean liked = dm.isArticleLiked(currentUser, a.id);
+        int likeCount = interactionDelegate.getArticleLikeCount(a.id);
+        boolean liked = interactionDelegate.isArticleLiked(a.id);
         h.tvLikeCount.setText(String.valueOf(likeCount));
         h.ivLikeIcon.setImageResource(liked ? R.drawable.ic_like_filled : R.drawable.ic_like_outline);
 
         // 评论数
-        h.tvCommentCount.setText(String.valueOf(dm.getCommentCount(a.id)));
+        h.tvCommentCount.setText(String.valueOf(interactionDelegate.getCommentCount(a.id)));
         h.tvReadCount.setText(a.readCount + " 浏览");
 
         // 进店铺（卖家身份的作者）
-        int authorRole = dm.getUserRole(a.author);
+        int authorRole = interactionDelegate.getUserRole(a.author);
         boolean isSeller = authorRole == User.ROLE_SELLER || authorRole == User.ROLE_BOTH;
         h.btnEnterStore.setVisibility(isSeller ? View.VISIBLE : View.GONE);
         if (isSeller) {
@@ -118,7 +125,7 @@ public class AgriCircleAdapter extends RecyclerView.Adapter<AgriCircleAdapter.Vi
 
         // +关注（非自己且未关注时显示）
         boolean isOwn = a.author.equals(currentUser);
-        boolean following = dm.isFollowing(currentUser, a.author);
+        boolean following = interactionDelegate.isFollowing(a.author);
         h.btnFollow.setVisibility((!isOwn && !following) ? View.VISIBLE : View.GONE);
         h.btnFollow.setOnClickListener(v -> listener.onFollow(a, h.getAdapterPosition()));
 

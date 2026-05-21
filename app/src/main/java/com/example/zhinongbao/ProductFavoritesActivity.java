@@ -4,15 +4,17 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.TextView;
-import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.StaggeredGridLayoutManager;
 import com.example.zhinongbao.adapter.ProductAdapter;
-import com.example.zhinongbao.data.DataManager;
+import com.example.zhinongbao.base.BaseMvpActivity;
 import com.example.zhinongbao.model.Product;
+import com.example.zhinongbao.mvp.productfavorites.ProductFavoritesContract;
+import com.example.zhinongbao.mvp.productfavorites.ProductFavoritesPresenter;
 import java.util.ArrayList;
 import java.util.List;
 
-public class ProductFavoritesActivity extends AppCompatActivity {
+public class ProductFavoritesActivity extends BaseMvpActivity<ProductFavoritesContract.Presenter>
+        implements ProductFavoritesContract.View {
     private final List<Product> products = new ArrayList<>();
     private ProductAdapter adapter;
 
@@ -32,14 +34,22 @@ public class ProductFavoritesActivity extends AppCompatActivity {
         });
         adapter.setCompactMode(true);
         rv.setAdapter(adapter);
+
+        new ProductFavoritesPresenter(this, this).start();
     }
 
     @Override
     protected void onResume() {
         super.onResume();
-        DataManager dm = DataManager.getInstance(this);
+        if (presenter != null) {
+            presenter.refresh();
+        }
+    }
+
+    @Override
+    public void showProducts(List<Product> favoriteProducts) {
         products.clear();
-        products.addAll(dm.getFavoriteProducts(dm.getLoggedUser()));
+        products.addAll(favoriteProducts);
         if (adapter != null) adapter.notifyDataSetChanged();
         TextView empty = findViewById(R.id.tvProductFavEmpty);
         View rv = findViewById(R.id.rvProductFavorites);

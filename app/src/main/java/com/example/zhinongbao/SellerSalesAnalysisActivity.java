@@ -4,17 +4,17 @@ import android.os.Bundle;
 import android.view.View;
 import android.widget.LinearLayout;
 import android.widget.TextView;
-import androidx.appcompat.app.AppCompatActivity;
-import com.example.zhinongbao.data.DataManager;
+import com.example.zhinongbao.base.BaseMvpActivity;
 import com.example.zhinongbao.model.Order;
+import com.example.zhinongbao.mvp.sellersales.SellerSalesContract;
+import com.example.zhinongbao.mvp.sellersales.SellerSalesPresenter;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 
-public class SellerSalesAnalysisActivity extends AppCompatActivity {
-
-    private DataManager dm;
+public class SellerSalesAnalysisActivity extends BaseMvpActivity<SellerSalesContract.Presenter>
+        implements SellerSalesContract.View {
 
     private static class ProductSummary {
         int quantity;
@@ -28,25 +28,17 @@ public class SellerSalesAnalysisActivity extends AppCompatActivity {
         if (getSupportActionBar() != null)
             getSupportActionBar().hide();
 
-        dm = DataManager.getInstance(this);
         findViewById(R.id.ivBack).setOnClickListener(v -> finish());
-        bindSalesAnalysis();
+        new SellerSalesPresenter(this, this, getIntent().getStringExtra("sales_scope")).start();
     }
 
-    private void bindSalesAnalysis() {
-        String seller = dm.getLoggedUser();
-        String scope = getIntent().getStringExtra("sales_scope");
-        if (scope == null || scope.isEmpty())
-            scope = "all";
-
-        List<Order> orders = dm.getSellerSalesOrders(seller, scope);
-        double total = 0;
+    @Override
+    public void showSales(String scope, List<Order> orders, double total) {
         Map<String, ProductSummary> productMap = new LinkedHashMap<>();
         for (Order order : orders) {
-            double amount = dm.getOrderPaidAmount(order) - order.refundAmount;
+            double amount = presenter.getOrderPaidAmount(order) - order.refundAmount;
             if (amount < 0)
                 amount = 0;
-            total += amount;
 
             ProductSummary summary = productMap.get(order.name);
             if (summary == null) {
@@ -97,7 +89,7 @@ public class SellerSalesAnalysisActivity extends AppCompatActivity {
             return;
         }
         for (Order order : orders) {
-            double amount = dm.getOrderPaidAmount(order) - order.refundAmount;
+            double amount = presenter.getOrderPaidAmount(order) - order.refundAmount;
             LinearLayout row = new LinearLayout(this);
             row.setOrientation(LinearLayout.VERTICAL);
             row.setPadding(0, 8, 0, 8);

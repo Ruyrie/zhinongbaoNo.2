@@ -8,7 +8,6 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 import com.example.zhinongbao.R;
-import com.example.zhinongbao.data.DataManager;
 import com.example.zhinongbao.model.Article;
 import java.util.List;
 
@@ -18,21 +17,28 @@ public class ArticleAdapter extends RecyclerView.Adapter<ArticleAdapter.VH> {
         void onItemClick(Article article);
     }
 
+    public interface ArticleInteractionDelegate {
+        int getArticleLikeCount(int articleId);
+        int getCommentCount(int articleId);
+        boolean isArticleLiked(int articleId);
+        void toggleArticleLike(int articleId);
+    }
+
     private final List<Article> data;
     private final OnItemClickListener listener;
-    private final DataManager dm;
     private final String currentUser;
+    private final ArticleInteractionDelegate interactionDelegate;
     private boolean hideCategory = false;
 
     public ArticleAdapter(List<Article> data, OnItemClickListener listener) {
-        this(data, listener, null, null);
+        this(data, listener, (ArticleInteractionDelegate) null, null);
     }
 
     public ArticleAdapter(List<Article> data, OnItemClickListener listener,
-            DataManager dm, String currentUser) {
+            ArticleInteractionDelegate interactionDelegate, String currentUser) {
         this.data = data;
         this.listener = listener;
-        this.dm = dm;
+        this.interactionDelegate = interactionDelegate;
         this.currentUser = currentUser;
     }
 
@@ -54,21 +60,17 @@ public class ArticleAdapter extends RecyclerView.Adapter<ArticleAdapter.VH> {
 
         holder.tvArticleTitle.setText(a.title);
         holder.tvTime.setText(a.time);
-        if (dm != null) {
-            int likeCount = dm.getArticleLikeCount(a.id);
-            int commentCount = dm.getCommentCount(a.id);
-            boolean liked = currentUser != null && dm.isArticleLiked(currentUser, a.id);
+        if (interactionDelegate != null) {
+            int likeCount = interactionDelegate.getArticleLikeCount(a.id);
+            int commentCount = interactionDelegate.getCommentCount(a.id);
+            boolean liked = currentUser != null && interactionDelegate.isArticleLiked(a.id);
             holder.ivLike.setImageResource(liked ? R.mipmap.dianzan : R.mipmap.weidianzan);
             holder.tvLikeCount.setText(String.valueOf(likeCount));
             holder.tvCommentCount.setText(String.valueOf(commentCount));
             View.OnClickListener likeClick = v -> {
                 if (currentUser == null || currentUser.isEmpty())
                     return;
-                if (dm.isArticleLiked(currentUser, a.id)) {
-                    dm.unlikeArticle(currentUser, a.id);
-                } else {
-                    dm.likeArticle(currentUser, a.id);
-                }
+                interactionDelegate.toggleArticleLike(a.id);
                 int pos = holder.getBindingAdapterPosition();
                 if (pos != RecyclerView.NO_POSITION)
                     notifyItemChanged(pos);

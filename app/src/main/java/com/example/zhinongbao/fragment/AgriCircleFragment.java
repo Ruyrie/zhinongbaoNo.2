@@ -14,7 +14,6 @@ import android.widget.ImageView;
 import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import com.example.zhinongbao.AddCirclePostActivity;
@@ -23,19 +22,21 @@ import com.example.zhinongbao.MyCirclePostsActivity;
 import com.example.zhinongbao.R;
 import com.example.zhinongbao.SellerStoreActivity;
 import com.example.zhinongbao.adapter.AgriCircleAdapter;
-import com.example.zhinongbao.data.DataManager;
+import com.example.zhinongbao.base.BaseMvpFragment;
 import com.example.zhinongbao.model.Article;
+import com.example.zhinongbao.mvp.agricircle.AgriCircleContract;
+import com.example.zhinongbao.mvp.agricircle.AgriCirclePresenter;
 import java.util.ArrayList;
 import java.util.List;
 import java.io.InputStream;
 
-public class AgriCircleFragment extends Fragment {
+public class AgriCircleFragment extends BaseMvpFragment<AgriCircleContract.Presenter>
+        implements AgriCircleContract.View {
 
     private static final int TAB_FOLLOW = 0;
     private static final int TAB_LATEST = 1;
     private static final int TAB_MINE   = 2; // 由头部"我的"触发，不在 tab 栏显示
 
-    private DataManager dm;
     private String currentUser;
     private RecyclerView rvCircle;
     private TextView tvEmpty;
@@ -57,9 +58,6 @@ public class AgriCircleFragment extends Fragment {
 
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
-        dm = DataManager.getInstance(requireContext());
-        currentUser = dm.getLoggedUser();
-
         rvCircle = view.findViewById(R.id.rvCircle);
         tvEmpty  = view.findViewById(R.id.tvCircleEmpty);
         rvCircle.setLayoutManager(new LinearLayoutManager(requireContext()));
@@ -97,57 +95,17 @@ public class AgriCircleFragment extends Fragment {
         view.findViewById(R.id.llHeaderMine).setOnClickListener(v ->
                 startActivity(new Intent(getContext(), MyCirclePostsActivity.class)));
 
-        // 加载头像
-        bindHeaderAvatar(view);
-
         // FAB：发农友圈
         view.findViewById(R.id.fabCirclePost).setOnClickListener(v ->
                 startActivity(new Intent(getContext(), AddCirclePostActivity.class)));
 
-        // Adapter
-        adapter = new AgriCircleAdapter(items, currentUser, dm,
-                new AgriCircleAdapter.OnActionListener() {
-                    @Override
-                    public void onItemClick(Article article) {
-                        Intent i = new Intent(getContext(), ArticleDetailActivity.class);
-                        i.putExtra("article_id", article.id);
-                        startActivity(i);
-                    }
-                    @Override
-                    public void onLikeClick(Article article, int position) {
-                        if (dm.isArticleLiked(currentUser, article.id)) {
-                            dm.unlikeArticle(currentUser, article.id);
-                        } else {
-                            dm.likeArticle(currentUser, article.id);
-                        }
-                        adapter.notifyItemChanged(position);
-                    }
-                    @Override
-                    public void onCommentClick(Article article) {
-                        Intent i = new Intent(getContext(), ArticleDetailActivity.class);
-                        i.putExtra("article_id", article.id);
-                        i.putExtra("focus_comment", true);
-                        startActivity(i);
-                    }
-                    @Override
-                    public void onEnterStore(Article article) {
-                        Intent i = new Intent(getContext(), SellerStoreActivity.class);
-                        i.putExtra("seller", article.author);
-                        startActivity(i);
-                    }
-                    @Override
-                    public void onFollow(Article article, int position) {
-                        dm.followUser(currentUser, article.author);
-                        adapter.notifyItemChanged(position);
-                    }
-                });
-        rvCircle.setAdapter(adapter);
+        new AgriCirclePresenter(requireContext(), this).start();
     }
 
     @Override
     public void onResume() {
         super.onResume();
-        if (dm != null) loadPosts();
+        if (presenter != null) loadPosts();
     }
 
     // ── 选中关注/最新 tab ──
@@ -190,21 +148,30 @@ public class AgriCircleFragment extends Fragment {
     }
 
     private void loadPosts() {
-        List<Article> fresh;
         switch (currentTab) {
             case TAB_FOLLOW:
-                fresh = dm.getCirclePostsByFollowing(currentUser);
+                presenter.loadFollowing();
                 break;
             case TAB_MINE:
-                fresh = dm.getCirclePostsByAuthor(currentUser);
+                presenter.loadMine();
                 break;
             default:
-                fresh = dm.getCirclePosts();
+                presenter.loadLatest();
                 break;
         }
+    }
+
+    @Override
+    public void showPosts(List<Article> posts, String currentUser) {
+        this.currentUser = currentUser;
         items.clear();
-        items.addAll(fresh);
-        adapter.notifyDataSetChanged();
+        items.addAll(posts);
+        if (adapter == null) {
+            adapter = new AgriCircleAdapter(items, currentUser, circleDelegate(), circleActionListener());
+            rvCircle.setAdapter(adapter);
+        } else {
+            adapter.notifyDataSetChanged();
+        }
 
         boolean empty = items.isEmpty();
         rvCircle.setVisibility(empty ? View.GONE : View.VISIBLE);
@@ -224,10 +191,12 @@ public class AgriCircleFragment extends Fragment {
         }
     }
 
-    private void bindHeaderAvatar(View view) {
+    @Override
+    public void showHeaderAvatar(String currentUser, String avatarUri) {
+        this.currentUser = currentUser == null ? "" : currentUser;
+        View view = requireView();
         ImageView ivAvatar = view.findViewById(R.id.ivHeaderAvatar);
         TextView tvInitial = view.findViewById(R.id.tvHeaderAvatarInitial);
-        String avatarUri = dm.getAvatarUri(currentUser);
         if (avatarUri != null && !avatarUri.isEmpty()) {
             try {
                 if (avatarUri.startsWith("data:image")) {
@@ -243,8 +212,75 @@ public class AgriCircleFragment extends Fragment {
         }
         ivAvatar.setVisibility(View.GONE);
         tvInitial.setVisibility(View.VISIBLE);
-        tvInitial.setText(currentUser.isEmpty() ? "我" :
-                String.valueOf(currentUser.charAt(0)).toUpperCase());
+        tvInitial.setText(this.currentUser.isEmpty() ? "我" :
+                String.valueOf(this.currentUser.charAt(0)).toUpperCase());
+    }
+
+    private AgriCircleAdapter.CircleInteractionDelegate circleDelegate() {
+        return new AgriCircleAdapter.CircleInteractionDelegate() {
+            @Override
+            public int getArticleLikeCount(int articleId) {
+                return presenter.getArticleLikeCount(articleId);
+            }
+
+            @Override
+            public int getCommentCount(int articleId) {
+                return presenter.getCommentCount(articleId);
+            }
+
+            @Override
+            public boolean isArticleLiked(int articleId) {
+                return presenter.isArticleLiked(articleId);
+            }
+
+            @Override
+            public boolean isFollowing(String author) {
+                return presenter.isFollowing(author);
+            }
+
+            @Override
+            public int getUserRole(String username) {
+                return presenter.getUserRole(username);
+            }
+        };
+    }
+
+    private AgriCircleAdapter.OnActionListener circleActionListener() {
+        return new AgriCircleAdapter.OnActionListener() {
+            @Override
+            public void onItemClick(Article article) {
+                Intent i = new Intent(getContext(), ArticleDetailActivity.class);
+                i.putExtra("article_id", article.id);
+                startActivity(i);
+            }
+
+            @Override
+            public void onLikeClick(Article article, int position) {
+                presenter.toggleArticleLike(article.id);
+                adapter.notifyItemChanged(position);
+            }
+
+            @Override
+            public void onCommentClick(Article article) {
+                Intent i = new Intent(getContext(), ArticleDetailActivity.class);
+                i.putExtra("article_id", article.id);
+                i.putExtra("focus_comment", true);
+                startActivity(i);
+            }
+
+            @Override
+            public void onEnterStore(Article article) {
+                Intent i = new Intent(getContext(), SellerStoreActivity.class);
+                i.putExtra("seller", article.author);
+                startActivity(i);
+            }
+
+            @Override
+            public void onFollow(Article article, int position) {
+                presenter.followUser(article.author);
+                adapter.notifyItemChanged(position);
+            }
+        };
     }
 
     private void loadScrollTopIcon(ImageView iv) {

@@ -11,6 +11,9 @@ import com.example.zhinongbao.model.CartItem;
 import com.example.zhinongbao.model.Order;
 import com.example.zhinongbao.model.Product;
 import com.example.zhinongbao.model.ProductComment;
+import com.example.zhinongbao.model.StoreFootprint;
+import com.example.zhinongbao.model.StoreSearchResult;
+import com.example.zhinongbao.model.User;
 import com.example.zhinongbao.provider.ZhiNongBaoProvider;
 
 import java.text.SimpleDateFormat;
@@ -49,6 +52,60 @@ public class ProductRepository {
         return null;
     }
 
+    public List<Product> getProducts() {
+        List<Product> products = new ArrayList<>();
+        try (Cursor cursor = resolver.query(
+                ZhiNongBaoProvider.CONTENT_URI_PRODUCTS,
+                productProjection(),
+                null,
+                null,
+                "id DESC")) {
+            while (cursor != null && cursor.moveToNext()) {
+                products.add(cursorToProduct(cursor));
+            }
+        }
+        return products;
+    }
+
+    public List<Product> getProductsBySeller(String seller) {
+        List<Product> products = new ArrayList<>();
+        try (Cursor cursor = resolver.query(
+                ZhiNongBaoProvider.CONTENT_URI_PRODUCTS,
+                productProjection(),
+                "seller=?",
+                new String[] { seller },
+                "id DESC")) {
+            while (cursor != null && cursor.moveToNext()) {
+                products.add(cursorToProduct(cursor));
+            }
+        }
+        return products;
+    }
+
+    public void addProduct(String name, String desc, double price, String coverUri, String category) {
+        ContentValues values = new ContentValues();
+        values.put("id", nextProductId());
+        values.put("name", name);
+        values.put("desc", desc);
+        values.put("price", price);
+        values.put("cover_uri", coverUri == null ? "" : coverUri);
+        values.put("category", category == null || category.isEmpty() ? "推荐" : category);
+        values.put("view_count", 0);
+        values.put("seller", getLoggedUser());
+        resolver.insert(ZhiNongBaoProvider.CONTENT_URI_PRODUCTS, values);
+    }
+
+    public boolean updateProduct(int productId, String name, String desc, double price, String coverUri, String category) {
+        ContentValues values = new ContentValues();
+        values.put("name", name);
+        values.put("desc", desc);
+        values.put("price", price);
+        values.put("cover_uri", coverUri == null ? "" : coverUri);
+        values.put("category", category == null || category.isEmpty() ? "推荐" : category);
+        return resolver.update(ZhiNongBaoProvider.CONTENT_URI_PRODUCTS, values,
+                "id=?", new String[] { String.valueOf(productId) }) > 0;
+    }
+
     public void recordProductView(String username, int productId) {
         Product product = getProductById(productId);
         ContentValues productValues = new ContentValues();
@@ -67,6 +124,63 @@ public class ProductRepository {
         resolver.insert(ZhiNongBaoProvider.CONTENT_URI_PRODUCT_FOOTPRINTS, footprint);
     }
 
+    public void recordStoreView(String username, String seller) {
+        if (username == null || username.isEmpty() || seller == null || seller.isEmpty()) {
+            return;
+        }
+        ContentValues values = new ContentValues();
+        values.put("username", username);
+        values.put("seller", seller);
+        values.put("viewed_at", System.currentTimeMillis());
+        resolver.delete(ZhiNongBaoProvider.CONTENT_URI_STORE_FOOTPRINTS,
+                "username=? AND seller=?", new String[] { username, seller });
+        resolver.insert(ZhiNongBaoProvider.CONTENT_URI_STORE_FOOTPRINTS, values);
+    }
+
+    public List<Product> getProductFootprints(String username) {
+        List<Product> products = new ArrayList<>();
+        if (username == null || username.isEmpty()) {
+            return products;
+        }
+        try (Cursor cursor = resolver.query(
+                ZhiNongBaoProvider.CONTENT_URI_PRODUCT_FOOTPRINTS,
+                new String[] { "product_id", "viewed_at" },
+                "username=?",
+                new String[] { username },
+                "viewed_at DESC")) {
+            while (cursor != null && cursor.moveToNext()) {
+                Product product = getProductById(cursor.getInt(0));
+                if (product != null) {
+                    product.viewedAt = cursor.getLong(1);
+                    products.add(product);
+                }
+            }
+        }
+        return products;
+    }
+
+    public List<StoreFootprint> getStoreFootprints(String username) {
+        List<StoreFootprint> stores = new ArrayList<>();
+        if (username == null || username.isEmpty()) {
+            return stores;
+        }
+        try (Cursor cursor = resolver.query(
+                ZhiNongBaoProvider.CONTENT_URI_STORE_FOOTPRINTS,
+                new String[] { "seller", "viewed_at" },
+                "username=?",
+                new String[] { username },
+                "viewed_at DESC")) {
+            while (cursor != null && cursor.moveToNext()) {
+                StoreFootprint item = new StoreFootprint();
+                item.seller = cursor.getString(0);
+                item.viewedAt = cursor.getLong(1);
+                fillStoreFootprint(item);
+                stores.add(item);
+            }
+        }
+        return stores;
+    }
+
     public String getStorePhone(String seller) {
         try (Cursor cursor = resolver.query(
                 ZhiNongBaoProvider.CONTENT_URI_USERS,
@@ -80,6 +194,47 @@ public class ProductRepository {
             }
         }
         return null;
+    }
+
+    public List<StoreSearchResult> searchStores(String keyword) {
+        List<StoreSearchResult> stores = new ArrayList<>();
+        String query = keyword == null ? "" : keyword.trim();
+        if (query.isEmpty()) {
+            return stores;
+        }
+        String like = "%" + query + "%";
+        try (Cursor cursor = resolver.query(
+                ZhiNongBaoProvider.CONTENT_URI_USERS,
+                new String[] { "username", "store_name", "nickname", "store_phone", "phone", "role" },
+                "username LIKE ? OR nickname LIKE ? OR store_name LIKE ?",
+                new String[] { like, like, like },
+                "id ASC")) {
+            while (cursor != null && cursor.moveToNext()) {
+                StoreSearchResult item = cursorToStoreSearchResult(cursor);
+                if (item.productCount > 0 || cursor.getInt(5) == User.ROLE_SELLER || cursor.getInt(5) == User.ROLE_BOTH
+                        || (item.storeName != null && !item.storeName.isEmpty())) {
+                    stores.add(item);
+                }
+            }
+        }
+        for (Product product : getProducts()) {
+            if (contains(product.name, query) || contains(product.desc, query) || contains(product.category, query)) {
+                boolean exists = false;
+                for (StoreSearchResult store : stores) {
+                    if (store.seller != null && store.seller.equals(product.seller)) {
+                        exists = true;
+                        break;
+                    }
+                }
+                if (!exists && product.seller != null && !product.seller.isEmpty()) {
+                    StoreSearchResult item = new StoreSearchResult();
+                    item.seller = product.seller;
+                    fillStoreSearchResult(item);
+                    stores.add(item);
+                }
+            }
+        }
+        return stores;
     }
 
     public boolean isProductFavorited(String username, int productId) {
@@ -179,6 +334,33 @@ public class ProductRepository {
         resolver.delete(ZhiNongBaoProvider.CONTENT_URI_PRODUCTS, "id=?", new String[] { String.valueOf(productId) });
     }
 
+    public int getProductOrderCount(int productId) {
+        try (Cursor cursor = resolver.query(
+                ZhiNongBaoProvider.CONTENT_URI_ORDERS,
+                new String[] { "id" },
+                "product_id=?",
+                new String[] { String.valueOf(productId) },
+                null)) {
+            return cursor == null ? 0 : cursor.getCount();
+        }
+    }
+
+    public double getProductSalesRevenue(int productId) {
+        double revenue = 0;
+        try (Cursor cursor = resolver.query(
+                ZhiNongBaoProvider.CONTENT_URI_ORDERS,
+                new String[] { "price", "unit_price", "quantity", "discount", "refund_amount" },
+                "product_id=? AND status=?",
+                new String[] { String.valueOf(productId), Order.STATUS_COMPLETED },
+                null)) {
+            while (cursor != null && cursor.moveToNext()) {
+                double unit = cursor.getDouble(1) > 0 ? cursor.getDouble(1) : cursor.getDouble(0);
+                revenue += Math.max(0, unit * cursor.getInt(2) - cursor.getDouble(3) - cursor.getDouble(4));
+            }
+        }
+        return revenue;
+    }
+
     public int getProductCommentCount(int productId) {
         try (Cursor cursor = resolver.query(
                 ZhiNongBaoProvider.CONTENT_URI_PRODUCT_COMMENTS,
@@ -269,6 +451,65 @@ public class ProductRepository {
         }
     }
 
+    private void fillStoreFootprint(StoreFootprint item) {
+        try (Cursor cursor = resolver.query(
+                ZhiNongBaoProvider.CONTENT_URI_USERS,
+                new String[] { "store_name", "nickname", "store_phone", "phone" },
+                "username=?",
+                new String[] { item.seller },
+                null)) {
+            if (cursor != null && cursor.moveToFirst()) {
+                String storeName = cursor.getString(0);
+                String nickname = cursor.getString(1);
+                item.storeName = storeName != null && !storeName.isEmpty()
+                        ? storeName
+                        : ((nickname != null && !nickname.isEmpty() ? nickname : item.seller) + "的店铺");
+                String storePhone = cursor.getString(2);
+                String phone = cursor.getString(3);
+                item.storePhone = storePhone != null && !storePhone.isEmpty() ? storePhone : (phone == null ? "" : phone);
+            } else {
+                item.storeName = item.seller + "的店铺";
+                item.storePhone = "";
+            }
+        }
+        item.productCount = getProductsBySeller(item.seller).size();
+    }
+
+    private StoreSearchResult cursorToStoreSearchResult(Cursor cursor) {
+        StoreSearchResult item = new StoreSearchResult();
+        item.seller = cursor.getString(0);
+        String storeName = cursor.getString(1);
+        String nickname = cursor.getString(2);
+        item.storeName = storeName != null && !storeName.trim().isEmpty()
+                ? storeName
+                : ((nickname != null && !nickname.isEmpty() ? nickname : item.seller) + "的店铺");
+        String storePhone = cursor.getString(3);
+        String phone = cursor.getString(4);
+        item.storePhone = storePhone != null && !storePhone.trim().isEmpty() ? storePhone : (phone == null ? "" : phone);
+        item.productCount = getProductsBySeller(item.seller).size();
+        return item;
+    }
+
+    private void fillStoreSearchResult(StoreSearchResult item) {
+        try (Cursor cursor = resolver.query(
+                ZhiNongBaoProvider.CONTENT_URI_USERS,
+                new String[] { "username", "store_name", "nickname", "store_phone", "phone", "role" },
+                "username=?",
+                new String[] { item.seller },
+                null)) {
+            if (cursor != null && cursor.moveToFirst()) {
+                StoreSearchResult filled = cursorToStoreSearchResult(cursor);
+                item.storeName = filled.storeName;
+                item.storePhone = filled.storePhone;
+                item.productCount = filled.productCount;
+            }
+        }
+    }
+
+    private boolean contains(String value, String query) {
+        return value != null && query != null && value.toLowerCase().contains(query.toLowerCase());
+    }
+
     private SharedPreferences prefs() {
         return context.getSharedPreferences(PREF_SESSION, Context.MODE_PRIVATE);
     }
@@ -284,5 +525,16 @@ public class ProductRepository {
     private Product cursorToProduct(Cursor cursor) {
         return new Product(cursor.getInt(0), cursor.getString(1), cursor.getString(2), cursor.getDouble(3),
                 cursor.getString(4), cursor.getString(5), cursor.getString(6), cursor.getInt(7));
+    }
+
+    private int nextProductId() {
+        try (Cursor cursor = resolver.query(
+                ZhiNongBaoProvider.CONTENT_URI_PRODUCTS,
+                new String[] { "id" },
+                null,
+                null,
+                "id DESC")) {
+            return cursor != null && cursor.moveToFirst() ? cursor.getInt(0) + 1 : 1;
+        }
     }
 }

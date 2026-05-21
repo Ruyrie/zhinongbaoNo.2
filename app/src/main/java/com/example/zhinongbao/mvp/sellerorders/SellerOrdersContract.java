@@ -3,6 +3,7 @@ package com.example.zhinongbao.mvp.sellerorders;
 import com.example.zhinongbao.base.BasePresenter;
 import com.example.zhinongbao.base.BaseView;
 import com.example.zhinongbao.model.Order;
+import com.example.zhinongbao.model.Product;
 
 import java.util.List;
 
@@ -41,5 +42,7 @@ public interface SellerOrdersContract {
         void updateOrderPrice(Order order, double unitPrice, double discount);
 
         void processRefund(Order order, double amount, String reason, boolean approve);
+
+        Product getProductById(int productId);
     }
 }

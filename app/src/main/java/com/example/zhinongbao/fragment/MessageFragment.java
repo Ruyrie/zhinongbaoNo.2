@@ -9,22 +9,23 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
-import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.DividerItemDecoration;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import com.example.zhinongbao.ChatActivity;
 import com.example.zhinongbao.R;
 import com.example.zhinongbao.adapter.ConversationAdapter;
-import com.example.zhinongbao.data.DataManager;
+import com.example.zhinongbao.base.BaseMvpFragment;
 import com.example.zhinongbao.model.ConversationItem;
+import com.example.zhinongbao.mvp.message.MessageContract;
+import com.example.zhinongbao.mvp.message.MessagePresenter;
 import java.util.List;
 
-public class MessageFragment extends Fragment {
+public class MessageFragment extends BaseMvpFragment<MessageContract.Presenter>
+        implements MessageContract.View {
 
     private RecyclerView rvConversations;
     private TextView tvEmpty;
-    private DataManager dm;
     private ConversationAdapter adapter;
     private List<ConversationItem> items;
 
@@ -37,27 +38,22 @@ public class MessageFragment extends Fragment {
 
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
-        dm = DataManager.getInstance(requireContext());
         rvConversations = view.findViewById(R.id.rvConversations);
         tvEmpty = view.findViewById(R.id.tvMsgEmpty);
         rvConversations.setLayoutManager(new LinearLayoutManager(requireContext()));
         rvConversations.addItemDecoration(
                 new DividerItemDecoration(requireContext(), DividerItemDecoration.VERTICAL));
-        loadConversations();
+        new MessagePresenter(requireContext(), this).start();
     }
 
     @Override
     public void onResume() {
         super.onResume();
-        if (dm != null) loadConversations();
+        if (presenter != null) presenter.refresh();
     }
 
-    private void loadConversations() {
-        String username = dm.getLoggedUser();
-        if (username == null) return;
-
-        List<ConversationItem> newItems = dm.getConversations(username);
-
+    @Override
+    public void showConversations(List<ConversationItem> newItems) {
         if (newItems.isEmpty()) {
             rvConversations.setVisibility(View.GONE);
             tvEmpty.setVisibility(View.VISIBLE);
@@ -80,9 +76,7 @@ public class MessageFragment extends Fragment {
                         .setTitle("删除对话")
                         .setMessage("确认删除与 " + displayName + " 的全部消息？")
                         .setPositiveButton("删除", (d, w) -> {
-                            String currentUser = dm.getLoggedUser();
-                            dm.deleteConversation(currentUser, item.otherUser);
-                            loadConversations();
+                            presenter.deleteConversation(item.otherUser);
                         })
                         .setNegativeButton("取消", null)
                         .show();

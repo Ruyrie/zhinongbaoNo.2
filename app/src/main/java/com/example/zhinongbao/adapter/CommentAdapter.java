@@ -9,7 +9,6 @@ import android.widget.ImageView;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 import com.example.zhinongbao.R;
-import com.example.zhinongbao.data.DataManager;
 import com.example.zhinongbao.model.Comment;
 import java.util.List;
 
@@ -20,18 +19,23 @@ public class CommentAdapter extends RecyclerView.Adapter<CommentAdapter.VH> {
         void onDelete(Comment comment);
     }
 
+    public interface CommentInteractionDelegate {
+        void likeComment(int commentId);
+        void unlikeComment(int commentId);
+    }
+
     private final List<Comment> data;
     private final String currentUser;
     private final String articleAuthor;
-    private final DataManager dm;
+    private final CommentInteractionDelegate interactionDelegate;
     private OnDeleteListener deleteListener;
 
     public CommentAdapter(List<Comment> data, String currentUser,
-            String articleAuthor, DataManager dm) {
+            String articleAuthor, CommentInteractionDelegate interactionDelegate) {
         this.data = data;
         this.currentUser = currentUser;
         this.articleAuthor = articleAuthor;
-        this.dm = dm;
+        this.interactionDelegate = interactionDelegate;
     }
 
     public void setOnDeleteListener(OnDeleteListener l) {
@@ -91,12 +95,15 @@ public class CommentAdapter extends RecyclerView.Adapter<CommentAdapter.VH> {
 
         // Like click
         h.layoutLike.setOnClickListener(v -> {
+            if (interactionDelegate == null || currentUser == null || currentUser.isEmpty()) {
+                return;
+            }
             if (c.isLikedByMe) {
-                dm.unlikeComment(currentUser, c.id);
+                interactionDelegate.unlikeComment(c.id);
                 c.likeCount = Math.max(0, c.likeCount - 1);
                 c.isLikedByMe = false;
             } else {
-                dm.likeComment(currentUser, c.id);
+                interactionDelegate.likeComment(c.id);
                 c.likeCount++;
                 c.isLikedByMe = true;
             }

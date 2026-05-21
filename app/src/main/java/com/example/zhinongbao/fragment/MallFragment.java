@@ -10,19 +10,21 @@ import android.widget.TextView;
 import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.recyclerview.widget.StaggeredGridLayoutManager;
 import com.example.zhinongbao.ProductDetailActivity;
 import com.example.zhinongbao.R;
 import com.example.zhinongbao.adapter.ProductAdapter;
-import com.example.zhinongbao.data.DataManager;
+import com.example.zhinongbao.base.BaseMvpFragment;
 import com.example.zhinongbao.model.Product;
+import com.example.zhinongbao.mvp.mall.MallContract;
+import com.example.zhinongbao.mvp.mall.MallPresenter;
 import com.google.android.material.tabs.TabLayout;
 import java.util.ArrayList;
 import java.util.List;
 
-public class MallFragment extends Fragment {
+public class MallFragment extends BaseMvpFragment<MallContract.Presenter>
+        implements MallContract.View {
 
     private static final String[] CATEGORIES = { "推荐", "水果蔬菜", "米面粮油", "农资农具" };
 
@@ -41,9 +43,7 @@ public class MallFragment extends Fragment {
 
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
-        DataManager dm = DataManager.getInstance(requireContext());
-
-        allProducts = dm.getProducts();
+        allProducts = new ArrayList<>();
         displayed = new ArrayList<>();
 
         RecyclerView rv = view.findViewById(R.id.rvProducts);
@@ -80,13 +80,7 @@ public class MallFragment extends Fragment {
             startActivity(intent);
         });
         adapter.setOnAddCartListener(product -> {
-            String user = dm.getLoggedUser();
-            if (product.seller != null && product.seller.equals(user)) {
-                Toast.makeText(getContext(), "不能购买自己发布的商品", Toast.LENGTH_SHORT).show();
-                return;
-            }
-            dm.addToCart(user, product);
-            Toast.makeText(getContext(), "已加入购物车", Toast.LENGTH_SHORT).show();
+            presenter.addToCart(product);
         });
         rv.setAdapter(adapter);
 
@@ -133,6 +127,19 @@ public class MallFragment extends Fragment {
         }
 
         filterByCategory();
+        new MallPresenter(requireContext(), this).start();
+    }
+
+    @Override
+    public void showProducts(List<Product> products) {
+        allProducts.clear();
+        allProducts.addAll(products);
+        filterByCategory();
+    }
+
+    @Override
+    public void showToast(String message) {
+        Toast.makeText(getContext(), message, Toast.LENGTH_SHORT).show();
     }
 
     private void filterByCategory() {
@@ -148,10 +155,8 @@ public class MallFragment extends Fragment {
     @Override
     public void onResume() {
         super.onResume();
-        if (adapter != null) {
-            allProducts.clear();
-            allProducts.addAll(DataManager.getInstance(requireContext()).getProducts());
-            filterByCategory();
+        if (presenter != null) {
+            presenter.refresh();
         }
     }
 }
