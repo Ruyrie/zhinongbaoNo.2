@@ -119,6 +119,16 @@ public class ProductSearchActivity extends BaseMvpActivity<ProductSearchContract
             }
 
             @Override
+            public void onEditClick(PurchaseRequest req) {
+                openPurchaseMarket();
+            }
+
+            @Override
+            public void onDeleteClick(PurchaseRequest req) {
+                openPurchaseMarket();
+            }
+
+            @Override
             public void onItemClick(PurchaseRequest req) {
                 openPurchaseMarket();
             }

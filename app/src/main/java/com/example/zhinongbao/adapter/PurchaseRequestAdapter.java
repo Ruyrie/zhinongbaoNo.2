@@ -8,6 +8,7 @@ import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 import com.example.zhinongbao.R;
 import com.example.zhinongbao.model.PurchaseRequest;
+import java.text.NumberFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
@@ -18,6 +19,8 @@ public class PurchaseRequestAdapter extends RecyclerView.Adapter<PurchaseRequest
     public interface OnActionListener {
         void onQuoteClick(PurchaseRequest req);
         void onViewQuotesClick(PurchaseRequest req);
+        void onEditClick(PurchaseRequest req);
+        void onDeleteClick(PurchaseRequest req);
         void onItemClick(PurchaseRequest req);
     }
 
@@ -64,14 +67,22 @@ public class PurchaseRequestAdapter extends RecyclerView.Adapter<PurchaseRequest
         if (isSeller && !req.buyerUser.equals(currentUser)) {
             h.btnQuote.setVisibility(View.VISIBLE);
             h.btnViewQuotes.setVisibility(View.GONE);
+            h.btnEdit.setVisibility(View.GONE);
+            h.btnDelete.setVisibility(View.GONE);
             h.btnQuote.setOnClickListener(v -> listener.onQuoteClick(req));
         } else if (req.buyerUser.equals(currentUser)) {
             h.btnQuote.setVisibility(View.GONE);
             h.btnViewQuotes.setVisibility(View.VISIBLE);
+            h.btnEdit.setVisibility(View.VISIBLE);
+            h.btnDelete.setVisibility(View.VISIBLE);
             h.btnViewQuotes.setOnClickListener(v -> listener.onViewQuotesClick(req));
+            h.btnEdit.setOnClickListener(v -> listener.onEditClick(req));
+            h.btnDelete.setOnClickListener(v -> listener.onDeleteClick(req));
         } else {
             h.btnQuote.setVisibility(View.GONE);
             h.btnViewQuotes.setVisibility(View.GONE);
+            h.btnEdit.setVisibility(View.GONE);
+            h.btnDelete.setVisibility(View.GONE);
         }
 
         h.itemView.setOnClickListener(v -> listener.onItemClick(req));
@@ -84,7 +95,7 @@ public class PurchaseRequestAdapter extends RecyclerView.Adapter<PurchaseRequest
 
     static class ViewHolder extends RecyclerView.ViewHolder {
         TextView tvCategory, tvBuyer, tvProductName, tvQuantity, tvTargetPrice,
-                tvDesc, tvQuoteCount, tvTime, btnQuote, btnViewQuotes;
+                tvDesc, tvQuoteCount, tvTime, btnQuote, btnViewQuotes, btnEdit, btnDelete;
 
         ViewHolder(View v) {
             super(v);
@@ -98,12 +109,16 @@ public class PurchaseRequestAdapter extends RecyclerView.Adapter<PurchaseRequest
             tvTime = v.findViewById(R.id.tvReqTime);
             btnQuote = v.findViewById(R.id.btnReqQuote);
             btnViewQuotes = v.findViewById(R.id.btnViewQuotes);
+            btnEdit = v.findViewById(R.id.btnEditPurchase);
+            btnDelete = v.findViewById(R.id.btnDeletePurchase);
         }
     }
 
     private String formatPrice(double price) {
-        if (price % 1 == 0) return String.valueOf((int) price);
-        return String.format(Locale.CHINA, "%.2f", price);
+        NumberFormat format = NumberFormat.getNumberInstance(Locale.CHINA);
+        format.setMaximumFractionDigits(price % 1 == 0 ? 0 : 2);
+        format.setMinimumFractionDigits(0);
+        return format.format(price);
     }
 
     private String formatTime(long ts) {

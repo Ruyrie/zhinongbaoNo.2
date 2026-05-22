@@ -25,7 +25,7 @@ public class MinePresenter implements MineContract.Presenter {
         view.renderUser(username, userRepository.getNickname(username), userRepository.getSignature(username),
                 userRepository.getAvatarUri(username), articleRepository.getFollowersCount(username),
                 articleRepository.getFollowingCount(username), articleRepository.getTotalLikesReceived(username),
-                userRepository.getActiveRole() == User.ROLE_SELLER);
+                userRepository.getActiveRole() == User.ROLE_SELLER, userRepository.canUseSellerRole(username));
     }
 
     @Override
@@ -35,6 +35,10 @@ public class MinePresenter implements MineContract.Presenter {
 
     @Override
     public void switchRole() {
+        String username = userRepository.getLoggedUser();
+        if (!userRepository.canUseSellerRole(username)) {
+            return;
+        }
         boolean sellerActive = userRepository.getActiveRole() == User.ROLE_SELLER;
         userRepository.setActiveRole(sellerActive ? User.ROLE_BUYER : User.ROLE_SELLER);
         view.restartMain();

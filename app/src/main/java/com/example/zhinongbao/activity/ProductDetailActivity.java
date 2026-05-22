@@ -8,16 +8,16 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.widget.Button;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
-
-import androidx.appcompat.app.AlertDialog;
 
 import com.example.zhinongbao.base.BaseMvpActivity;
 import com.example.zhinongbao.model.Product;
 import com.example.zhinongbao.model.ProductComment;
 import com.example.zhinongbao.mvp.productdetail.ProductDetailContract;
 import com.example.zhinongbao.mvp.productdetail.ProductDetailPresenter;
+import com.example.zhinongbao.utils.DialogUtils;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -29,6 +29,7 @@ public class ProductDetailActivity extends BaseMvpActivity<ProductDetailContract
     private int productId;
     private Product product;
     private TextView tvFavorite;
+    private ImageView ivFavorite;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -65,17 +66,52 @@ public class ProductDetailActivity extends BaseMvpActivity<ProductDetailContract
         ((TextView) findViewById(R.id.tvDetailProductName)).setText(product.name);
         ((TextView) findViewById(R.id.tvDetailProductDesc)).setText(product.desc);
         ((TextView) findViewById(R.id.tvDetailProductPrice)).setText(String.format("¥%.2f", product.price));
+        ((TextView) findViewById(R.id.tvDetailViewCount)).setText(product.viewCount + " 浏览");
         loadAssetImage(findViewById(R.id.ivDetailStore), "dianpu.png");
         loadAssetImage(findViewById(R.id.ivDetailService), "lianxikefu.png");
         loadAssetImage(findViewById(R.id.ivDetailPhone), "dianhua.png");
         tvFavorite = findViewById(R.id.tvProductFavorite);
+        ivFavorite = findViewById(R.id.ivProductFavorite);
         setFavoriteState(favorited);
 
         bindDetailImages(images);
+        bindProductParams(product);
         bindCommentSection(product);
         bindStoreActions(product, seller);
         bindFavoriteAndShare(product);
         bindBottomActions(product, ownProduct);
+    }
+
+    private void bindProductParams(Product product) {
+        TextView summary = findViewById(R.id.tvProductParamsSummary);
+        String brand = displayParam(product.brand);
+        String origin = displayParam(product.origin);
+        String spec = displayParam(product.spec);
+        String packageType = displayParam(product.packageType);
+        summary.setText("品牌 " + brand + "  产地 " + origin + "  规格 " + spec);
+
+        findViewById(R.id.llProductParams).setOnClickListener(v -> {
+            LinearLayout content = new LinearLayout(this);
+            content.setOrientation(LinearLayout.VERTICAL);
+            content.addView(createParamRow("品牌", brand));
+            content.addView(createParamRow("产地", origin));
+            content.addView(createParamRow("规格", spec));
+            content.addView(createParamRow("包装方式", packageType));
+            DialogUtils.showContent(this, "商品参数", null, content, "关闭", "知道了", false, null);
+        });
+    }
+
+    private TextView createParamRow(String label, String value) {
+        TextView tv = new TextView(this);
+        tv.setText(label + "：" + value);
+        tv.setTextColor(0xFF333333);
+        tv.setTextSize(15);
+        tv.setPadding(0, dp(7), 0, dp(7));
+        return tv;
+    }
+
+    private String displayParam(String value) {
+        return value == null || value.trim().isEmpty() ? "暂无填写" : value.trim();
     }
 
     private void bindDetailImages(java.util.List<Object> images) {
@@ -188,12 +224,12 @@ public class ProductDetailActivity extends BaseMvpActivity<ProductDetailContract
 
             btnBuy.setText("下架商品");
             btnBuy.setBackgroundTintList(android.content.res.ColorStateList.valueOf(0xFFE53935));
-            btnBuy.setOnClickListener(v -> new AlertDialog.Builder(this)
-                    .setTitle("下架商品")
-                    .setMessage("确认将「" + product.name + "」下架？下架后买家将无法购买。")
-                    .setPositiveButton("确认下架", (dialog, which) -> presenter.deleteProduct())
-                    .setNegativeButton("取消", null)
-                    .show());
+            btnBuy.setOnClickListener(v -> DialogUtils.showConfirm(this, "下架商品",
+                    "确认将「" + product.name + "」下架？下架后买家将无法购买。",
+                    "取消", "确认下架", true, () -> {
+                        presenter.deleteProduct();
+                        return true;
+                    }));
         } else {
             btnAddCart.setOnClickListener(v -> presenter.addToCart());
             btnBuy.setOnClickListener(v -> presenter.buyNow());
@@ -247,6 +283,9 @@ public class ProductDetailActivity extends BaseMvpActivity<ProductDetailContract
     public void setFavoriteState(boolean favorited) {
         if (tvFavorite != null) {
             tvFavorite.setText(favorited ? "已收藏" : "收藏");
+        }
+        if (ivFavorite != null) {
+            loadAssetImage(ivFavorite, favorited ? "yishoucang.png" : "shoucang.png");
         }
     }
 
@@ -343,5 +382,9 @@ public class ProductDetailActivity extends BaseMvpActivity<ProductDetailContract
             iv.setImageBitmap(bmp);
         } catch (IOException ignored) {
         }
+    }
+
+    private int dp(int value) {
+        return (int) (value * getResources().getDisplayMetrics().density + 0.5f);
     }
 }

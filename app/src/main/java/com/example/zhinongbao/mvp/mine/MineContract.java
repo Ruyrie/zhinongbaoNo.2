@@ -6,7 +6,7 @@ import com.example.zhinongbao.base.BaseView;
 public interface MineContract {
     interface View extends BaseView<Presenter> {
         void renderUser(String username, String nickname, String signature, String avatarUri,
-                int followers, int following, int likes, boolean sellerActive);
+                int followers, int following, int likes, boolean sellerActive, boolean canSwitchSeller);
         void restartMain();
     }
 

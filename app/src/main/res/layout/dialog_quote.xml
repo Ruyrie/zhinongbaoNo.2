@@ -3,37 +3,40 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:orientation="vertical"
-    android:padding="20dp">
+    android:paddingTop="18dp">
 
     <!-- 需求信息摘要 -->
     <TextView
         android:id="@+id/tvQuoteReqInfo"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:background="@drawable/bg_category_tag"
-        android:paddingHorizontal="12dp"
-        android:paddingVertical="8dp"
+        android:background="@drawable/bg_quote_summary"
+        android:paddingHorizontal="14dp"
+        android:paddingVertical="10dp"
         android:textSize="13sp"
-        android:textColor="#1976D2"
-        android:layout_marginBottom="16dp" />
+        android:textColor="#2E7D32"
+        android:lineSpacingExtra="2dp"
+        android:layout_marginBottom="18dp" />
 
     <!-- 报价金额 -->
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="报价金额（元/单位）*"
-        android:textSize="14sp"
-        android:textColor="#333333"
+        android:textSize="15sp"
+        android:textColor="#212529"
         android:textStyle="bold"
-        android:layout_marginBottom="6dp" />
+        android:layout_marginBottom="8dp" />
 
     <EditText
         android:id="@+id/etQuotePrice"
         android:layout_width="match_parent"
-        android:layout_height="48dp"
-        android:background="@drawable/bg_auth_input"
-        android:paddingHorizontal="12dp"
-        android:textSize="14sp"
+        android:layout_height="52dp"
+        android:background="@drawable/bg_dialog_input"
+        android:paddingHorizontal="16dp"
+        android:textSize="15sp"
+        android:textColor="#212529"
+        android:textColorHint="#AAB0B4"
         android:hint="请输入您的报价"
         android:inputType="numberDecimal"
         android:singleLine="true"
@@ -43,13 +46,13 @@
         android:id="@+id/tvQuoteTotal"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginBottom="14dp"
-        android:background="@drawable/bg_category_tag"
-        android:paddingHorizontal="12dp"
-        android:paddingVertical="8dp"
+        android:layout_marginBottom="18dp"
+        android:background="@drawable/bg_quote_total"
+        android:paddingHorizontal="14dp"
+        android:paddingVertical="11dp"
         android:text="预计成交总额：¥0.00"
-        android:textColor="#4CAF50"
-        android:textSize="14sp"
+        android:textColor="#2E7D32"
+        android:textSize="15sp"
         android:textStyle="bold" />
 
     <!-- 说明 -->
@@ -57,18 +60,20 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="备注说明"
-        android:textSize="14sp"
-        android:textColor="#333333"
+        android:textSize="15sp"
+        android:textColor="#212529"
         android:textStyle="bold"
-        android:layout_marginBottom="6dp" />
+        android:layout_marginBottom="8dp" />
 
     <EditText
         android:id="@+id/etQuoteDesc"
         android:layout_width="match_parent"
-        android:layout_height="80dp"
-        android:background="@drawable/bg_auth_input"
-        android:padding="12dp"
-        android:textSize="14sp"
+        android:layout_height="92dp"
+        android:background="@drawable/bg_dialog_input"
+        android:padding="16dp"
+        android:textSize="15sp"
+        android:textColor="#212529"
+        android:textColorHint="#AAB0B4"
         android:hint="质量说明、交货条件等（选填）"
         android:gravity="top" />
 </LinearLayout>

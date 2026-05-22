@@ -4,7 +4,6 @@ import com.example.zhinongbao.R;
 import android.content.Intent;
 import android.os.Bundle;
 import android.widget.ImageView;
-import androidx.appcompat.app.AlertDialog;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import com.example.zhinongbao.adapter.MyProductAdapter;
@@ -12,6 +11,7 @@ import com.example.zhinongbao.base.BaseMvpActivity;
 import com.example.zhinongbao.model.Product;
 import com.example.zhinongbao.mvp.sellermyproducts.SellerMyProductsContract;
 import com.example.zhinongbao.mvp.sellermyproducts.SellerMyProductsPresenter;
+import com.example.zhinongbao.utils.DialogUtils;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -45,14 +45,12 @@ public class SellerMyProductsActivity extends BaseMvpActivity<SellerMyProductsCo
 
             @Override
             public void onDelete(Product product, int position) {
-                new AlertDialog.Builder(SellerMyProductsActivity.this)
-                        .setTitle("删除货品")
-                        .setMessage("确定要删除货品「" + product.name + "」吗？")
-                        .setPositiveButton("删除", (d, w) -> {
+                DialogUtils.showConfirm(SellerMyProductsActivity.this, "删除货品",
+                        "确定要删除货品「" + product.name + "」吗？",
+                        "取消", "删除", true, () -> {
                             presenter.deleteProduct(product);
-                        })
-                        .setNegativeButton("取消", null)
-                        .show();
+                            return true;
+                        });
             }
         }, new MyProductAdapter.ProductStatsDelegate() {
             @Override

@@ -56,6 +56,63 @@ public class PurchaseRepository {
         return resolver.insert(ZhiNongBaoProvider.CONTENT_URI_PURCHASE_REQUESTS, values) != null;
     }
 
+    public boolean updatePurchaseRequest(long requestId, String productName, String category, double quantity,
+            String unit, double targetPrice, String description) {
+        String buyer = getLoggedUser();
+        if (!canModifyPurchaseRequest(requestId, buyer)) {
+            return false;
+        }
+        ContentValues values = new ContentValues();
+        values.put("product_name", productName);
+        values.put("category", category);
+        values.put("quantity", quantity);
+        values.put("unit", unit);
+        values.put("target_price", targetPrice);
+        values.put("description", description);
+        values.put("timestamp", System.currentTimeMillis());
+        return resolver.update(ZhiNongBaoProvider.CONTENT_URI_PURCHASE_REQUESTS, values,
+                "id=? AND buyer_user=?", new String[] { String.valueOf(requestId), buyer }) > 0;
+    }
+
+    public boolean deletePurchaseRequest(long requestId) {
+        String buyer = getLoggedUser();
+        if (!canModifyPurchaseRequest(requestId, buyer)) {
+            return false;
+        }
+        resolver.delete(ZhiNongBaoProvider.CONTENT_URI_PURCHASE_QUOTES,
+                "request_id=?", new String[] { String.valueOf(requestId) });
+        return resolver.delete(ZhiNongBaoProvider.CONTENT_URI_PURCHASE_REQUESTS,
+                "id=? AND buyer_user=?", new String[] { String.valueOf(requestId), buyer }) > 0;
+    }
+
+    public boolean canModifyPurchaseRequest(long requestId, String username) {
+        if (username == null || username.isEmpty()) {
+            return false;
+        }
+        PurchaseRequest request = getRequestById(requestId);
+        if (request == null || request.buyerUser == null || !request.buyerUser.equals(username)) {
+            return false;
+        }
+        try (Cursor cursor = resolver.query(
+                ZhiNongBaoProvider.CONTENT_URI_ORDERS,
+                new String[] { "status" },
+                "purchase_request_id=? AND order_type=?",
+                new String[] { String.valueOf(requestId), Order.ORDER_TYPE_PROCUREMENT },
+                null)) {
+            while (cursor != null && cursor.moveToNext()) {
+                String status = cursor.getString(0);
+                if (!Order.STATUS_PENDING.equals(status) && !Order.STATUS_CANCELLED.equals(status)) {
+                    return false;
+                }
+            }
+        }
+        return true;
+    }
+
+    public PurchaseRequest getPurchaseRequestById(long requestId) {
+        return getRequestById(requestId);
+    }
+
     public List<PurchaseRequest> getPurchaseRequests() {
         List<PurchaseRequest> list = new ArrayList<>();
         try (Cursor cursor = resolver.query(

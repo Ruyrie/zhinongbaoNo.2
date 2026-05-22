@@ -185,6 +185,87 @@
                 android:background="#EEEEEE"
                 android:layout_marginHorizontal="16dp" />
 
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="16dp"
+                android:background="#FFFFFF">
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="商品参数"
+                    android:textSize="14sp"
+                    android:textColor="#999999"
+                    android:layout_marginBottom="8dp" />
+
+                <EditText
+                    android:id="@+id/etProductBrand"
+                    android:layout_width="match_parent"
+                    android:layout_height="48dp"
+                    android:hint="品牌（如：北货郎、自营农场）"
+                    android:textSize="15sp"
+                    android:textColor="#333333"
+                    android:textColorHint="#BBBBBB"
+                    android:background="@null"
+                    android:singleLine="true" />
+
+                <View
+                    android:layout_width="match_parent"
+                    android:layout_height="1dp"
+                    android:background="#EEEEEE" />
+
+                <EditText
+                    android:id="@+id/etProductOrigin"
+                    android:layout_width="match_parent"
+                    android:layout_height="48dp"
+                    android:hint="产地（如：山东临沂、东北产区）"
+                    android:textSize="15sp"
+                    android:textColor="#333333"
+                    android:textColorHint="#BBBBBB"
+                    android:background="@null"
+                    android:singleLine="true" />
+
+                <View
+                    android:layout_width="match_parent"
+                    android:layout_height="1dp"
+                    android:background="#EEEEEE" />
+
+                <EditText
+                    android:id="@+id/etProductSpec"
+                    android:layout_width="match_parent"
+                    android:layout_height="48dp"
+                    android:hint="规格（如：500g/盒、5kg/袋）"
+                    android:textSize="15sp"
+                    android:textColor="#333333"
+                    android:textColorHint="#BBBBBB"
+                    android:background="@null"
+                    android:singleLine="true" />
+
+                <View
+                    android:layout_width="match_parent"
+                    android:layout_height="1dp"
+                    android:background="#EEEEEE" />
+
+                <EditText
+                    android:id="@+id/etProductPackage"
+                    android:layout_width="match_parent"
+                    android:layout_height="48dp"
+                    android:hint="包装方式（如：礼盒装、袋装、散装）"
+                    android:textSize="15sp"
+                    android:textColor="#333333"
+                    android:textColorHint="#BBBBBB"
+                    android:background="@null"
+                    android:singleLine="true" />
+            </LinearLayout>
+
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="1dp"
+                android:background="#EEEEEE"
+                android:layout_marginHorizontal="16dp" />
+
             <!-- Category picker -->
             <LinearLayout
                 android:layout_width="match_parent"

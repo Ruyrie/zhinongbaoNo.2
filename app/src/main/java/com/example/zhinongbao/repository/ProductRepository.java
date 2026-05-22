@@ -82,7 +82,8 @@ public class ProductRepository {
         return products;
     }
 
-    public void addProduct(String name, String desc, double price, String coverUri, String category) {
+    public void addProduct(String name, String desc, double price, String coverUri, String category,
+            String brand, String origin, String spec, String packageType) {
         ContentValues values = new ContentValues();
         values.put("id", nextProductId());
         values.put("name", name);
@@ -90,18 +91,27 @@ public class ProductRepository {
         values.put("price", price);
         values.put("cover_uri", coverUri == null ? "" : coverUri);
         values.put("category", category == null || category.isEmpty() ? "推荐" : category);
+        values.put("brand", cleanParam(brand));
+        values.put("origin", cleanParam(origin));
+        values.put("spec", cleanParam(spec));
+        values.put("package_type", cleanParam(packageType));
         values.put("view_count", 0);
         values.put("seller", getLoggedUser());
         resolver.insert(ZhiNongBaoProvider.CONTENT_URI_PRODUCTS, values);
     }
 
-    public boolean updateProduct(int productId, String name, String desc, double price, String coverUri, String category) {
+    public boolean updateProduct(int productId, String name, String desc, double price, String coverUri, String category,
+            String brand, String origin, String spec, String packageType) {
         ContentValues values = new ContentValues();
         values.put("name", name);
         values.put("desc", desc);
         values.put("price", price);
         values.put("cover_uri", coverUri == null ? "" : coverUri);
         values.put("category", category == null || category.isEmpty() ? "推荐" : category);
+        values.put("brand", cleanParam(brand));
+        values.put("origin", cleanParam(origin));
+        values.put("spec", cleanParam(spec));
+        values.put("package_type", cleanParam(packageType));
         return resolver.update(ZhiNongBaoProvider.CONTENT_URI_PRODUCTS, values,
                 "id=?", new String[] { String.valueOf(productId) }) > 0;
     }
@@ -125,7 +135,8 @@ public class ProductRepository {
     }
 
     public void recordStoreView(String username, String seller) {
-        if (username == null || username.isEmpty() || seller == null || seller.isEmpty()) {
+        if (username == null || username.isEmpty() || seller == null || seller.isEmpty()
+                || username.equals(seller)) {
             return;
         }
         ContentValues values = new ContentValues();
@@ -519,12 +530,18 @@ public class ProductRepository {
     }
 
     private String[] productProjection() {
-        return new String[] { "id", "name", "`desc`", "price", "cover_uri", "category", "seller", "view_count" };
+        return new String[] { "id", "name", "`desc`", "price", "cover_uri", "category", "seller", "view_count",
+                "brand", "origin", "spec", "package_type" };
     }
 
     private Product cursorToProduct(Cursor cursor) {
         return new Product(cursor.getInt(0), cursor.getString(1), cursor.getString(2), cursor.getDouble(3),
-                cursor.getString(4), cursor.getString(5), cursor.getString(6), cursor.getInt(7));
+                cursor.getString(4), cursor.getString(5), cursor.getString(6), cursor.getInt(7),
+                cursor.getString(8), cursor.getString(9), cursor.getString(10), cursor.getString(11));
+    }
+
+    private String cleanParam(String value) {
+        return value == null ? "" : value.trim();
     }
 
     private int nextProductId() {

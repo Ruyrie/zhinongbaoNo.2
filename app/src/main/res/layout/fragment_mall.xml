@@ -89,7 +89,7 @@
             android:paddingBottom="110dp" />
     </LinearLayout>
 
-    <TextView
+    <ImageView
         android:id="@+id/btnScrollTop"
         android:layout_width="46dp"
         android:layout_height="46dp"
@@ -98,11 +98,8 @@
         android:layout_marginBottom="112dp"
         android:background="@drawable/bg_scroll_top"
         android:elevation="8dp"
-        android:gravity="center"
-        android:text="↑"
-        android:textColor="#2F80ED"
-        android:textSize="24sp"
-        android:textStyle="bold"
+        android:padding="12dp"
+        android:scaleType="fitCenter"
         android:visibility="gone" />
 
 </FrameLayout>

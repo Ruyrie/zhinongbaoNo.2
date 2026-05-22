@@ -61,6 +61,19 @@
             android:textColor="#999999"
             android:textSize="12sp" />
 
+        <TextView
+            android:id="@+id/btnEditQuote"
+            android:layout_width="match_parent"
+            android:layout_height="40dp"
+            android:layout_marginTop="10dp"
+            android:background="@drawable/bg_action_outline_green"
+            android:gravity="center"
+            android:text="修改报价"
+            android:textColor="#2E7D32"
+            android:textSize="14sp"
+            android:textStyle="bold"
+            android:visibility="gone" />
+
         <LinearLayout
             android:id="@+id/llReplyContainer"
             android:layout_width="match_parent"

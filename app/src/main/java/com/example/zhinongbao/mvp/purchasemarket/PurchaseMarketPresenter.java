@@ -55,13 +55,31 @@ public class PurchaseMarketPresenter implements PurchaseMarketContract.Presenter
     }
 
     @Override
+    public boolean canModify(PurchaseRequest request) {
+        return request != null && repository.canModifyPurchaseRequest(request.id, currentUser);
+    }
+
+    @Override
+    public boolean deleteRequest(PurchaseRequest request) {
+        if (request == null) {
+            return false;
+        }
+        boolean ok = repository.deletePurchaseRequest(request.id);
+        view.showToast(ok ? "采购需求已删除" : "删除失败，请确认订单未付款");
+        if (ok) {
+            refresh();
+        }
+        return ok;
+    }
+
+    @Override
     public void submitQuote(PurchaseRequest request, String priceStr, String desc) {
         if (TextUtils.isEmpty(priceStr)) {
             view.showToast("请填写报价金额");
             return;
         }
         try {
-            double price = Double.parseDouble(priceStr);
+            double price = Double.parseDouble(priceStr.replace(",", "").replace("¥", "").trim());
             boolean ok = repository.addQuote(request.id, currentUser, price, desc);
             view.showToast(ok ? "报价成功！买家将看到您的报价" : "报价失败，请重试");
             if (ok) {

@@ -36,11 +36,14 @@ public class LoginPresenter implements LoginContract.Presenter {
         User user = repository.login(account, password);
         if (user == null) {
             view.showToast("密码错误");
-        } else if (user.role == User.ROLE_BOTH) {
+            return;
+        }
+        int role = repository.getUserRole(user.username);
+        if (role == User.ROLE_BOTH) {
             view.showRoleSelection(user.username);
         } else {
             repository.setLoggedUser(user.username);
-            repository.setActiveRole(user.role);
+            repository.setActiveRole(role);
             view.goMain();
         }
     }

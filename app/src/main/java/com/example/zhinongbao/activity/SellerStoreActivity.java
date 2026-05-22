@@ -13,13 +13,13 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 import androidx.annotation.NonNull;
-import androidx.appcompat.app.AlertDialog;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import com.example.zhinongbao.base.BaseMvpActivity;
 import com.example.zhinongbao.model.Product;
 import com.example.zhinongbao.mvp.sellerstore.SellerStoreContract;
 import com.example.zhinongbao.mvp.sellerstore.SellerStorePresenter;
+import com.example.zhinongbao.utils.DialogUtils;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -58,16 +58,13 @@ public class SellerStoreActivity extends BaseMvpActivity<SellerStoreContract.Pre
             i.putExtra("product_id", product.id);
             startActivity(i);
         }, product -> {
-            // 下架
-            new AlertDialog.Builder(this)
-                    .setTitle("下架商品")
-                    .setMessage("确认将\"" + product.name + "\"下架？下架后买家将无法购买。")
-                    .setPositiveButton("确认下架", (d, w) -> {
+            DialogUtils.showConfirm(this, "下架商品",
+                    "确认将「" + product.name + "」下架？下架后买家将无法购买。",
+                    "取消", "确认下架", true, () -> {
                         presenter.deleteProduct(product.id);
                         Toast.makeText(this, "已下架", Toast.LENGTH_SHORT).show();
-                    })
-                    .setNegativeButton("取消", null)
-                    .show();
+                        return true;
+                    });
         }, presenter::getProductOrderCount);
         rv.setAdapter(adapter);
         presenter.loadStore(seller);
@@ -101,35 +98,48 @@ public class SellerStoreActivity extends BaseMvpActivity<SellerStoreContract.Pre
     private void showEditStoreDialog() {
         LinearLayout box = new LinearLayout(this);
         box.setOrientation(LinearLayout.VERTICAL);
-        int pad = (int) (20 * getResources().getDisplayMetrics().density);
-        box.setPadding(pad, pad / 2, pad, 0);
 
-        EditText etName = new EditText(this);
+        TextView nameLabel = createDialogLabel("店铺名称");
+        box.addView(nameLabel);
+        EditText etName = DialogUtils.createInput(this, "请输入店铺名称", false);
         etName.setHint("店铺名称");
         etName.setText(((TextView) findViewById(R.id.tvStoreDisplayName)).getText());
         box.addView(etName);
 
-        EditText etPhone = new EditText(this);
+        TextView phoneLabel = createDialogLabel("联系电话");
+        phoneLabel.setPadding(0, dp(14), 0, 0);
+        box.addView(phoneLabel);
+        EditText etPhone = DialogUtils.createInput(this, "请输入联系电话", false);
         etPhone.setHint("商铺电话");
         etPhone.setInputType(android.text.InputType.TYPE_CLASS_PHONE);
         String phoneText = ((TextView) findViewById(R.id.tvStorePhone)).getText().toString().replace("电话：", "");
         etPhone.setText("未填写".equals(phoneText) ? "" : phoneText);
         box.addView(etPhone);
 
-        new AlertDialog.Builder(this)
-                .setTitle("修改店铺信息")
-                .setView(box)
-                .setPositiveButton("保存", (dialog, which) -> {
+        DialogUtils.showContent(this, "修改店铺信息", "完善店铺名称和联系电话，方便买家确认商品来源。",
+                box, "取消", "保存", false, () -> {
                     String name = etName.getText().toString().trim();
                     String phone = etPhone.getText().toString().trim();
                     if (name.isEmpty() || phone.isEmpty()) {
                         Toast.makeText(this, "店铺名称和电话不能为空", Toast.LENGTH_SHORT).show();
-                        return;
+                        return false;
                     }
                     presenter.updateStoreInfo(name, phone);
-                })
-                .setNegativeButton("取消", null)
-                .show();
+                    return true;
+                });
+    }
+
+    private TextView createDialogLabel(String text) {
+        TextView label = new TextView(this);
+        label.setText(text);
+        label.setTextColor(0xFF212529);
+        label.setTextSize(14);
+        label.setTypeface(android.graphics.Typeface.DEFAULT, android.graphics.Typeface.BOLD);
+        return label;
+    }
+
+    private int dp(int value) {
+        return (int) (value * getResources().getDisplayMetrics().density + 0.5f);
     }
 
     @Override

@@ -5,12 +5,14 @@ import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
 import android.text.TextUtils;
-import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.core.content.FileProvider;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
+import com.example.zhinongbao.adapter.ImagePickerAdapter;
 import com.example.zhinongbao.base.BaseMvpActivity;
 import com.example.zhinongbao.mvp.addcirclepost.AddCirclePostContract;
 import com.example.zhinongbao.mvp.addcirclepost.AddCirclePostPresenter;
@@ -23,7 +25,7 @@ public class AddCirclePostActivity extends BaseMvpActivity<AddCirclePostContract
         implements AddCirclePostContract.View {
 
     private android.widget.EditText etContent;
-    private ImageView ivPreview;
+    private ImagePickerAdapter imageAdapter;
     private TextView tvImageHint;
     private Uri selectedImageUri;
     private Uri currentCameraUri;
@@ -36,36 +38,30 @@ public class AddCirclePostActivity extends BaseMvpActivity<AddCirclePostContract
                         getContentResolver().takePersistableUriPermission(
                                 uri, Intent.FLAG_GRANT_READ_URI_PERMISSION);
                     } catch (SecurityException ignored) {}
-                    selectedImageUri = uri;
-                    selectedImageUris.clear();
-                    selectedImageUris.add(uri);
-                    showPreview(uri);
+                    addImage(uri);
                 }
             });
 
     private final ActivityResultLauncher<String> pickImages =
             registerForActivityResult(new ActivityResultContracts.GetMultipleContents(), uris -> {
                 if (uris != null && !uris.isEmpty()) {
-                    selectedImageUris.clear();
                     for (Uri uri : uris) {
+                        if (selectedImageUris.size() >= 9) {
+                            break;
+                        }
                         try {
                             getContentResolver().takePersistableUriPermission(
                                     uri, Intent.FLAG_GRANT_READ_URI_PERMISSION);
                         } catch (SecurityException ignored) {}
-                        selectedImageUris.add(uri);
+                        addImage(uri);
                     }
-                    selectedImageUri = selectedImageUris.get(0);
-                    showPreview(selectedImageUri);
                 }
             });
 
     private final ActivityResultLauncher<Uri> takePicture =
             registerForActivityResult(new ActivityResultContracts.TakePicture(), success -> {
                 if (success && currentCameraUri != null) {
-                    selectedImageUri = currentCameraUri;
-                    selectedImageUris.clear();
-                    selectedImageUris.add(currentCameraUri);
-                    showPreview(currentCameraUri);
+                    addImage(currentCameraUri);
                 }
             });
 
@@ -77,8 +73,28 @@ public class AddCirclePostActivity extends BaseMvpActivity<AddCirclePostContract
         new AddCirclePostPresenter(this, this).start();
 
         etContent = findViewById(R.id.etCircleContent);
-        ivPreview = findViewById(R.id.ivCircleSelectedImage);
         tvImageHint = findViewById(R.id.tvImageHint);
+        RecyclerView rvImages = findViewById(R.id.rvCircleImages);
+        rvImages.setLayoutManager(new LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false));
+        imageAdapter = new ImagePickerAdapter(selectedImageUris, 9, new ImagePickerAdapter.OnImagePickerClickListener() {
+            @Override
+            public void onAddClick() {
+                if (selectedImageUris.size() >= 9) {
+                    Toast.makeText(AddCirclePostActivity.this, "最多上传 9 张照片", Toast.LENGTH_SHORT).show();
+                    return;
+                }
+                pickImageSource();
+            }
+
+            @Override
+            public void onDeleteClick(int position) {
+                selectedImageUris.remove(position);
+                selectedImageUri = selectedImageUris.isEmpty() ? null : selectedImageUris.get(0);
+                imageAdapter.notifyDataSetChanged();
+                updateImageHint();
+            }
+        });
+        rvImages.setAdapter(imageAdapter);
 
         findViewById(R.id.tvCirclePostCancel).setOnClickListener(v -> finish());
         findViewById(R.id.tvCirclePostSubmit).setOnClickListener(v -> submit());
@@ -100,11 +116,20 @@ public class AddCirclePostActivity extends BaseMvpActivity<AddCirclePostContract
                 });
     }
 
-    private void showPreview(Uri uri) {
-        ivPreview.setVisibility(android.view.View.VISIBLE);
-        ivPreview.setImageURI(uri);
-        int count = selectedImageUris.isEmpty() ? 1 : selectedImageUris.size();
-        tvImageHint.setText("已选择 " + count + " 张");
+    private void addImage(Uri uri) {
+        if (selectedImageUris.size() >= 9) {
+            Toast.makeText(this, "最多上传 9 张照片", Toast.LENGTH_SHORT).show();
+            return;
+        }
+        selectedImageUri = uri;
+        selectedImageUris.add(uri);
+        imageAdapter.notifyDataSetChanged();
+        updateImageHint();
+    }
+
+    private void updateImageHint() {
+        int count = selectedImageUris.size();
+        tvImageHint.setText(count == 0 ? "最多 9 张" : "已选择 " + count + " 张");
     }
 
     private Uri createImageFile() {

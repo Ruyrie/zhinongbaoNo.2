@@ -15,6 +15,6 @@ public interface AddProductContract {
     interface Presenter extends BasePresenter {
         void loadProduct(int productId);
         void submitProduct(int productId, String name, String desc, double price, String coverUri, String categories,
-                String storePhone);
+                String storePhone, String brand, String origin, String spec, String packageType);
     }
 }

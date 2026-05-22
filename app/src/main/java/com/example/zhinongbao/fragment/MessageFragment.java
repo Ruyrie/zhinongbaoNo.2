@@ -8,7 +8,6 @@ import android.view.ViewGroup;
 import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.appcompat.app.AlertDialog;
 import androidx.recyclerview.widget.DividerItemDecoration;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -19,6 +18,7 @@ import com.example.zhinongbao.base.BaseMvpFragment;
 import com.example.zhinongbao.model.ConversationItem;
 import com.example.zhinongbao.mvp.message.MessageContract;
 import com.example.zhinongbao.mvp.message.MessagePresenter;
+import com.example.zhinongbao.utils.DialogUtils;
 import java.util.List;
 
 public class MessageFragment extends BaseMvpFragment<MessageContract.Presenter>
@@ -72,14 +72,12 @@ public class MessageFragment extends BaseMvpFragment<MessageContract.Presenter>
             adapter.setOnItemLongPressListener((item, position) -> {
                 String displayName = (item.displayName != null && !item.displayName.isEmpty())
                         ? item.displayName : item.otherUser;
-                new AlertDialog.Builder(requireContext())
-                        .setTitle("删除对话")
-                        .setMessage("确认删除与 " + displayName + " 的全部消息？")
-                        .setPositiveButton("删除", (d, w) -> {
+                DialogUtils.showConfirm(requireContext(), "删除对话",
+                        "确认删除与 " + displayName + " 的全部消息？",
+                        "取消", "删除", true, () -> {
                             presenter.deleteConversation(item.otherUser);
-                        })
-                        .setNegativeButton("取消", null)
-                        .show();
+                            return true;
+                        });
             });
             rvConversations.setAdapter(adapter);
         } else {

@@ -180,7 +180,7 @@
                     <TextView
                         android:layout_width="88dp"
                         android:layout_height="wrap_content"
-                        android:text="需求数量"
+                    android:text="购买数量"
                         android:textSize="16sp"
                         android:textColor="#1C1C1E" />
 
@@ -190,7 +190,7 @@
                         android:layout_height="match_parent"
                         android:layout_weight="1"
                         android:background="@null"
-                        android:hint="数量（必填）"
+                        android:hint="要采购的数量"
                         android:textSize="16sp"
                         android:textColor="#1C1C1E"
                         android:textColorHint="#C7C7CC"
@@ -223,7 +223,7 @@
                     android:background="#C6C6C8"
                     android:layout_marginStart="16dp" />
 
-                <!-- 目标价格 -->
+                <!-- 预算单价 -->
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="52dp"
@@ -234,38 +234,79 @@
                     <TextView
                         android:layout_width="88dp"
                         android:layout_height="wrap_content"
-                        android:text="目标价格"
+                        android:text="预算单价"
                         android:textSize="16sp"
                         android:textColor="#1C1C1E" />
 
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="¥"
-                        android:textSize="16sp"
-                        android:textColor="#FF3B30"
-                        android:layout_marginEnd="2dp" />
-
-                    <EditText
-                        android:id="@+id/etPurchaseTargetPrice"
+                    <LinearLayout
                         android:layout_width="0dp"
                         android:layout_height="match_parent"
                         android:layout_weight="1"
-                        android:background="@null"
-                        android:hint="必填"
-                        android:textSize="16sp"
-                        android:textColor="#FF3B30"
-                        android:textColorHint="#C7C7CC"
-                        android:gravity="center_vertical"
-                        android:inputType="numberDecimal"
-                        android:singleLine="true" />
+                        android:orientation="horizontal"
+                        android:gravity="center_vertical|end">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="¥"
+                            android:textSize="16sp"
+                            android:textColor="#FF3B30"
+                            android:layout_marginEnd="4dp" />
+
+                        <EditText
+                            android:id="@+id/etPurchaseTargetPrice"
+                            android:layout_width="120dp"
+                            android:layout_height="match_parent"
+                            android:background="@null"
+                            android:hint="您的预算"
+                            android:textSize="16sp"
+                            android:textColor="#FF3B30"
+                            android:textColorHint="#C7C7CC"
+                            android:gravity="center_vertical|end"
+                            android:inputType="numberDecimal"
+                            android:singleLine="true" />
+                    </LinearLayout>
 
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="元/单位"
                         android:textSize="13sp"
-                        android:textColor="#8E8E93" />
+                        android:textColor="#8E8E93"
+                        android:layout_marginStart="10dp" />
+                </LinearLayout>
+
+                <View
+                    android:layout_width="match_parent"
+                    android:layout_height="0.5dp"
+                    android:background="#C6C6C8"
+                    android:layout_marginStart="16dp" />
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="58dp"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical"
+                    android:paddingHorizontal="16dp">
+
+                    <TextView
+                        android:layout_width="88dp"
+                        android:layout_height="wrap_content"
+                        android:text="预计总价"
+                        android:textSize="16sp"
+                        android:textColor="#1C1C1E" />
+
+                    <TextView
+                        android:id="@+id/tvPurchaseTotal"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="¥0.00"
+                        android:textSize="20sp"
+                        android:textStyle="bold"
+                        android:textColor="#34C759"
+                        android:gravity="end"
+                        android:singleLine="true" />
                 </LinearLayout>
             </LinearLayout>
 

@@ -18,6 +18,7 @@ public class UserRepository {
     private static final String PREF_SESSION = "pref_session";
     private static final String KEY_LOGGED_USER = "logged_user";
     private static final String KEY_ACTIVE_ROLE = "active_role";
+    private static final String KEY_ACTIVE_ROLE_PREFIX = "active_role_";
 
     private final Context context;
     private final ContentResolver resolver;
@@ -36,11 +37,33 @@ public class UserRepository {
     }
 
     public void setActiveRole(int role) {
-        prefs().edit().putInt(KEY_ACTIVE_ROLE, role).apply();
+        String username = getLoggedUser();
+        SharedPreferences.Editor editor = prefs().edit().putInt(KEY_ACTIVE_ROLE, role);
+        if (username != null && !username.isEmpty()) {
+            editor.putInt(activeRoleKey(username), role);
+        }
+        editor.apply();
     }
 
     public int getActiveRole() {
-        return prefs().getInt(KEY_ACTIVE_ROLE, User.ROLE_BUYER);
+        String username = getLoggedUser();
+        int userRole = getUserRole(username);
+        int fallback = userRole == User.ROLE_SELLER ? User.ROLE_SELLER : User.ROLE_BUYER;
+        int activeRole = username == null || username.isEmpty()
+                ? prefs().getInt(KEY_ACTIVE_ROLE, fallback)
+                : prefs().getInt(activeRoleKey(username), fallback);
+        if (activeRole == User.ROLE_SELLER && !canUseSellerRole(username)) {
+            return User.ROLE_BUYER;
+        }
+        if (activeRole == User.ROLE_BUYER && userRole == User.ROLE_SELLER) {
+            return User.ROLE_SELLER;
+        }
+        return activeRole;
+    }
+
+    public boolean canUseSellerRole(String username) {
+        int role = getUserRole(username);
+        return role == User.ROLE_SELLER || role == User.ROLE_BOTH;
     }
 
     public void logout() {
@@ -238,6 +261,9 @@ public class UserRepository {
         if (username == null) {
             return User.ROLE_BUYER;
         }
+        if ("admin".equals(username)) {
+            return User.ROLE_BOTH;
+        }
         try (Cursor cursor = resolver.query(
                 ZhiNongBaoProvider.CONTENT_URI_USERS,
                 new String[] { "role" },
@@ -284,5 +310,9 @@ public class UserRepository {
 
     private SharedPreferences prefs() {
         return context.getSharedPreferences(PREF_SESSION, Context.MODE_PRIVATE);
+    }
+
+    private String activeRoleKey(String username) {
+        return KEY_ACTIVE_ROLE_PREFIX + username;
     }
 }

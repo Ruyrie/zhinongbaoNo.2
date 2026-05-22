@@ -39,17 +39,19 @@ public class AddProductPresenter implements AddProductContract.Presenter {
 
     @Override
     public void submitProduct(int productId, String name, String desc, double price, String coverUri, String categories,
-            String storePhone) {
+            String storePhone, String brand, String origin, String spec, String packageType) {
         if (currentUser != null) {
             userRepository.updateStoreInfo(currentUser, userRepository.getStoreName(currentUser), storePhone);
         }
         if (productId > 0) {
-            productRepository.updateProduct(productId, name, desc, price, coverUri, categories);
+            productRepository.updateProduct(productId, name, desc, price, coverUri, categories,
+                    brand, origin, spec, packageType);
             view.showToast("货品信息已更新", false);
             view.closePage();
             return;
         }
-        productRepository.addProduct(name, desc, price, coverUri == null ? "" : coverUri, categories);
+        productRepository.addProduct(name, desc, price, coverUri == null ? "" : coverUri, categories,
+                brand, origin, spec, packageType);
         if (currentUser != null && userRepository.getUserRole(currentUser) == User.ROLE_BUYER) {
             userRepository.updateUserRole(currentUser, User.ROLE_BOTH);
             view.showToast("商品发布成功！您已获得卖家身份，下次登录可选择身份", true);

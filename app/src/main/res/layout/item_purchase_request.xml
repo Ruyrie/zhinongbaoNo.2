@@ -48,7 +48,7 @@
         android:textColor="#1A1A2E"
         android:layout_marginBottom="6dp" />
 
-    <!-- 数量 + 目标价格 -->
+    <!-- 数量 + 预算单价 -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -59,7 +59,7 @@
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="需求量："
+            android:text="购买量："
             android:textSize="13sp"
             android:textColor="#666666" />
 
@@ -76,7 +76,7 @@
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="目标价："
+            android:text="预算："
             android:textSize="13sp"
             android:textColor="#666666" />
 
@@ -132,15 +132,48 @@
             android:layout_marginEnd="12dp" />
 
         <TextView
+            android:id="@+id/btnEditPurchase"
+            android:layout_width="wrap_content"
+            android:layout_height="36dp"
+            android:text="修改"
+            android:textSize="13sp"
+            android:textColor="#1976D2"
+            android:background="@drawable/bg_action_outline_blue"
+            android:gravity="center"
+            android:minWidth="64dp"
+            android:paddingHorizontal="12dp"
+            android:layout_marginEnd="8dp"
+            android:visibility="gone"
+            android:clickable="true"
+            android:focusable="true" />
+
+        <TextView
+            android:id="@+id/btnDeletePurchase"
+            android:layout_width="wrap_content"
+            android:layout_height="36dp"
+            android:text="删除"
+            android:textSize="13sp"
+            android:textColor="#E53935"
+            android:background="@drawable/bg_action_outline_red"
+            android:gravity="center"
+            android:minWidth="64dp"
+            android:paddingHorizontal="12dp"
+            android:layout_marginEnd="8dp"
+            android:visibility="gone"
+            android:clickable="true"
+            android:focusable="true" />
+
+        <TextView
             android:id="@+id/btnReqQuote"
             android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
+            android:layout_height="36dp"
             android:text="我要报价"
             android:textSize="13sp"
-            android:textColor="#FFFFFF"
-            android:background="@drawable/bg_auth_button"
+            android:textColor="#2E7D32"
+            android:background="@drawable/bg_action_outline_green"
+            android:gravity="center"
+            android:minWidth="84dp"
             android:paddingHorizontal="14dp"
-            android:paddingVertical="6dp"
             android:visibility="gone"
             android:clickable="true"
             android:focusable="true" />
@@ -148,13 +181,14 @@
         <TextView
             android:id="@+id/btnViewQuotes"
             android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
+            android:layout_height="36dp"
             android:text="查看报价"
             android:textSize="13sp"
             android:textColor="#1976D2"
-            android:background="@drawable/bg_bubble_received"
+            android:background="@drawable/bg_action_outline_blue"
+            android:gravity="center"
+            android:minWidth="84dp"
             android:paddingHorizontal="14dp"
-            android:paddingVertical="6dp"
             android:visibility="gone"
             android:clickable="true"
             android:focusable="true" />

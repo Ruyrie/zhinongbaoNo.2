@@ -11,6 +11,7 @@ import com.example.zhinongbao.base.BaseMvpActivity;
 import com.example.zhinongbao.model.User;
 import com.example.zhinongbao.mvp.login.LoginContract;
 import com.example.zhinongbao.mvp.login.LoginPresenter;
+import com.example.zhinongbao.utils.DialogUtils;
 
 /** 登录界面 */
 public class LoginActivity extends BaseMvpActivity<LoginContract.Presenter> implements LoginContract.View {
@@ -46,14 +47,10 @@ public class LoginActivity extends BaseMvpActivity<LoginContract.Presenter> impl
     @Override
     public void showRoleSelection(String username) {
         String[] options = { "登录买家版本", "登录卖家版本" };
-        new androidx.appcompat.app.AlertDialog.Builder(this)
-                .setTitle("请选择登录版本")
-                .setItems(options, (dialog, which) -> {
+        DialogUtils.showRoleSelection(this, "请选择登录版本", options, which -> {
                     int selectedRole = (which == 0) ? User.ROLE_BUYER : User.ROLE_SELLER;
                     presenter.selectRole(username, selectedRole);
-                })
-                .setCancelable(false)
-                .show();
+                });
     }
 
     @Override

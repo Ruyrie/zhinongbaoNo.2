@@ -30,7 +30,7 @@ public class SellerPurchasePresenter implements SellerPurchaseContract.Presenter
     public void switchTab(int tab) {
         currentTab = tab;
         if (tab == 0) {
-            view.showMarket(repository.getMarketRequestsForSeller(currentUser));
+            view.showMarket(repository.getPurchaseRequests());
         } else if (tab == 1) {
             view.showMyQuotes(repository.getQuotesBySellerUser(currentUser));
         } else {
@@ -41,7 +41,8 @@ public class SellerPurchasePresenter implements SellerPurchaseContract.Presenter
     @Override
     public void submitQuote(PurchaseRequest request, String price, String desc) {
         try {
-            boolean ok = repository.addQuote(request.id, currentUser, Double.parseDouble(price), desc);
+            boolean ok = repository.addQuote(request.id, currentUser,
+                    Double.parseDouble(price.replace(",", "").replace("¥", "").trim()), desc);
             view.showToast(ok ? "报价成功" : "报价失败");
             switchTab(currentTab);
         } catch (Exception e) {
@@ -70,5 +71,23 @@ public class SellerPurchasePresenter implements SellerPurchaseContract.Presenter
     @Override
     public List<PurchaseQuote> getQuotesForRequest(long requestId) {
         return repository.getQuotesForRequestWithStatus(requestId);
+    }
+
+    @Override
+    public boolean canModify(PurchaseRequest request) {
+        return request != null && repository.canModifyPurchaseRequest(request.id, currentUser);
+    }
+
+    @Override
+    public boolean deleteRequest(PurchaseRequest request) {
+        if (request == null) {
+            return false;
+        }
+        boolean ok = repository.deletePurchaseRequest(request.id);
+        view.showToast(ok ? "采购需求已删除" : "删除失败，请确认订单未付款");
+        if (ok) {
+            switchTab(currentTab);
+        }
+        return ok;
     }
 }

@@ -1,11 +1,14 @@
 package com.example.zhinongbao.fragment;
 
 import android.content.Intent;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.EditText;
+import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 import androidx.annotation.NonNull;
@@ -20,6 +23,8 @@ import com.example.zhinongbao.model.Product;
 import com.example.zhinongbao.mvp.mall.MallContract;
 import com.example.zhinongbao.mvp.mall.MallPresenter;
 import com.google.android.material.tabs.TabLayout;
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -52,8 +57,9 @@ public class MallFragment extends BaseMvpFragment<MallContract.Presenter>
         layoutManager.setGapStrategy(StaggeredGridLayoutManager.GAP_HANDLING_MOVE_ITEMS_BETWEEN_SPANS);
         rv.setLayoutManager(layoutManager);
 
-        TextView btnScrollTop = view.findViewById(R.id.btnScrollTop);
+        ImageView btnScrollTop = view.findViewById(R.id.btnScrollTop);
         if (btnScrollTop != null) {
+            loadAssetImage(btnScrollTop, "xiangshangfanhui.png");
             btnScrollTop.setOnClickListener(v -> {
                 rv.stopScroll();
                 layoutManager.invalidateSpanAssignments();
@@ -157,6 +163,14 @@ public class MallFragment extends BaseMvpFragment<MallContract.Presenter>
         super.onResume();
         if (presenter != null) {
             presenter.refresh();
+        }
+    }
+
+    private void loadAssetImage(ImageView iv, String filename) {
+        try (InputStream is = requireContext().getAssets().open("pic/" + filename)) {
+            Bitmap bmp = BitmapFactory.decodeStream(is);
+            iv.setImageBitmap(bmp);
+        } catch (IOException ignored) {
         }
     }
 }

@@ -33,7 +33,7 @@ public class AddProductActivity extends BaseMvpActivity<AddProductContract.Prese
     private Set<String> selectedCategories = new HashSet<>();
     private TextView[] categoryChips;
 
-    private EditText etName, etDesc, etPrice, etStorePhone;
+    private EditText etName, etDesc, etPrice, etStorePhone, etBrand, etOrigin, etSpec, etPackage;
     private RecyclerView rvImages;
     private ImagePickerAdapter imageAdapter;
     private List<Uri> imageUris = new ArrayList<>();
@@ -81,6 +81,10 @@ public class AddProductActivity extends BaseMvpActivity<AddProductContract.Prese
         etDesc = findViewById(R.id.etProductDesc);
         etPrice = findViewById(R.id.etProductPrice);
         etStorePhone = findViewById(R.id.etStorePhone);
+        etBrand = findViewById(R.id.etProductBrand);
+        etOrigin = findViewById(R.id.etProductOrigin);
+        etSpec = findViewById(R.id.etProductSpec);
+        etPackage = findViewById(R.id.etProductPackage);
         rvImages = findViewById(R.id.rvProductImages);
         new AddProductPresenter(this, this).start();
 
@@ -150,6 +154,10 @@ public class AddProductActivity extends BaseMvpActivity<AddProductContract.Prese
         etName.setText(p.name);
         etDesc.setText(p.desc);
         etPrice.setText(String.valueOf(p.price));
+        etBrand.setText(p.brand == null ? "" : p.brand);
+        etOrigin.setText(p.origin == null ? "" : p.origin);
+        etSpec.setText(p.spec == null ? "" : p.spec);
+        etPackage.setText(p.packageType == null ? "" : p.packageType);
         existingCoverUri = p.coverUri;
         imageUris.clear();
         if (existingCoverUri != null && !existingCoverUri.isEmpty()) {
@@ -264,8 +272,13 @@ public class AddProductActivity extends BaseMvpActivity<AddProductContract.Prese
         String desc = etDesc.getText().toString().trim();
         String priceStr = etPrice.getText().toString().trim();
         String storePhone = etStorePhone.getText().toString().trim();
+        String brand = etBrand.getText().toString().trim();
+        String origin = etOrigin.getText().toString().trim();
+        String spec = etSpec.getText().toString().trim();
+        String packageType = etPackage.getText().toString().trim();
 
-        if (name.isEmpty() || desc.isEmpty() || priceStr.isEmpty() || storePhone.isEmpty()) {
+        if (name.isEmpty() || desc.isEmpty() || priceStr.isEmpty() || storePhone.isEmpty()
+                || brand.isEmpty() || origin.isEmpty() || spec.isEmpty() || packageType.isEmpty()) {
             Toast.makeText(this, "请完整填写商品信息", Toast.LENGTH_SHORT).show();
             return;
         }
@@ -305,6 +318,7 @@ public class AddProductActivity extends BaseMvpActivity<AddProductContract.Prese
         if (editProductId > 0 && coverUri == null) {
             coverUri = existingCoverUri;
         }
-        presenter.submitProduct(editProductId, name, desc, price, coverUri, catBuilder.toString(), storePhone);
+        presenter.submitProduct(editProductId, name, desc, price, coverUri, catBuilder.toString(), storePhone,
+                brand, origin, spec, packageType);
     }
 }

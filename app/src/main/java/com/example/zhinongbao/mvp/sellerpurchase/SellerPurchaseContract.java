@@ -21,5 +21,7 @@ public interface SellerPurchaseContract {
         void acceptQuote(long quoteId, String reply);
         void rejectQuote(long quoteId, String reply);
         List<PurchaseQuote> getQuotesForRequest(long requestId);
+        boolean canModify(PurchaseRequest request);
+        boolean deleteRequest(PurchaseRequest request);
     }
 }

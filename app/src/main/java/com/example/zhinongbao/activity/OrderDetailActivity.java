@@ -5,7 +5,6 @@ import android.os.Bundle;
 import android.content.Intent;
 import android.view.View;
 import android.widget.Button;
-import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
@@ -15,6 +14,7 @@ import com.example.zhinongbao.base.BaseMvpActivity;
 import com.example.zhinongbao.model.Order;
 import com.example.zhinongbao.mvp.orderdetail.OrderDetailContract;
 import com.example.zhinongbao.mvp.orderdetail.OrderDetailPresenter;
+import com.example.zhinongbao.utils.DialogUtils;
 
 public class OrderDetailActivity extends BaseMvpActivity<OrderDetailContract.Presenter> implements OrderDetailContract.View {
 
@@ -187,19 +187,12 @@ public class OrderDetailActivity extends BaseMvpActivity<OrderDetailContract.Pre
 
     @Override
     public void showRefundDialog() {
-        EditText etReason = new EditText(this);
-        etReason.setHint("请输入退款原因");
-        etReason.setMinLines(2);
-        new AlertDialog.Builder(this)
-                .setTitle("申请退款")
-                .setMessage("退款申请提交后，卖家 24 小时内未处理将自动退款。")
-                .setView(etReason)
-                .setPositiveButton("提交申请", (dialog, which) -> {
-                    String reason = etReason.getText().toString().trim();
+        DialogUtils.showTextInput(this, "申请退款",
+                "退款申请提交后，卖家 24 小时内未处理将自动退款。",
+                "请输入退款原因", "取消", "提交申请", false, reason -> {
                     presenter.requestRefund(reason);
-                })
-                .setNegativeButton("取消", null)
-                .show();
+                    return true;
+                });
     }
 
     @Override

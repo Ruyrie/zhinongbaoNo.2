@@ -85,7 +85,7 @@ public class MineFragment extends BaseMvpFragment<MineContract.Presenter> implem
 
         @Override
         public void renderUser(String username, String nickname, String signature, String avatarUri,
-                        int followers, int following, int likes, boolean sellerActive) {
+                        int followers, int following, int likes, boolean sellerActive, boolean canSwitchSeller) {
                 View view = getView();
                 if (view == null)
                         return;
@@ -131,7 +131,7 @@ public class MineFragment extends BaseMvpFragment<MineContract.Presenter> implem
                 // Role switch button
                 TextView btnSwitch = view.findViewById(R.id.btnSwitchToSeller);
                 btnSwitch.setText(sellerActive ? "切换到买家" : "切换到卖家");
-                btnSwitch.setVisibility(View.VISIBLE);
+                btnSwitch.setVisibility(canSwitchSeller ? View.VISIBLE : View.GONE);
                 btnSwitch.setOnClickListener(v -> presenter.switchRole());
 
                 // Stats row click handlers

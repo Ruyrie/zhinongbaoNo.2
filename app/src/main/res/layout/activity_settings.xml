@@ -90,9 +90,12 @@
                 android:gravity="center_vertical"
                 android:paddingHorizontal="20dp"
                 android:background="?android:attr/selectableItemBackground">
-                <TextView android:layout_width="18dp" android:layout_height="18dp"
-                    android:gravity="center" android:text="⌂" android:textSize="16sp"
-                    android:textColor="#4CAF50" android:layout_marginEnd="14dp"/>
+                <ImageView
+                    android:id="@+id/ivAddressManagerIcon"
+                    android:layout_width="18dp"
+                    android:layout_height="18dp"
+                    android:scaleType="fitCenter"
+                    android:layout_marginEnd="14dp"/>
                 <TextView android:layout_width="0dp" android:layout_height="wrap_content"
                     android:layout_weight="1" android:text="地址管理"
                     android:textSize="16sp" android:textColor="#1F1F1F"/>

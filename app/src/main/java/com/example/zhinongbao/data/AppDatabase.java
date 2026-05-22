@@ -11,7 +11,7 @@ import android.database.sqlite.SQLiteOpenHelper;
 public class AppDatabase extends SQLiteOpenHelper {
 
         private static final String DB_NAME = "zhinongbao.db";
-        private static final int DB_VERSION = 16;
+        private static final int DB_VERSION = 17;
 
         private static AppDatabase instance;
 
@@ -59,6 +59,10 @@ public class AppDatabase extends SQLiteOpenHelper {
                                 "cover_uri TEXT," +
                                 "price REAL NOT NULL," +
                                 "category TEXT DEFAULT '推荐'," +
+                                "brand TEXT," +
+                                "origin TEXT," +
+                                "spec TEXT," +
+                                "package_type TEXT," +
                                 "view_count INTEGER DEFAULT 0," +
                                 "seller TEXT)");
 
@@ -332,6 +336,12 @@ public class AppDatabase extends SQLiteOpenHelper {
                                         "phone TEXT NOT NULL," +
                                         "address TEXT NOT NULL," +
                                         "is_default INTEGER DEFAULT 0)");
+                }
+                if (oldVersion < 17) {
+                        db.execSQL("ALTER TABLE products ADD COLUMN brand TEXT");
+                        db.execSQL("ALTER TABLE products ADD COLUMN origin TEXT");
+                        db.execSQL("ALTER TABLE products ADD COLUMN spec TEXT");
+                        db.execSQL("ALTER TABLE products ADD COLUMN package_type TEXT");
                 }
         }
 }

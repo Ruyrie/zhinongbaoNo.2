@@ -115,6 +115,77 @@
 
             </LinearLayout>
 
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="48dp"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:paddingHorizontal="16dp"
+                android:background="@color/white">
+
+                <TextView
+                    android:id="@+id/tvDetailViewCount"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="0 浏览"
+                    android:textColor="#999999"
+                    android:textSize="13sp" />
+
+                <LinearLayout
+                    android:id="@+id/btnShareProduct"
+                    android:layout_width="76dp"
+                    android:layout_height="match_parent"
+                    android:gravity="center"
+                    android:orientation="horizontal"
+                    android:background="?android:attr/selectableItemBackground"
+                    android:clickable="true"
+                    android:focusable="true">
+
+                    <TextView
+                        android:layout_width="22dp"
+                        android:layout_height="22dp"
+                        android:gravity="center"
+                        android:text="↗"
+                        android:textColor="#999999"
+                        android:textSize="16sp" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="分享"
+                        android:textColor="#999999"
+                        android:textSize="13sp" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:id="@+id/btnFavoriteProduct"
+                    android:layout_width="76dp"
+                    android:layout_height="match_parent"
+                    android:gravity="center"
+                    android:orientation="horizontal"
+                    android:background="?android:attr/selectableItemBackground"
+                    android:clickable="true"
+                    android:focusable="true">
+
+                    <ImageView
+                        android:id="@+id/ivProductFavorite"
+                        android:layout_width="18dp"
+                        android:layout_height="18dp"
+                        android:src="@mipmap/shoucang"
+                        android:scaleType="fitCenter"
+                        android:layout_marginEnd="4dp" />
+
+                    <TextView
+                        android:id="@+id/tvProductFavorite"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="收藏"
+                        android:textColor="#999999"
+                        android:textSize="13sp" />
+                </LinearLayout>
+            </LinearLayout>
+
             <!-- 服务保障模块 -->
             <LinearLayout
                 android:layout_width="match_parent"
@@ -142,13 +213,17 @@
 
             <!-- 规格参数模块 -->
             <LinearLayout
+                android:id="@+id/llProductParams"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="1dp"
                 android:background="@color/white"
                 android:orientation="horizontal"
                 android:padding="16dp"
-                android:gravity="center_vertical">
+                android:gravity="center_vertical"
+                android:foreground="?attr/selectableItemBackground"
+                android:clickable="true"
+                android:focusable="true">
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
@@ -157,12 +232,21 @@
                     android:textColor="#999999"
                     android:layout_marginEnd="16dp"/>
                 <TextView
+                    android:id="@+id/tvProductParamsSummary"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
                     android:text="品牌 产地 包装方式..."
                     android:textSize="13sp"
                     android:textColor="#333333"/>
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="›"
+                    android:textSize="20sp"
+                    android:textColor="#BBBBBB"
+                    android:layout_marginStart="8dp" />
             </LinearLayout>
 
             <!-- 用户评价模块 -->
@@ -343,58 +427,6 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="电话"
-                android:textColor="#333333"
-                android:textSize="12sp" />
-        </LinearLayout>
-
-        <LinearLayout
-            android:id="@+id/btnFavoriteProduct"
-            android:layout_width="46dp"
-            android:layout_height="match_parent"
-            android:gravity="center"
-            android:orientation="vertical"
-            android:background="?android:attr/selectableItemBackground"
-            android:clickable="true"
-            android:focusable="true">
-
-            <ImageView
-                android:id="@+id/ivProductFavorite"
-                android:layout_width="22dp"
-                android:layout_height="22dp"
-                android:src="@mipmap/shoucang"
-                android:scaleType="fitCenter" />
-
-            <TextView
-                android:id="@+id/tvProductFavorite"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="收藏"
-                android:textColor="#333333"
-                android:textSize="12sp" />
-        </LinearLayout>
-
-        <LinearLayout
-            android:id="@+id/btnShareProduct"
-            android:layout_width="46dp"
-            android:layout_height="match_parent"
-            android:gravity="center"
-            android:orientation="vertical"
-            android:background="?android:attr/selectableItemBackground"
-            android:clickable="true"
-            android:focusable="true">
-
-            <TextView
-                android:layout_width="22dp"
-                android:layout_height="22dp"
-                android:gravity="center"
-                android:text="↗"
-                android:textColor="#333333"
-                android:textSize="18sp" />
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="分享"
                 android:textColor="#333333"
                 android:textSize="12sp" />
         </LinearLayout>

@@ -9,6 +9,10 @@ public class Product {
     public String coverUri;
     public String category; // 逗号分隔的分类字符串，如 "推荐,水果蔬菜"
     public String seller;
+    public String brand;
+    public String origin;
+    public String spec;
+    public String packageType;
     public int viewCount;
     public long viewedAt;
 
@@ -43,5 +47,15 @@ public class Product {
         this(id, name, desc, price, coverUri, category);
         this.seller = seller;
         this.viewCount = viewCount;
+    }
+
+    public Product(int id, String name, String desc, double price, String coverUri,
+            String category, String seller, int viewCount, String brand, String origin,
+            String spec, String packageType) {
+        this(id, name, desc, price, coverUri, category, seller, viewCount);
+        this.brand = brand;
+        this.origin = origin;
+        this.spec = spec;
+        this.packageType = packageType;
     }
 }

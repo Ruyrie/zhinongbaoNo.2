@@ -2,6 +2,7 @@ package com.example.zhinongbao.activity;
 
 import com.example.zhinongbao.R;
 import android.app.AlertDialog;
+import android.content.Intent;
 import android.os.Bundle;
 import android.text.TextUtils;
 import android.text.Editable;
@@ -21,6 +22,8 @@ import com.example.zhinongbao.model.PurchaseQuote;
 import com.example.zhinongbao.model.PurchaseRequest;
 import com.example.zhinongbao.mvp.sellerpurchase.SellerPurchaseContract;
 import com.example.zhinongbao.mvp.sellerpurchase.SellerPurchasePresenter;
+import com.example.zhinongbao.utils.DialogUtils;
+import java.text.NumberFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
@@ -32,6 +35,7 @@ public class SellerPurchaseMgmtActivity extends BaseMvpActivity<SellerPurchaseCo
     private TextView tabMarket, tabMyQuotes, tabMyRequests;
     private View tabIndicator;
     private RecyclerView rvPurchase;
+    private String currentUser;
     private SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.getDefault());
 
     private int currentTab = 0; // 0=Market, 1=MyQuotes, 2=MyRequests
@@ -57,6 +61,7 @@ public class SellerPurchaseMgmtActivity extends BaseMvpActivity<SellerPurchaseCo
         tabMyRequests.setOnClickListener(v -> switchTab(2));
 
         new SellerPurchasePresenter(this, this);
+        currentUser = getSharedPreferences("pref_session", MODE_PRIVATE).getString("logged_user", "");
         tabIndicator.post(() -> switchTab(0));
     }
 
@@ -123,12 +128,19 @@ public class SellerPurchaseMgmtActivity extends BaseMvpActivity<SellerPurchaseCo
             holder.tvDesc.setText(r.description);
             holder.tvTime.setText(formatTime(r.timestamp));
 
-            holder.btnQuote.setVisibility(View.VISIBLE);
             holder.btnQuote.setText("立即报价");
-            holder.btnQuote.setTextColor(0xFF4CAF50);
-            holder.btnQuote.setBackgroundResource(R.drawable.bg_btn_outline_green);
-            holder.btnQuote.setOnClickListener(v -> showQuoteDialog(r));
-            holder.btnViewQuotes.setVisibility(View.GONE);
+            holder.btnQuote.setTextColor(0xFF2E7D32);
+            holder.btnQuote.setBackgroundResource(R.drawable.bg_action_outline_green);
+            if (r.buyerUser != null && r.buyerUser.equals(currentUser)) {
+                holder.btnQuote.setVisibility(View.GONE);
+                holder.btnViewQuotes.setVisibility(View.VISIBLE);
+                holder.btnViewQuotes.setText("我的采购");
+                holder.btnViewQuotes.setOnClickListener(v -> switchTab(2));
+            } else {
+                holder.btnQuote.setVisibility(View.VISIBLE);
+                holder.btnQuote.setOnClickListener(v -> showQuoteDialog(r));
+                holder.btnViewQuotes.setVisibility(View.GONE);
+            }
         }
 
         @Override
@@ -162,10 +174,10 @@ public class SellerPurchaseMgmtActivity extends BaseMvpActivity<SellerPurchaseCo
     }
 
     private String formatPrice(double price) {
-        if (price % 1 == 0) {
-            return String.valueOf((int) price);
-        }
-        return String.format(Locale.CHINA, "%.2f", price);
+        NumberFormat format = NumberFormat.getNumberInstance(Locale.CHINA);
+        format.setMaximumFractionDigits(price % 1 == 0 ? 0 : 2);
+        format.setMinimumFractionDigits(0);
+        return format.format(price);
     }
 
     private void showQuoteDialog(PurchaseRequest r) {
@@ -173,20 +185,21 @@ public class SellerPurchaseMgmtActivity extends BaseMvpActivity<SellerPurchaseCo
         EditText etPrice = v.findViewById(R.id.etQuotePrice);
         EditText etDesc = v.findViewById(R.id.etQuoteDesc);
         TextView tvTotal = v.findViewById(R.id.tvQuoteTotal);
+        TextView tvReqInfo = v.findViewById(R.id.tvQuoteReqInfo);
+        tvReqInfo.setText(r.category + " · " + formatQuantity(r.quantity) + r.unit
+                + " · 买家预算 ¥" + formatPrice(r.targetPrice));
         bindQuoteTotal(etPrice, tvTotal, r.quantity);
-        new AlertDialog.Builder(this)
-                .setTitle("对 " + r.productName + " 报价")
-                .setView(v)
-                .setPositiveButton("提交", (d, w) -> {
+        DialogUtils.showContent(this, "对 " + r.productName + " 报价", null, v,
+                "取消", "提交", false, () -> {
                     try {
-                        double p = Double.parseDouble(etPrice.getText().toString());
                         String desc = etDesc.getText().toString();
                         presenter.submitQuote(r, etPrice.getText().toString(), desc);
+                        return true;
                     } catch (Exception e) {
+                        showToast("请填写有效报价");
+                        return false;
                     }
-                })
-                .setNegativeButton("取消", null)
-                .show();
+                });
     }
 
     // ─── 我的报价 Adapter ────────────────────────────────────────────────────────
@@ -208,7 +221,7 @@ public class SellerPurchaseMgmtActivity extends BaseMvpActivity<SellerPurchaseCo
         public void onBindViewHolder(@NonNull VH holder, int position) {
             PurchaseQuote q = list.get(position);
             holder.tvName.setText("需求商品: " + q.requestProductName);
-            holder.tvPrice.setText("我的报价: ¥" + q.price);
+            holder.tvPrice.setText("我的报价: ¥" + formatPrice(q.price));
             holder.tvDesc.setText("备注: " + q.description);
             holder.tvTime.setText(formatTime(q.timestamp));
 
@@ -222,6 +235,9 @@ public class SellerPurchaseMgmtActivity extends BaseMvpActivity<SellerPurchaseCo
                 holder.tvStatus.setText("待处理");
                 holder.tvStatus.setTextColor(0xFFFF9800);
             }
+
+            holder.btnEditQuote.setVisibility("pending".equals(q.status) ? View.VISIBLE : View.GONE);
+            holder.btnEditQuote.setOnClickListener(v -> showEditQuoteDialog(q));
 
             if (!TextUtils.isEmpty(q.replyDesc)) {
                 holder.llReply.setVisibility(View.VISIBLE);
@@ -237,7 +253,7 @@ public class SellerPurchaseMgmtActivity extends BaseMvpActivity<SellerPurchaseCo
         }
 
         class VH extends RecyclerView.ViewHolder {
-            TextView tvName, tvStatus, tvPrice, tvDesc, tvTime, tvReply;
+            TextView tvName, tvStatus, tvPrice, tvDesc, tvTime, tvReply, btnEditQuote;
             LinearLayout llReply;
 
             VH(View v) {
@@ -247,10 +263,31 @@ public class SellerPurchaseMgmtActivity extends BaseMvpActivity<SellerPurchaseCo
                 tvPrice = v.findViewById(R.id.tvQuotePrice);
                 tvDesc = v.findViewById(R.id.tvQuoteDesc);
                 tvTime = v.findViewById(R.id.tvQuoteTime);
+                btnEditQuote = v.findViewById(R.id.btnEditQuote);
                 llReply = v.findViewById(R.id.llReplyContainer);
                 tvReply = v.findViewById(R.id.tvReplyDesc);
             }
         }
+    }
+
+    private void showEditQuoteDialog(PurchaseQuote quote) {
+        View v = LayoutInflater.from(this).inflate(R.layout.dialog_quote, null);
+        EditText etPrice = v.findViewById(R.id.etQuotePrice);
+        EditText etDesc = v.findViewById(R.id.etQuoteDesc);
+        TextView tvTotal = v.findViewById(R.id.tvQuoteTotal);
+        TextView tvReqInfo = v.findViewById(R.id.tvQuoteReqInfo);
+        tvReqInfo.setText("修改对「" + quote.requestProductName + "」的报价");
+        tvTotal.setVisibility(View.GONE);
+        etPrice.setText(formatPrice(quote.price));
+        etPrice.setSelection(etPrice.getText().length());
+        etDesc.setText(quote.description == null ? "" : quote.description);
+
+        DialogUtils.showContent(this, "修改已发布报价", null, v, "取消", "保存修改", false, () -> {
+            PurchaseRequest request = new PurchaseRequest();
+            request.id = quote.requestId;
+            presenter.submitQuote(request, etPrice.getText().toString(), etDesc.getText().toString());
+            return true;
+        });
     }
 
     // ─── 我的采购 Adapter ────────────────────────────────────────────────────────
@@ -274,13 +311,23 @@ public class SellerPurchaseMgmtActivity extends BaseMvpActivity<SellerPurchaseCo
             PurchaseRequest r = list.get(position);
             holder.tvName.setText(r.productName);
             holder.tvStatus.setText("收到 " + r.quoteCount + " 个报价");
-            holder.tvQuantity.setText("需求量: " + r.quantity + r.unit);
-            holder.tvTargetPrice.setText("目标价: ¥" + r.targetPrice);
+            holder.tvQuantity.setText("购买量: " + formatQuantity(r.quantity) + r.unit);
+            holder.tvTargetPrice.setText("买家预算: ¥" + formatPrice(r.targetPrice));
             holder.tvDesc.setText("描述: " + r.description);
             holder.tvTime.setText(formatTime(r.timestamp));
+            holder.btnEdit.setOnClickListener(v -> editPurchaseRequest(r));
+            holder.btnDelete.setOnClickListener(v -> confirmDeletePurchaseRequest(r));
 
             holder.llQuotes.removeAllViews();
             List<PurchaseQuote> quotes = presenter.getQuotesForRequest(r.id);
+            holder.btnViewQuotes.setText(quotes.isEmpty() ? "暂无报价" : "查看报价");
+            holder.btnViewQuotes.setEnabled(!quotes.isEmpty());
+            holder.btnViewQuotes.setAlpha(quotes.isEmpty() ? 0.55f : 1f);
+            holder.btnViewQuotes.setOnClickListener(v -> {
+                holder.llQuotes.setVisibility(holder.llQuotes.getVisibility() == View.VISIBLE ? View.GONE : View.VISIBLE);
+                holder.btnViewQuotes.setText(holder.llQuotes.getVisibility() == View.VISIBLE ? "收起报价" : "查看报价");
+            });
+            holder.llQuotes.setVisibility(View.GONE);
             for (PurchaseQuote q : quotes) {
                 View qv = LayoutInflater.from(holder.itemView.getContext()).inflate(R.layout.item_received_quote,
                         holder.llQuotes, false);
@@ -329,7 +376,7 @@ public class SellerPurchaseMgmtActivity extends BaseMvpActivity<SellerPurchaseCo
         }
 
         class VH extends RecyclerView.ViewHolder {
-            TextView tvName, tvStatus, tvQuantity, tvTargetPrice, tvDesc, tvTime;
+            TextView tvName, tvStatus, tvQuantity, tvTargetPrice, tvDesc, tvTime, btnEdit, btnDelete, btnViewQuotes;
             LinearLayout llQuotes;
 
             VH(View v) {
@@ -340,9 +387,32 @@ public class SellerPurchaseMgmtActivity extends BaseMvpActivity<SellerPurchaseCo
                 tvTargetPrice = v.findViewById(R.id.tvReqTargetPrice);
                 tvDesc = v.findViewById(R.id.tvReqDesc);
                 tvTime = v.findViewById(R.id.tvReqTime);
+                btnEdit = v.findViewById(R.id.btnEditPurchase);
+                btnDelete = v.findViewById(R.id.btnDeletePurchase);
+                btnViewQuotes = v.findViewById(R.id.btnViewQuotes);
                 llQuotes = v.findViewById(R.id.llQuotesContainer);
             }
         }
+    }
+
+    private void editPurchaseRequest(PurchaseRequest req) {
+        if (!presenter.canModify(req)) {
+            showToast("该采购需求已付款或状态变化，不能修改");
+            return;
+        }
+        Intent intent = new Intent(this, PostPurchaseActivity.class);
+        intent.putExtra("request_id", req.id);
+        startActivity(intent);
+    }
+
+    private void confirmDeletePurchaseRequest(PurchaseRequest req) {
+        if (!presenter.canModify(req)) {
+            showToast("该采购需求已付款或状态变化，不能删除");
+            return;
+        }
+        DialogUtils.showConfirm(this, "删除采购需求",
+                "确认删除「" + req.productName + "」？相关商家报价也会一并清除。",
+                "取消", "删除", true, () -> presenter.deleteRequest(req));
     }
 
     private void showReplyDialog(long quoteId, boolean isAccept) {

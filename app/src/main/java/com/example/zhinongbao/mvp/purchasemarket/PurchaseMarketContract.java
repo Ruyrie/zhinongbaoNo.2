@@ -20,6 +20,8 @@ public interface PurchaseMarketContract {
         void onQuoteClick(PurchaseRequest request);
         void onViewQuotesClick(PurchaseRequest request);
         void onItemClick(PurchaseRequest request);
+        boolean canModify(PurchaseRequest request);
+        boolean deleteRequest(PurchaseRequest request);
         void submitQuote(PurchaseRequest request, String price, String desc);
     }
 }

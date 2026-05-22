@@ -162,10 +162,17 @@ public class SellerSalesAnalysisActivity extends BaseMvpActivity<SellerSalesCont
     }
 
     private void addEmptyText(LinearLayout container, String text) {
-        TextView tv = createText(text, 0xFF999999, 14, 1, false);
+        TextView tv = createText(text, 0xFF999999, 14, 0, false);
+        tv.setLayoutParams(new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT));
         tv.setGravity(android.view.Gravity.CENTER);
-        tv.setPadding(0, 24, 0, 24);
+        tv.setMinHeight(dp(120));
+        tv.setPadding(0, 36, 0, 36);
         container.addView(tv);
+    }
+
+    private int dp(int value) {
+        return (int) (value * getResources().getDisplayMetrics().density + 0.5f);
     }
 
     private String scopeName(String scope) {
