@@ -6,6 +6,7 @@ import android.graphics.Color;
 import android.graphics.Typeface;
 import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.GradientDrawable;
+import android.net.Uri;
 import android.os.Bundle;
 import android.text.TextWatcher;
 import android.text.Editable;
@@ -15,13 +16,19 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.Window;
 import android.widget.EditText;
+import android.widget.HorizontalScrollView;
 import android.widget.LinearLayout;
 import android.widget.ScrollView;
 import android.widget.TextView;
 import android.widget.Toast;
+import android.widget.ImageView;
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.appcompat.app.AlertDialog;
+import androidx.core.content.FileProvider;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
+import com.example.zhinongbao.adapter.ImagePickerAdapter;
 import com.example.zhinongbao.adapter.PurchaseRequestAdapter;
 import com.example.zhinongbao.base.BaseMvpActivity;
 import com.example.zhinongbao.model.PurchaseQuote;
@@ -29,11 +36,16 @@ import com.example.zhinongbao.model.PurchaseRequest;
 import com.example.zhinongbao.mvp.purchasemarket.PurchaseMarketContract;
 import com.example.zhinongbao.mvp.purchasemarket.PurchaseMarketPresenter;
 import com.example.zhinongbao.utils.DialogUtils;
+import com.example.zhinongbao.utils.ImageUtils;
+import java.io.File;
 import java.text.NumberFormat;
 import java.text.SimpleDateFormat;
+import java.util.HashSet;
 import java.util.Date;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
+import java.util.Set;
 
 public class PurchaseMarketActivity extends BaseMvpActivity<PurchaseMarketContract.Presenter>
         implements PurchaseMarketContract.View {
@@ -45,12 +57,27 @@ public class PurchaseMarketActivity extends BaseMvpActivity<PurchaseMarketContra
     private List<PurchaseRequest> items;
     private TextView tvEmpty;
     private AlertDialog quoteListDialog;
+    private final List<Uri> quoteImageUris = new ArrayList<>();
+    private ImagePickerAdapter quoteImageAdapter;
+    private ActivityResultLauncher<String> pickQuoteImages;
+    private ActivityResultLauncher<Uri> takeQuotePicture;
+    private Uri currentQuoteCameraUri;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_purchase_market);
         if (getSupportActionBar() != null) getSupportActionBar().hide();
+        pickQuoteImages = registerForActivityResult(new ActivityResultContracts.GetMultipleContents(), uris -> {
+            for (Uri uri : uris) {
+                addQuoteImage(uri);
+            }
+        });
+        takeQuotePicture = registerForActivityResult(new ActivityResultContracts.TakePicture(), success -> {
+            if (success && currentQuoteCameraUri != null) {
+                addQuoteImage(currentQuoteCameraUri);
+            }
+        });
 
         findViewById(R.id.ivPurchaseBack).setOnClickListener(v -> finish());
         findViewById(R.id.tvToolbarPost).setOnClickListener(v ->
@@ -83,7 +110,7 @@ public class PurchaseMarketActivity extends BaseMvpActivity<PurchaseMarketContra
 
         if (adapter == null) {
             items = newItems;
-            adapter = new PurchaseRequestAdapter(items, currentUser, isSeller,
+            adapter = new PurchaseRequestAdapter(items, currentUser, isSeller, quotedRequestIds(newItems),
                     new PurchaseRequestAdapter.OnActionListener() {
                         @Override
                         public void onQuoteClick(PurchaseRequest req) {
@@ -110,8 +137,22 @@ public class PurchaseMarketActivity extends BaseMvpActivity<PurchaseMarketContra
         } else {
             items.clear();
             items.addAll(newItems);
+            adapter.updateQuotedRequestIds(quotedRequestIds(newItems));
             adapter.notifyDataSetChanged();
         }
+    }
+
+    private Set<Long> quotedRequestIds(List<PurchaseRequest> requests) {
+        Set<Long> ids = new HashSet<>();
+        if (requests == null) {
+            return ids;
+        }
+        for (PurchaseRequest request : requests) {
+            if (presenter.hasQuoted(request)) {
+                ids.add(request.id);
+            }
+        }
+        return ids;
     }
 
     @Override
@@ -125,8 +166,10 @@ public class PurchaseMarketActivity extends BaseMvpActivity<PurchaseMarketContra
         EditText etDesc = dialogView.findViewById(R.id.etQuoteDesc);
         TextView tvTotal = dialogView.findViewById(R.id.tvQuoteTotal);
         TextView tvReqInfo = dialogView.findViewById(R.id.tvQuoteReqInfo);
+        RecyclerView rvImages = dialogView.findViewById(R.id.rvQuoteImages);
         tvReqInfo.setText(req.productName + " · " + formatQty(req.quantity) + req.unit
                 + " · 买家预算 ¥" + formatPrice(req.targetPrice));
+        quoteImageUris.clear();
         if (quote != null) {
             if (quoteListDialog != null && quoteListDialog.isShowing()) {
                 quoteListDialog.dismiss();
@@ -134,14 +177,29 @@ public class PurchaseMarketActivity extends BaseMvpActivity<PurchaseMarketContra
             etPrice.setText(formatPrice(quote.price));
             etPrice.setSelection(etPrice.getText().length());
             etDesc.setText(quote.description == null ? "" : quote.description);
+            restoreQuoteImages(quote.images);
         }
+        quoteImageAdapter = new ImagePickerAdapter(quoteImageUris, 9, new ImagePickerAdapter.OnImagePickerClickListener() {
+            @Override
+            public void onAddClick() {
+                pickQuoteImageSource();
+            }
+
+            @Override
+            public void onDeleteClick(int position) {
+                quoteImageUris.remove(position);
+                quoteImageAdapter.notifyDataSetChanged();
+            }
+        });
+        rvImages.setLayoutManager(new LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false));
+        rvImages.setAdapter(quoteImageAdapter);
         bindQuoteTotal(etPrice, tvTotal, req.quantity);
 
         DialogUtils.showContent(this, quote == null ? "提交采购报价" : "修改采购报价", null, dialogView,
                 "取消", quote == null ? "提交报价" : "保存修改", false, () -> {
                     String priceStr = etPrice.getText().toString().trim();
                     String desc = etDesc.getText().toString().trim();
-                    presenter.submitQuote(req, priceStr, desc);
+                    presenter.submitQuote(req, priceStr, desc, joinQuoteImages());
                     return true;
                 });
     }
@@ -307,6 +365,7 @@ public class PurchaseMarketActivity extends BaseMvpActivity<PurchaseMarketContra
             desc.setPadding(0, dp(8), 0, 0);
             card.addView(desc);
         }
+        addQuoteImagePreview(card, quote.images);
         TextView time = createText(new SimpleDateFormat("MM-dd HH:mm", Locale.CHINA)
                 .format(new Date(quote.timestamp)), 12, 0xFF9AA0A6, false);
         time.setPadding(0, dp(8), 0, 0);
@@ -365,6 +424,109 @@ public class PurchaseMarketActivity extends BaseMvpActivity<PurchaseMarketContra
 
     private String cleanNumber(String value) {
         return value == null ? "" : value.replace(",", "").replace("¥", "").trim();
+    }
+
+    private void restoreQuoteImages(String images) {
+        if (TextUtils.isEmpty(images)) {
+            return;
+        }
+        for (String uri : images.split(",")) {
+            String trimmed = uri.trim();
+            if (!trimmed.isEmpty()) {
+                quoteImageUris.add(Uri.parse(trimmed));
+            }
+        }
+    }
+
+    private void pickQuoteImageSource() {
+        if (quoteImageUris.size() >= 9) {
+            showToast("最多上传 9 张照片");
+            return;
+        }
+        ImageUtils.showImagePickerDialog(this, "添加商品图片", new ImageUtils.OnImagePickerListener() {
+            @Override
+            public void onTakePhoto() {
+                currentQuoteCameraUri = createQuoteImageFile();
+                takeQuotePicture.launch(currentQuoteCameraUri);
+            }
+
+            @Override
+            public void onPickFromGallery() {
+                pickQuoteImages.launch("image/*");
+            }
+        });
+    }
+
+    private void addQuoteImage(Uri uri) {
+        if (uri == null) {
+            return;
+        }
+        if (quoteImageUris.size() >= 9) {
+            showToast("最多上传 9 张照片");
+            return;
+        }
+        try {
+            getContentResolver().takePersistableUriPermission(uri, Intent.FLAG_GRANT_READ_URI_PERMISSION);
+        } catch (SecurityException ignored) {
+        }
+        quoteImageUris.add(uri);
+        if (quoteImageAdapter != null) {
+            quoteImageAdapter.notifyDataSetChanged();
+        }
+    }
+
+    private Uri createQuoteImageFile() {
+        File imagePath = new File(getCacheDir(), "images");
+        if (!imagePath.exists()) {
+            imagePath.mkdirs();
+        }
+        File newFile = new File(imagePath, "quote_" + System.currentTimeMillis() + ".jpg");
+        return FileProvider.getUriForFile(this, getPackageName() + ".fileprovider", newFile);
+    }
+
+    private String joinQuoteImages() {
+        StringBuilder builder = new StringBuilder();
+        for (int i = 0; i < quoteImageUris.size(); i++) {
+            builder.append(quoteImageUris.get(i).toString());
+            if (i < quoteImageUris.size() - 1) {
+                builder.append(",");
+            }
+        }
+        return builder.toString();
+    }
+
+    private void addQuoteImagePreview(LinearLayout card, String images) {
+        if (TextUtils.isEmpty(images)) {
+            return;
+        }
+        HorizontalScrollView scrollView = new HorizontalScrollView(this);
+        scrollView.setHorizontalScrollBarEnabled(false);
+        scrollView.setOverScrollMode(View.OVER_SCROLL_NEVER);
+
+        LinearLayout row = new LinearLayout(this);
+        row.setOrientation(LinearLayout.HORIZONTAL);
+        row.setGravity(Gravity.CENTER_VERTICAL);
+        for (String uriText : images.split(",")) {
+            String trimmed = uriText.trim();
+            if (trimmed.isEmpty()) {
+                continue;
+            }
+            ImageView image = new ImageView(this);
+            image.setScaleType(ImageView.ScaleType.CENTER_CROP);
+            image.setBackgroundResource(R.drawable.bg_dialog_input);
+            image.setImageURI(Uri.parse(trimmed));
+            LinearLayout.LayoutParams imageLp = new LinearLayout.LayoutParams(dp(88), dp(88));
+            imageLp.setMarginEnd(dp(8));
+            row.addView(image, imageLp);
+        }
+        if (row.getChildCount() == 0) {
+            return;
+        }
+        scrollView.addView(row);
+        LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT, dp(96));
+        lp.topMargin = dp(10);
+        card.addView(scrollView, lp);
     }
 
     private int dp(int value) {

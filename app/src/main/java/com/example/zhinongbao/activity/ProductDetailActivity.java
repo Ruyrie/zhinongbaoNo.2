@@ -4,13 +4,19 @@ import com.example.zhinongbao.R;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.Color;
+import android.graphics.drawable.ColorDrawable;
 import android.net.Uri;
 import android.os.Bundle;
+import android.view.Gravity;
+import android.view.View;
+import android.view.Window;
 import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
+import androidx.appcompat.app.AlertDialog;
 
 import com.example.zhinongbao.base.BaseMvpActivity;
 import com.example.zhinongbao.model.Product;
@@ -97,8 +103,47 @@ public class ProductDetailActivity extends BaseMvpActivity<ProductDetailContract
             content.addView(createParamRow("产地", origin));
             content.addView(createParamRow("规格", spec));
             content.addView(createParamRow("包装方式", packageType));
-            DialogUtils.showContent(this, "商品参数", null, content, "关闭", "知道了", false, null);
+            showParamsDialog(content);
         });
+    }
+
+    private void showParamsDialog(LinearLayout content) {
+        LinearLayout root = new LinearLayout(this);
+        root.setOrientation(LinearLayout.VERTICAL);
+        root.setPadding(dp(24), dp(24), dp(24), dp(20));
+        root.setBackgroundResource(R.drawable.bg_dialog_card);
+
+        TextView title = new TextView(this);
+        title.setText("商品参数");
+        title.setTextColor(0xFF212529);
+        title.setTextSize(21);
+        title.setTypeface(android.graphics.Typeface.DEFAULT, android.graphics.Typeface.BOLD);
+        root.addView(title);
+        root.addView(content);
+
+        AlertDialog dialog = new AlertDialog.Builder(this).setView(root).create();
+        TextView close = new TextView(this);
+        close.setText("关闭");
+        close.setTextColor(Color.WHITE);
+        close.setTextSize(15);
+        close.setTypeface(android.graphics.Typeface.DEFAULT, android.graphics.Typeface.BOLD);
+        close.setGravity(Gravity.CENTER);
+        close.setBackgroundResource(R.drawable.bg_auth_green_button);
+        LinearLayout.LayoutParams closeLp = new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT, dp(48));
+        closeLp.topMargin = dp(22);
+        root.addView(close, closeLp);
+        close.setOnClickListener(v -> dialog.dismiss());
+
+        dialog.setOnShowListener(d -> {
+            Window window = dialog.getWindow();
+            if (window != null) {
+                window.setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
+                int width = getResources().getDisplayMetrics().widthPixels - dp(48);
+                window.setLayout(Math.min(width, dp(360)), LinearLayout.LayoutParams.WRAP_CONTENT);
+            }
+        });
+        dialog.show();
     }
 
     private TextView createParamRow(String label, String value) {

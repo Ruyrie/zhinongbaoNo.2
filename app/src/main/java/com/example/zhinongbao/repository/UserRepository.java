@@ -55,9 +55,6 @@ public class UserRepository {
         if (activeRole == User.ROLE_SELLER && !canUseSellerRole(username)) {
             return User.ROLE_BUYER;
         }
-        if (activeRole == User.ROLE_BUYER && userRole == User.ROLE_SELLER) {
-            return User.ROLE_SELLER;
-        }
         return activeRole;
     }
 

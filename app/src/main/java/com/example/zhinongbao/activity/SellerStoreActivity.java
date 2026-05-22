@@ -79,7 +79,7 @@ public class SellerStoreActivity extends BaseMvpActivity<SellerStoreContract.Pre
     }
 
     @Override
-    public void showStoreMeta(String seller, String storeName, String storePhone, boolean ownStore) {
+    public void showStoreMeta(String seller, String storeName, String storePhone, String avatarUri, boolean ownStore) {
         this.seller = seller;
         this.isOwnStore = ownStore;
         findViewById(R.id.tvAddProduct).setVisibility(ownStore ? View.VISIBLE : View.GONE);
@@ -93,6 +93,24 @@ public class SellerStoreActivity extends BaseMvpActivity<SellerStoreContract.Pre
         String phone = storePhone;
         ((TextView) findViewById(R.id.tvStorePhone)).setText(
                 phone == null || phone.isEmpty() ? "电话：未填写" : "电话：" + phone);
+        bindStoreAvatar((ImageView) findViewById(R.id.ivStoreAvatar), avatarUri, storeName);
+    }
+
+    private void bindStoreAvatar(ImageView avatar, String avatarUri, String storeName) {
+        if (avatarUri != null && !avatarUri.isEmpty()) {
+            try {
+                if (avatarUri.startsWith("data:image")) {
+                    com.example.zhinongbao.utils.ImageUtils.setAvatarFromBase64(avatar, avatarUri);
+                } else {
+                    avatar.setImageURI(Uri.parse(avatarUri));
+                }
+                return;
+            } catch (Exception ignored) {
+                // Fall through to default avatar.
+            }
+        }
+        avatar.setImageResource(R.mipmap.ic_launcher_round);
+        avatar.setContentDescription((storeName == null ? "店铺" : storeName) + "头像");
     }
 
     private void showEditStoreDialog() {

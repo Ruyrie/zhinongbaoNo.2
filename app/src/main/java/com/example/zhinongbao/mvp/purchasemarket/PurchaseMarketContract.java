@@ -22,6 +22,7 @@ public interface PurchaseMarketContract {
         void onItemClick(PurchaseRequest request);
         boolean canModify(PurchaseRequest request);
         boolean deleteRequest(PurchaseRequest request);
-        void submitQuote(PurchaseRequest request, String price, String desc);
+        boolean hasQuoted(PurchaseRequest request);
+        void submitQuote(PurchaseRequest request, String price, String desc, String images);
     }
 }

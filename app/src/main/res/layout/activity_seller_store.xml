@@ -64,6 +64,15 @@
         android:paddingVertical="12dp"
         android:layout_marginBottom="8dp">
 
+        <ImageView
+            android:id="@+id/ivStoreAvatar"
+            android:layout_width="52dp"
+            android:layout_height="52dp"
+            android:layout_marginEnd="12dp"
+            android:background="@drawable/bg_avatar_chat"
+            android:scaleType="centerCrop"
+            android:src="@mipmap/ic_launcher_round" />
+
         <LinearLayout
             android:layout_width="0dp"
             android:layout_height="wrap_content"

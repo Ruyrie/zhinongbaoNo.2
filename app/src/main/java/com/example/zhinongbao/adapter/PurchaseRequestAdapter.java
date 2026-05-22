@@ -10,9 +10,12 @@ import com.example.zhinongbao.R;
 import com.example.zhinongbao.model.PurchaseRequest;
 import java.text.NumberFormat;
 import java.text.SimpleDateFormat;
+import java.util.Collections;
 import java.util.Date;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
+import java.util.Set;
 
 public class PurchaseRequestAdapter extends RecyclerView.Adapter<PurchaseRequestAdapter.ViewHolder> {
 
@@ -27,14 +30,28 @@ public class PurchaseRequestAdapter extends RecyclerView.Adapter<PurchaseRequest
     private final List<PurchaseRequest> items;
     private final String currentUser;
     private final boolean isSeller;
+    private final Set<Long> quotedRequestIds;
     private final OnActionListener listener;
 
     public PurchaseRequestAdapter(List<PurchaseRequest> items, String currentUser,
             boolean isSeller, OnActionListener listener) {
+        this(items, currentUser, isSeller, Collections.emptySet(), listener);
+    }
+
+    public PurchaseRequestAdapter(List<PurchaseRequest> items, String currentUser,
+            boolean isSeller, Set<Long> quotedRequestIds, OnActionListener listener) {
         this.items = items;
         this.currentUser = currentUser;
         this.isSeller = isSeller;
+        this.quotedRequestIds = quotedRequestIds == null ? new HashSet<>() : quotedRequestIds;
         this.listener = listener;
+    }
+
+    public void updateQuotedRequestIds(Set<Long> ids) {
+        quotedRequestIds.clear();
+        if (ids != null) {
+            quotedRequestIds.addAll(ids);
+        }
     }
 
     @NonNull
@@ -66,6 +83,7 @@ public class PurchaseRequestAdapter extends RecyclerView.Adapter<PurchaseRequest
         // 卖家看到"我要报价"，买家（自己发的）看到"查看报价"
         if (isSeller && !req.buyerUser.equals(currentUser)) {
             h.btnQuote.setVisibility(View.VISIBLE);
+            h.btnQuote.setText(quotedRequestIds.contains(req.id) ? "再次报价" : "立即报价");
             h.btnViewQuotes.setVisibility(View.GONE);
             h.btnEdit.setVisibility(View.GONE);
             h.btnDelete.setVisibility(View.GONE);

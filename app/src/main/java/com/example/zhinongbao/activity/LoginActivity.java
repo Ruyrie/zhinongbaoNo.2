@@ -34,7 +34,14 @@ public class LoginActivity extends BaseMvpActivity<LoginContract.Presenter> impl
         TextView tvForgotPassword = findViewById(R.id.tvForgotPassword);
 
         btnLogin.setOnClickListener(v -> doLogin());
-        tvRegister.setOnClickListener(v -> startActivity(new Intent(this, RegisterActivity.class)));
+        tvRegister.setOnClickListener(v -> {
+            Intent intent = new Intent(this, RegisterActivity.class);
+            String account = etUsername.getText().toString().trim();
+            if (!account.isEmpty()) {
+                intent.putExtra("prefill_username", account);
+            }
+            startActivity(intent);
+        });
         tvForgotPassword.setOnClickListener(v -> startActivity(new Intent(this, ForgotPasswordActivity.class)));
     }
 
@@ -74,7 +81,9 @@ public class LoginActivity extends BaseMvpActivity<LoginContract.Presenter> impl
         view.findViewById(R.id.btnDialogCancel).setOnClickListener(btn -> dialog.dismiss());
         btnConfirm.setOnClickListener(btn -> {
             dialog.dismiss();
-            startActivity(new Intent(this, RegisterActivity.class));
+            Intent intent = new Intent(this, RegisterActivity.class);
+            intent.putExtra("prefill_username", account);
+            startActivity(intent);
         });
         dialog.show();
     }

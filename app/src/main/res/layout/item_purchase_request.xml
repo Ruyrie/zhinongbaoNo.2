@@ -107,41 +107,49 @@
         android:background="#EEEEEE"
         android:layout_marginBottom="10dp" />
 
-    <!-- 底部：报价数 + 时间 + 操作按钮 -->
+    <!-- 底部：报价数 + 时间 -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
-        android:gravity="center_vertical">
+        android:gravity="center_vertical"
+        android:layout_marginBottom="10dp">
 
         <TextView
             android:id="@+id/tvReqQuoteCount"
-            android:layout_width="wrap_content"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
+            android:layout_weight="1"
             android:textSize="12sp"
-            android:textColor="#1976D2" />
-
-        <View android:layout_width="0dp" android:layout_height="1dp" android:layout_weight="1" />
+            android:textColor="#1976D2"
+            android:singleLine="true"
+            android:ellipsize="end" />
 
         <TextView
             android:id="@+id/tvReqTime"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:textSize="11sp"
-            android:textColor="#AAAAAA"
-            android:layout_marginEnd="12dp" />
+            android:textColor="#AAAAAA" />
+    </LinearLayout>
+
+    <!-- 操作按钮单独一行，避免小屏挤压 -->
+    <LinearLayout
+        android:id="@+id/layoutPurchaseActions"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="end|center_vertical">
 
         <TextView
             android:id="@+id/btnEditPurchase"
-            android:layout_width="wrap_content"
+            android:layout_width="78dp"
             android:layout_height="36dp"
             android:text="修改"
             android:textSize="13sp"
             android:textColor="#1976D2"
             android:background="@drawable/bg_action_outline_blue"
             android:gravity="center"
-            android:minWidth="64dp"
-            android:paddingHorizontal="12dp"
             android:layout_marginEnd="8dp"
             android:visibility="gone"
             android:clickable="true"
@@ -149,15 +157,13 @@
 
         <TextView
             android:id="@+id/btnDeletePurchase"
-            android:layout_width="wrap_content"
+            android:layout_width="78dp"
             android:layout_height="36dp"
             android:text="删除"
             android:textSize="13sp"
             android:textColor="#E53935"
             android:background="@drawable/bg_action_outline_red"
             android:gravity="center"
-            android:minWidth="64dp"
-            android:paddingHorizontal="12dp"
             android:layout_marginEnd="8dp"
             android:visibility="gone"
             android:clickable="true"
@@ -165,30 +171,26 @@
 
         <TextView
             android:id="@+id/btnReqQuote"
-            android:layout_width="wrap_content"
+            android:layout_width="98dp"
             android:layout_height="36dp"
             android:text="我要报价"
             android:textSize="13sp"
             android:textColor="#2E7D32"
             android:background="@drawable/bg_action_outline_green"
             android:gravity="center"
-            android:minWidth="84dp"
-            android:paddingHorizontal="14dp"
             android:visibility="gone"
             android:clickable="true"
             android:focusable="true" />
 
         <TextView
             android:id="@+id/btnViewQuotes"
-            android:layout_width="wrap_content"
+            android:layout_width="98dp"
             android:layout_height="36dp"
             android:text="查看报价"
             android:textSize="13sp"
             android:textColor="#1976D2"
             android:background="@drawable/bg_action_outline_blue"
             android:gravity="center"
-            android:minWidth="84dp"
-            android:paddingHorizontal="14dp"
             android:visibility="gone"
             android:clickable="true"
             android:focusable="true" />

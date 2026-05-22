@@ -1,8 +1,8 @@
 package com.example.zhinongbao.activity;
 
 import com.example.zhinongbao.R;
-import android.app.AlertDialog;
 import android.content.Intent;
+import android.net.Uri;
 import android.os.Bundle;
 import android.text.TextUtils;
 import android.text.Editable;
@@ -11,18 +11,27 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.EditText;
+import android.widget.HorizontalScrollView;
+import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
+import androidx.core.content.FileProvider;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
+import com.example.zhinongbao.adapter.ImagePickerAdapter;
 import com.example.zhinongbao.base.BaseMvpActivity;
 import com.example.zhinongbao.model.PurchaseQuote;
 import com.example.zhinongbao.model.PurchaseRequest;
 import com.example.zhinongbao.mvp.sellerpurchase.SellerPurchaseContract;
 import com.example.zhinongbao.mvp.sellerpurchase.SellerPurchasePresenter;
 import com.example.zhinongbao.utils.DialogUtils;
+import com.example.zhinongbao.utils.ImageUtils;
+import java.io.File;
+import java.util.ArrayList;
 import java.text.NumberFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -36,6 +45,11 @@ public class SellerPurchaseMgmtActivity extends BaseMvpActivity<SellerPurchaseCo
     private View tabIndicator;
     private RecyclerView rvPurchase;
     private String currentUser;
+    private final List<Uri> quoteImageUris = new ArrayList<>();
+    private ImagePickerAdapter quoteImageAdapter;
+    private ActivityResultLauncher<String> pickQuoteImages;
+    private ActivityResultLauncher<Uri> takeQuotePicture;
+    private Uri currentQuoteCameraUri;
     private SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.getDefault());
 
     private int currentTab = 0; // 0=Market, 1=MyQuotes, 2=MyRequests
@@ -46,6 +60,16 @@ public class SellerPurchaseMgmtActivity extends BaseMvpActivity<SellerPurchaseCo
         setContentView(R.layout.activity_seller_purchase_mgmt);
         if (getSupportActionBar() != null)
             getSupportActionBar().hide();
+        pickQuoteImages = registerForActivityResult(new ActivityResultContracts.GetMultipleContents(), uris -> {
+            for (Uri uri : uris) {
+                addQuoteImage(uri);
+            }
+        });
+        takeQuotePicture = registerForActivityResult(new ActivityResultContracts.TakePicture(), success -> {
+            if (success && currentQuoteCameraUri != null) {
+                addQuoteImage(currentQuoteCameraUri);
+            }
+        });
 
         findViewById(R.id.ivBack).setOnClickListener(v -> finish());
 
@@ -128,7 +152,7 @@ public class SellerPurchaseMgmtActivity extends BaseMvpActivity<SellerPurchaseCo
             holder.tvDesc.setText(r.description);
             holder.tvTime.setText(formatTime(r.timestamp));
 
-            holder.btnQuote.setText("立即报价");
+            holder.btnQuote.setText(presenter.hasQuoted(r.id) ? "再次报价" : "立即报价");
             holder.btnQuote.setTextColor(0xFF2E7D32);
             holder.btnQuote.setBackgroundResource(R.drawable.bg_action_outline_green);
             if (r.buyerUser != null && r.buyerUser.equals(currentUser)) {
@@ -186,14 +210,16 @@ public class SellerPurchaseMgmtActivity extends BaseMvpActivity<SellerPurchaseCo
         EditText etDesc = v.findViewById(R.id.etQuoteDesc);
         TextView tvTotal = v.findViewById(R.id.tvQuoteTotal);
         TextView tvReqInfo = v.findViewById(R.id.tvQuoteReqInfo);
+        RecyclerView rvImages = v.findViewById(R.id.rvQuoteImages);
         tvReqInfo.setText(r.category + " · " + formatQuantity(r.quantity) + r.unit
                 + " · 买家预算 ¥" + formatPrice(r.targetPrice));
+        bindQuoteImages(rvImages, null);
         bindQuoteTotal(etPrice, tvTotal, r.quantity);
         DialogUtils.showContent(this, "对 " + r.productName + " 报价", null, v,
                 "取消", "提交", false, () -> {
                     try {
                         String desc = etDesc.getText().toString();
-                        presenter.submitQuote(r, etPrice.getText().toString(), desc);
+                        presenter.submitQuote(r, etPrice.getText().toString(), desc, joinQuoteImages());
                         return true;
                     } catch (Exception e) {
                         showToast("请填写有效报价");
@@ -276,16 +302,18 @@ public class SellerPurchaseMgmtActivity extends BaseMvpActivity<SellerPurchaseCo
         EditText etDesc = v.findViewById(R.id.etQuoteDesc);
         TextView tvTotal = v.findViewById(R.id.tvQuoteTotal);
         TextView tvReqInfo = v.findViewById(R.id.tvQuoteReqInfo);
+        RecyclerView rvImages = v.findViewById(R.id.rvQuoteImages);
         tvReqInfo.setText("修改对「" + quote.requestProductName + "」的报价");
         tvTotal.setVisibility(View.GONE);
         etPrice.setText(formatPrice(quote.price));
         etPrice.setSelection(etPrice.getText().length());
         etDesc.setText(quote.description == null ? "" : quote.description);
+        bindQuoteImages(rvImages, quote.images);
 
         DialogUtils.showContent(this, "修改已发布报价", null, v, "取消", "保存修改", false, () -> {
             PurchaseRequest request = new PurchaseRequest();
             request.id = quote.requestId;
-            presenter.submitQuote(request, etPrice.getText().toString(), etDesc.getText().toString());
+            presenter.submitQuote(request, etPrice.getText().toString(), etDesc.getText().toString(), joinQuoteImages());
             return true;
         });
     }
@@ -336,6 +364,8 @@ public class SellerPurchaseMgmtActivity extends BaseMvpActivity<SellerPurchaseCo
                 TextView tvDesc = qv.findViewById(R.id.tvQuoteDesc);
                 TextView tvStatus = qv.findViewById(R.id.tvQuoteStatus);
                 TextView tvReply = qv.findViewById(R.id.tvReplyInfo);
+                HorizontalScrollView hsvImages = qv.findViewById(R.id.hsvQuoteImages);
+                LinearLayout llImages = qv.findViewById(R.id.llQuoteImages);
                 LinearLayout llActions = qv.findViewById(R.id.llActions);
                 TextView btnAccept = qv.findViewById(R.id.btnAccept);
                 TextView btnReject = qv.findViewById(R.id.btnReject);
@@ -343,6 +373,7 @@ public class SellerPurchaseMgmtActivity extends BaseMvpActivity<SellerPurchaseCo
                 tvSeller.setText("卖家: " + q.sellerNickname);
                 tvPrice.setText("报价: ¥" + q.price);
                 tvDesc.setText("备注: " + q.description);
+                bindQuotePreviews(hsvImages, llImages, q.images);
 
                 if ("pending".equals(q.status)) {
                     llActions.setVisibility(View.VISIBLE);
@@ -420,21 +451,30 @@ public class SellerPurchaseMgmtActivity extends BaseMvpActivity<SellerPurchaseCo
         TextView tvInfo = v.findViewById(R.id.tvQuoteReplyInfo);
         EditText etReply = v.findViewById(R.id.etReplyDesc);
 
-        tvInfo.setText(isAccept ? "确定同意此报价并生成采购订单吗？" : "确定拒绝此报价吗？");
+        tvInfo.setText(isAccept
+                ? "同意后将生成一笔待付款采购订单，请确认报价和收货地址无误。"
+                : "拒绝后该商家的报价将不再进入采购订单。");
 
-        new AlertDialog.Builder(this)
-                .setTitle(isAccept ? "同意报价" : "拒绝报价")
-                .setView(v)
-                .setPositiveButton("确定", (d, w) -> {
+        DialogUtils.showContent(this, isAccept ? "同意报价" : "拒绝报价", null, v,
+                "取消", isAccept ? "确认生成" : "确认拒绝", !isAccept, () -> {
                     String reply = etReply.getText().toString();
                     if (isAccept) {
                         presenter.acceptQuote(quoteId, reply);
                     } else {
                         presenter.rejectQuote(quoteId, reply);
                     }
-                })
-                .setNegativeButton("取消", null)
-                .show();
+                    return true;
+                });
+    }
+
+    @Override
+    public void promptAddAddress() {
+        DialogUtils.showConfirm(this, "缺少收货地址",
+                "同意报价前需要先设置默认收货地址，用于生成采购订单。",
+                "取消", "去设置地址", false, () -> {
+                    startActivity(new Intent(this, AddressManagerActivity.class));
+                    return true;
+                });
     }
 
     @Override
@@ -455,5 +495,114 @@ public class SellerPurchaseMgmtActivity extends BaseMvpActivity<SellerPurchaseCo
                 }
             }
         });
+    }
+
+    private void bindQuoteImages(RecyclerView rvImages, String images) {
+        quoteImageUris.clear();
+        if (!TextUtils.isEmpty(images)) {
+            for (String uri : images.split(",")) {
+                String trimmed = uri.trim();
+                if (!trimmed.isEmpty()) {
+                    quoteImageUris.add(Uri.parse(trimmed));
+                }
+            }
+        }
+        quoteImageAdapter = new ImagePickerAdapter(quoteImageUris, 9, new ImagePickerAdapter.OnImagePickerClickListener() {
+            @Override
+            public void onAddClick() {
+                pickQuoteImageSource();
+            }
+
+            @Override
+            public void onDeleteClick(int position) {
+                quoteImageUris.remove(position);
+                quoteImageAdapter.notifyDataSetChanged();
+            }
+        });
+        rvImages.setLayoutManager(new LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false));
+        rvImages.setAdapter(quoteImageAdapter);
+    }
+
+    private void pickQuoteImageSource() {
+        if (quoteImageUris.size() >= 9) {
+            showToast("最多上传 9 张照片");
+            return;
+        }
+        ImageUtils.showImagePickerDialog(this, "添加商品图片", new ImageUtils.OnImagePickerListener() {
+            @Override
+            public void onTakePhoto() {
+                currentQuoteCameraUri = createQuoteImageFile();
+                takeQuotePicture.launch(currentQuoteCameraUri);
+            }
+
+            @Override
+            public void onPickFromGallery() {
+                pickQuoteImages.launch("image/*");
+            }
+        });
+    }
+
+    private void addQuoteImage(Uri uri) {
+        if (uri == null) {
+            return;
+        }
+        if (quoteImageUris.size() >= 9) {
+            showToast("最多上传 9 张照片");
+            return;
+        }
+        try {
+            getContentResolver().takePersistableUriPermission(uri, Intent.FLAG_GRANT_READ_URI_PERMISSION);
+        } catch (SecurityException ignored) {
+        }
+        quoteImageUris.add(uri);
+        if (quoteImageAdapter != null) {
+            quoteImageAdapter.notifyDataSetChanged();
+        }
+    }
+
+    private Uri createQuoteImageFile() {
+        File imagePath = new File(getCacheDir(), "images");
+        if (!imagePath.exists()) {
+            imagePath.mkdirs();
+        }
+        File newFile = new File(imagePath, "quote_" + System.currentTimeMillis() + ".jpg");
+        return FileProvider.getUriForFile(this, getPackageName() + ".fileprovider", newFile);
+    }
+
+    private String joinQuoteImages() {
+        StringBuilder builder = new StringBuilder();
+        for (int i = 0; i < quoteImageUris.size(); i++) {
+            builder.append(quoteImageUris.get(i).toString());
+            if (i < quoteImageUris.size() - 1) {
+                builder.append(",");
+            }
+        }
+        return builder.toString();
+    }
+
+    private void bindQuotePreviews(HorizontalScrollView scrollView, LinearLayout container, String images) {
+        container.removeAllViews();
+        if (TextUtils.isEmpty(images)) {
+            scrollView.setVisibility(View.GONE);
+            return;
+        }
+        for (String uriText : images.split(",")) {
+            String trimmed = uriText.trim();
+            if (trimmed.isEmpty()) {
+                continue;
+            }
+            ImageView imageView = new ImageView(this);
+            imageView.setScaleType(ImageView.ScaleType.CENTER_CROP);
+            imageView.setBackgroundResource(R.drawable.bg_dialog_input);
+            imageView.setImageURI(Uri.parse(trimmed));
+            LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(dp(64), dp(64));
+            lp.setMarginEnd(dp(8));
+            container.addView(imageView, lp);
+        }
+        scrollView.setVisibility(container.getChildCount() > 0 ? View.VISIBLE : View.GONE);
+    }
+
+    private int dp(int value) {
+        return (int) (value * getResources().getDisplayMetrics().density + 0.5f);
     }
 }

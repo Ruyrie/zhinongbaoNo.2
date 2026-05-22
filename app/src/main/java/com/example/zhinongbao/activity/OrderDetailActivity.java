@@ -1,8 +1,10 @@
 package com.example.zhinongbao.activity;
 
 import com.example.zhinongbao.R;
+import android.net.Uri;
 import android.os.Bundle;
 import android.content.Intent;
+import android.text.TextUtils;
 import android.view.View;
 import android.widget.Button;
 import android.widget.ImageView;
@@ -50,7 +52,9 @@ public class OrderDetailActivity extends BaseMvpActivity<OrderDetailContract.Pre
         Button btnComment = findViewById(R.id.btnDetailComment);
 
         tvName.setText(order.name);
-        switch (order.productId) {
+        if (!TextUtils.isEmpty(order.proofImages)) {
+            ivProduct.setImageURI(Uri.parse(firstImage(order.proofImages)));
+        } else switch (order.productId) {
             case 1:
                 ivProduct.setImageResource(R.mipmap.dami1);
                 break;
@@ -198,6 +202,14 @@ public class OrderDetailActivity extends BaseMvpActivity<OrderDetailContract.Pre
     @Override
     public void showToast(String message) {
         Toast.makeText(this, message, Toast.LENGTH_SHORT).show();
+    }
+
+    private String firstImage(String images) {
+        if (TextUtils.isEmpty(images)) {
+            return "";
+        }
+        String[] parts = images.split(",");
+        return parts.length == 0 ? "" : parts[0].trim();
     }
 
     @Override

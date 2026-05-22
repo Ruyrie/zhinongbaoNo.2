@@ -35,6 +35,12 @@ public class RegisterActivity extends BaseMvpActivity<RegisterContract.Presenter
         etPhone = findViewById(R.id.etRegPhone);
         rgRole = findViewById(R.id.rgRole);
         Button btnRegister = findViewById(R.id.btnRegister);
+        findViewById(R.id.ivRegisterBack).setOnClickListener(v -> finish());
+        String prefillUsername = getIntent().getStringExtra("prefill_username");
+        if (prefillUsername != null && !prefillUsername.trim().isEmpty()) {
+            etUsername.setText(prefillUsername.trim());
+            etUsername.setSelection(etUsername.getText().length());
+        }
 
         setTitle(isAddMode ? "添加账号" : "注册");
 

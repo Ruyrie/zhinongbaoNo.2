@@ -11,6 +11,8 @@ import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
+import android.widget.Toast;
+import androidx.activity.OnBackPressedCallback;
 import androidx.core.graphics.ColorUtils;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentTransaction;
@@ -38,6 +40,7 @@ public class MainActivity extends BaseMvpActivity<MainContract.Presenter> implem
     private int currentIndex = 0;
     private ValueAnimator pillAnimator;
     private int lastRole = Integer.MIN_VALUE;
+    private long lastBackPressedTime = 0L;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -108,6 +111,12 @@ public class MainActivity extends BaseMvpActivity<MainContract.Presenter> implem
                     ? new com.example.zhinongbao.fragment.SellerMineFragment()
                     : new MallFragment(), true);
         }
+        getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
+            @Override
+            public void handleOnBackPressed() {
+                handleDoubleBackToDesktop();
+            }
+        });
     }
 
     @Override
@@ -262,5 +271,20 @@ public class MainActivity extends BaseMvpActivity<MainContract.Presenter> implem
     private void switchFragment(Fragment f, boolean first) {
         FragmentTransaction tx = getSupportFragmentManager().beginTransaction();
         tx.replace(R.id.fragmentContainer, f).commit();
+    }
+
+    @Override
+    public void onBackPressed() {
+        handleDoubleBackToDesktop();
+    }
+
+    private void handleDoubleBackToDesktop() {
+        long now = System.currentTimeMillis();
+        if (now - lastBackPressedTime < 2000) {
+            moveTaskToBack(true);
+            return;
+        }
+        lastBackPressedTime = now;
+        Toast.makeText(this, "再按一次返回桌面", Toast.LENGTH_SHORT).show();
     }
 }

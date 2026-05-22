@@ -39,10 +39,10 @@ public class SellerPurchasePresenter implements SellerPurchaseContract.Presenter
     }
 
     @Override
-    public void submitQuote(PurchaseRequest request, String price, String desc) {
+    public void submitQuote(PurchaseRequest request, String price, String desc, String images) {
         try {
             boolean ok = repository.addQuote(request.id, currentUser,
-                    Double.parseDouble(price.replace(",", "").replace("¥", "").trim()), desc);
+                    Double.parseDouble(price.replace(",", "").replace("¥", "").trim()), desc, images);
             view.showToast(ok ? "报价成功" : "报价失败");
             switchTab(currentTab);
         } catch (Exception e) {
@@ -53,7 +53,7 @@ public class SellerPurchasePresenter implements SellerPurchaseContract.Presenter
     @Override
     public void acceptQuote(long quoteId, String reply) {
         if (!repository.hasDefaultAddress(currentUser)) {
-            view.showToast("请先在设置中添加收货地址");
+            view.promptAddAddress();
             return;
         }
         repository.acceptQuote(quoteId, reply);
@@ -71,6 +71,11 @@ public class SellerPurchasePresenter implements SellerPurchaseContract.Presenter
     @Override
     public List<PurchaseQuote> getQuotesForRequest(long requestId) {
         return repository.getQuotesForRequestWithStatus(requestId);
+    }
+
+    @Override
+    public boolean hasQuoted(long requestId) {
+        return repository.hasQuoted(requestId, currentUser);
     }
 
     @Override

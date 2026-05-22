@@ -167,11 +167,16 @@ public class PurchaseRepository {
     }
 
     public boolean addQuote(long requestId, String sellerUser, double price, String description) {
+        return addQuote(requestId, sellerUser, price, description, "");
+    }
+
+    public boolean addQuote(long requestId, String sellerUser, double price, String description, String images) {
         ContentValues values = new ContentValues();
         values.put("request_id", requestId);
         values.put("seller_user", sellerUser);
         values.put("price", price);
         values.put("description", description);
+        values.put("images", images == null ? "" : images);
         values.put("timestamp", System.currentTimeMillis());
         values.put("status", "pending");
         if (hasQuoted(requestId, sellerUser)) {
@@ -249,6 +254,9 @@ public class PurchaseRepository {
         order.put("purchase_request_id", request.id);
         order.put("seller", quote.sellerUser);
         order.put("unit_price", quote.price);
+        if (quote.images != null && !quote.images.trim().isEmpty()) {
+            order.put("proof_images", quote.images);
+        }
         if (address != null) {
             order.put("receiver_name", address.receiverName);
             order.put("receiver_phone", address.phone);
@@ -379,7 +387,7 @@ public class PurchaseRepository {
 
     private String[] quoteProjection() {
         return new String[] { "id", "request_id", "seller_user", "price", "description",
-                "timestamp", "status", "reply_desc" };
+                "images", "timestamp", "status", "reply_desc" };
     }
 
     private PurchaseQuote cursorToQuote(Cursor cursor) {
@@ -389,9 +397,10 @@ public class PurchaseRepository {
         quote.sellerUser = cursor.getString(2);
         quote.price = cursor.getDouble(3);
         quote.description = cursor.getString(4);
-        quote.timestamp = cursor.getLong(5);
-        quote.status = cursor.getString(6);
-        quote.replyDesc = cursor.getString(7);
+        quote.images = cursor.getString(5);
+        quote.timestamp = cursor.getLong(6);
+        quote.status = cursor.getString(7);
+        quote.replyDesc = cursor.getString(8);
         if (quote.status == null) {
             quote.status = "pending";
         }

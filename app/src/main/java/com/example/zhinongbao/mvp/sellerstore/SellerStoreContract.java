@@ -8,7 +8,7 @@ import java.util.List;
 
 public interface SellerStoreContract {
     interface View extends BaseView<Presenter> {
-        void showStoreMeta(String seller, String storeName, String storePhone, boolean ownStore);
+        void showStoreMeta(String seller, String storeName, String storePhone, String avatarUri, boolean ownStore);
         void showProducts(List<Product> products);
         void showStats(int totalOrders, double totalRevenue);
         void showToast(String message);

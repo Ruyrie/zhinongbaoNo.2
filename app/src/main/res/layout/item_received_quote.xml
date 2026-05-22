@@ -56,6 +56,24 @@
             android:textColor="#888888"
             android:textSize="12sp"
             android:visibility="gone"/>
+
+        <HorizontalScrollView
+            android:id="@+id/hsvQuoteImages"
+            android:layout_width="match_parent"
+            android:layout_height="72dp"
+            android:layout_marginTop="8dp"
+            android:fillViewport="false"
+            android:overScrollMode="never"
+            android:scrollbars="none"
+            android:visibility="gone">
+
+            <LinearLayout
+                android:id="@+id/llQuoteImages"
+                android:layout_width="wrap_content"
+                android:layout_height="match_parent"
+                android:gravity="center_vertical"
+                android:orientation="horizontal" />
+        </HorizontalScrollView>
     </LinearLayout>
 
     <LinearLayout

@@ -13,14 +13,16 @@ public interface SellerPurchaseContract {
         void showMyQuotes(List<PurchaseQuote> quotes);
         void showMyRequests(List<PurchaseRequest> requests);
         void showToast(String message);
+        void promptAddAddress();
     }
 
     interface Presenter extends BasePresenter {
         void switchTab(int tab);
-        void submitQuote(PurchaseRequest request, String price, String desc);
+        void submitQuote(PurchaseRequest request, String price, String desc, String images);
         void acceptQuote(long quoteId, String reply);
         void rejectQuote(long quoteId, String reply);
         List<PurchaseQuote> getQuotesForRequest(long requestId);
+        boolean hasQuoted(long requestId);
         boolean canModify(PurchaseRequest request);
         boolean deleteRequest(PurchaseRequest request);
     }

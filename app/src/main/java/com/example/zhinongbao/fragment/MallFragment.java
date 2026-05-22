@@ -151,7 +151,8 @@ public class MallFragment extends BaseMvpFragment<MallContract.Presenter>
     private void filterByCategory() {
         displayed.clear();
         for (Product p : allProducts) {
-            if (p.category != null && p.category.contains(selectedCategory)) {
+            if ("推荐".equals(selectedCategory)
+                    || (p.category != null && p.category.contains(selectedCategory))) {
                 displayed.add(p);
             }
         }

@@ -243,7 +243,8 @@
                         android:layout_height="match_parent"
                         android:layout_weight="1"
                         android:orientation="horizontal"
-                        android:gravity="center_vertical|end">
+                        android:gravity="center_vertical|end"
+                        android:clipChildren="true">
 
                         <TextView
                             android:layout_width="wrap_content"
@@ -251,12 +252,14 @@
                             android:text="¥"
                             android:textSize="16sp"
                             android:textColor="#FF3B30"
-                            android:layout_marginEnd="4dp" />
+                            android:layout_marginEnd="3dp" />
 
                         <EditText
                             android:id="@+id/etPurchaseTargetPrice"
-                            android:layout_width="120dp"
+                            android:layout_width="wrap_content"
                             android:layout_height="match_parent"
+                            android:minWidth="24dp"
+                            android:maxWidth="190dp"
                             android:background="@null"
                             android:hint="您的预算"
                             android:textSize="16sp"
@@ -264,7 +267,8 @@
                             android:textColorHint="#C7C7CC"
                             android:gravity="center_vertical|end"
                             android:inputType="numberDecimal"
-                            android:singleLine="true" />
+                            android:singleLine="true"
+                            android:scrollHorizontally="true" />
                     </LinearLayout>
 
                     <TextView
@@ -273,7 +277,7 @@
                         android:text="元/单位"
                         android:textSize="13sp"
                         android:textColor="#8E8E93"
-                        android:layout_marginStart="10dp" />
+                        android:layout_marginStart="12dp" />
                 </LinearLayout>
 
                 <View

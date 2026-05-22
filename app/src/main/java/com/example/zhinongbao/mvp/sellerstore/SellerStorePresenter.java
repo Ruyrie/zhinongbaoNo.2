@@ -39,7 +39,7 @@ public class SellerStorePresenter implements SellerStoreContract.Presenter {
         productRepository.recordStoreView(currentUser, this.seller);
         boolean ownStore = this.seller != null && this.seller.equals(currentUser);
         view.showStoreMeta(this.seller, ownStore ? "我的店铺" : userRepository.getStoreName(this.seller),
-                productRepository.getStorePhone(this.seller), ownStore);
+                productRepository.getStorePhone(this.seller), userRepository.getAvatarUri(this.seller), ownStore);
         refreshProducts();
         if (ownStore) {
             refreshStats();
