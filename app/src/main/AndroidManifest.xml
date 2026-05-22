@@ -14,7 +14,7 @@
 
         <!-- 登录（启动页） -->
         <activity
-            android:name=".LoginActivity"
+            android:name=".activity.LoginActivity"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -23,127 +23,127 @@
         </activity>
 
         <!-- 注册 / 添加账号 -->
-        <activity android:name=".RegisterActivity" />
+        <activity android:name=".activity.RegisterActivity" />
 
         <!-- 主界面 -->
         <activity
-            android:name=".MainActivity"
+            android:name=".activity.MainActivity"
             android:windowSoftInputMode="adjustPan" />
 
         <!-- 文章详情（adjustResize 让底部评论栏随键盘上移） -->
         <activity
-            android:name=".ArticleDetailActivity"
+            android:name=".activity.ArticleDetailActivity"
             android:windowSoftInputMode="adjustResize" />
 
         <!-- 我的收藏（文章） -->
-        <activity android:name=".MyFavoritesActivity" />
+        <activity android:name=".activity.MyFavoritesActivity" />
 
         <!-- 商品收藏 -->
-        <activity android:name=".ProductFavoritesActivity" />
+        <activity android:name=".activity.ProductFavoritesActivity" />
 
         <!-- 聊天 -->
         <activity
-            android:name=".ChatActivity"
+            android:name=".activity.ChatActivity"
             android:windowSoftInputMode="adjustResize" />
 
         <!-- 我的足迹 -->
-        <activity android:name=".FootprintActivity" />
+        <activity android:name=".activity.FootprintActivity" />
 
         <!-- 粉丝 / 关注列表 -->
-        <activity android:name=".FollowListActivity" />
+        <activity android:name=".activity.FollowListActivity" />
 
         <!-- 搜索 -->
         <activity
-            android:name=".SearchActivity"
+            android:name=".activity.SearchActivity"
             android:windowSoftInputMode="adjustResize" />
 
         <!-- 商品搜索 -->
         <activity
-            android:name=".ProductSearchActivity"
+            android:name=".activity.ProductSearchActivity"
             android:windowSoftInputMode="adjustResize" />
 
         <!-- 商品详情 -->
-        <activity android:name=".ProductDetailActivity" />
+        <activity android:name=".activity.ProductDetailActivity" />
 
         <!-- 购物车 -->
-        <activity android:name=".CartActivity" />
+        <activity android:name=".activity.CartActivity" />
 
         <!-- 我的文章 -->
-        <activity android:name=".MyArticlesActivity" />
+        <activity android:name=".activity.MyArticlesActivity" />
 
         <!-- 我的订单 -->
-        <activity android:name=".MyOrdersActivity" />
+        <activity android:name=".activity.MyOrdersActivity" />
 
         <!-- 设置 -->
-        <activity android:name=".SettingsActivity" />
+        <activity android:name=".activity.SettingsActivity" />
 
         <!-- 账号管理 -->
-        <activity android:name=".AccountManagerActivity" />
+        <activity android:name=".activity.AccountManagerActivity" />
 
         <!-- 地址管理 -->
-        <activity android:name=".AddressManagerActivity" />
+        <activity android:name=".activity.AddressManagerActivity" />
 
         <!-- 修改密码 -->
-        <activity android:name=".ChangePasswordActivity" />
+        <activity android:name=".activity.ChangePasswordActivity" />
 
         <!-- 忘记密码 -->
-        <activity android:name=".ForgotPasswordActivity" />
+        <activity android:name=".activity.ForgotPasswordActivity" />
 
         <!-- 重置密码 -->
-        <activity android:name=".ResetPasswordActivity" />
+        <activity android:name=".activity.ResetPasswordActivity" />
 
         <!-- 添加文章（管理员） -->
-        <activity android:name=".AddArticleActivity" />
+        <activity android:name=".activity.AddArticleActivity" />
 
         <!-- 添加商品（管理员） -->
-        <activity android:name=".AddProductActivity" />
+        <activity android:name=".activity.AddProductActivity" />
 
         <!-- 订单详情 -->
-        <activity android:name=".OrderDetailActivity" />
+        <activity android:name=".activity.OrderDetailActivity" />
 
         <!-- 编辑资料 -->
-        <activity android:name=".ProfileEditActivity" />
+        <activity android:name=".activity.ProfileEditActivity" />
 
         <!-- 商品评价列表 -->
-        <activity android:name=".ProductCommentsActivity" />
+        <activity android:name=".activity.ProductCommentsActivity" />
 
         <!-- 发表商品评价 -->
-        <activity android:name=".AddProductCommentActivity" />
+        <activity android:name=".activity.AddProductCommentActivity" />
 
         <!-- 发农友圈动态 -->
         <activity
-            android:name=".AddCirclePostActivity"
+            android:name=".activity.AddCirclePostActivity"
             android:windowSoftInputMode="adjustResize" />
 
         <!-- 我的动态 -->
-        <activity android:name=".MyCirclePostsActivity" />
+        <activity android:name=".activity.MyCirclePostsActivity" />
 
         <!-- 卖家店铺 -->
-        <activity android:name=".SellerStoreActivity" />
+        <activity android:name=".activity.SellerStoreActivity" />
 
         <!-- 发布采购需求 -->
         <activity
-            android:name=".PostPurchaseActivity"
+            android:name=".activity.PostPurchaseActivity"
             android:windowSoftInputMode="adjustResize" />
 
         <!-- 采购市场 -->
-        <activity android:name=".PurchaseMarketActivity" />
+        <activity android:name=".activity.PurchaseMarketActivity" />
 
         <!-- 卖家：我的货品 -->
-        <activity android:name=".SellerMyProductsActivity" />
+        <activity android:name=".activity.SellerMyProductsActivity" />
 
         <!-- 卖家：采购管理 -->
-        <activity android:name=".SellerPurchaseMgmtActivity" />
+        <activity android:name=".activity.SellerPurchaseMgmtActivity" />
 
         <!-- 卖家：订单管理 -->
-        <activity android:name=".SellerOrdersActivity" />
+        <activity android:name=".activity.SellerOrdersActivity" />
 
         <!-- 卖家：销售流水分析 -->
-        <activity android:name=".SellerSalesAnalysisActivity" />
+        <activity android:name=".activity.SellerSalesAnalysisActivity" />
 
         <!-- uCrop 裁剪 Activity（子类，用于正确处理 Android 16 edge-to-edge insets） -->
         <activity
-            android:name=".UCropCompatActivity"
+            android:name=".activity.UCropCompatActivity"
             android:screenOrientation="portrait"
             android:theme="@style/Theme.UCrop"/>
 

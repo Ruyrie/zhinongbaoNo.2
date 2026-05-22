@@ -12,7 +12,7 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.recyclerview.widget.StaggeredGridLayoutManager;
-import com.example.zhinongbao.ProductDetailActivity;
+import com.example.zhinongbao.activity.ProductDetailActivity;
 import com.example.zhinongbao.R;
 import com.example.zhinongbao.adapter.ProductAdapter;
 import com.example.zhinongbao.base.BaseMvpFragment;
@@ -88,7 +88,7 @@ public class MallFragment extends BaseMvpFragment<MallContract.Presenter>
         EditText etSearch = view.findViewById(R.id.etSearch);
         if (etSearch != null) {
             etSearch.setOnClickListener(v -> {
-                startActivity(new Intent(getContext(), com.example.zhinongbao.ProductSearchActivity.class));
+                startActivity(new Intent(getContext(), com.example.zhinongbao.activity.ProductSearchActivity.class));
             });
         }
 
@@ -96,7 +96,7 @@ public class MallFragment extends BaseMvpFragment<MallContract.Presenter>
         View btnGoSell = view.findViewById(R.id.btnGoSell);
         if (btnGoSell != null) {
             btnGoSell.setOnClickListener(v -> {
-                startActivity(new Intent(getContext(), com.example.zhinongbao.AddProductActivity.class));
+                startActivity(new Intent(getContext(), com.example.zhinongbao.activity.AddProductActivity.class));
             });
         }
 

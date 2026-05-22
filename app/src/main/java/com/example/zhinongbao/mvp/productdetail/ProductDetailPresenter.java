@@ -2,7 +2,7 @@ package com.example.zhinongbao.mvp.productdetail;
 
 import android.content.Context;
 
-import com.example.zhinongbao.ChatActivity;
+import com.example.zhinongbao.activity.ChatActivity;
 import com.example.zhinongbao.model.Product;
 import com.example.zhinongbao.model.ProductComment;
 import com.example.zhinongbao.repository.ProductRepository;

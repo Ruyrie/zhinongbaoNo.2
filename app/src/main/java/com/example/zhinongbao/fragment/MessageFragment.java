@@ -12,7 +12,7 @@ import androidx.appcompat.app.AlertDialog;
 import androidx.recyclerview.widget.DividerItemDecoration;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
-import com.example.zhinongbao.ChatActivity;
+import com.example.zhinongbao.activity.ChatActivity;
 import com.example.zhinongbao.R;
 import com.example.zhinongbao.adapter.ConversationAdapter;
 import com.example.zhinongbao.base.BaseMvpFragment;
