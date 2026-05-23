@@ -250,19 +250,47 @@ public class SellerOrdersActivity extends BaseMvpActivity<SellerOrdersContract.P
             }
         });
 
-        new AlertDialog.Builder(this)
-                .setTitle("订单发货")
+        AlertDialog dialog = new AlertDialog.Builder(this)
                 .setView(v)
-                .setPositiveButton("确定发货", (d, w) -> {
-                    if (rg.getCheckedRadioButtonId() == R.id.rbExpress) {
-                        presenter.shipOrder(o, "express", etCompany.getText().toString(), etNo.getText().toString(), "");
-                    } else {
-                        presenter.shipOrder(o, "custom", etDriver.getText().toString(), etCar.getText().toString(),
-                                etPhone.getText().toString());
-                    }
-                })
-                .setNegativeButton("取消", null)
-                .show();
+                .create();
+        v.findViewById(R.id.btnShipCancel).setOnClickListener(view -> dialog.dismiss());
+        v.findViewById(R.id.btnShipConfirm).setOnClickListener(view -> {
+            if (rg.getCheckedRadioButtonId() == R.id.rbExpress) {
+                String company = etCompany.getText().toString().trim();
+                String no = etNo.getText().toString().trim();
+                if (company.isEmpty()) {
+                    etCompany.setError("请填写快递公司");
+                    return;
+                }
+                if (no.isEmpty()) {
+                    etNo.setError("请填写快递单号");
+                    return;
+                }
+                presenter.shipOrder(o, "express", company, no, "");
+            } else {
+                String driver = etDriver.getText().toString().trim();
+                String car = etCar.getText().toString().trim();
+                String phone = etPhone.getText().toString().trim();
+                if (driver.isEmpty()) {
+                    etDriver.setError("请填写司机姓名");
+                    return;
+                }
+                if (car.isEmpty()) {
+                    etCar.setError("请填写车牌号");
+                    return;
+                }
+                if (phone.isEmpty()) {
+                    etPhone.setError("请填写司机联系电话");
+                    return;
+                }
+                presenter.shipOrder(o, "custom", driver, car, phone);
+            }
+            dialog.dismiss();
+        });
+        dialog.show();
+        if (dialog.getWindow() != null) {
+            dialog.getWindow().setBackgroundDrawableResource(android.R.color.transparent);
+        }
     }
 
     @Override

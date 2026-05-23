@@ -456,7 +456,7 @@ public class SellerPurchaseMgmtActivity extends BaseMvpActivity<SellerPurchaseCo
                 : "拒绝后该商家的报价将不再进入采购订单。");
 
         DialogUtils.showContent(this, isAccept ? "同意报价" : "拒绝报价", null, v,
-                "取消", isAccept ? "确认生成" : "确认拒绝", !isAccept, () -> {
+                "取消", isAccept ? "确定订单" : "确认拒绝", !isAccept, () -> {
                     String reply = etReply.getText().toString();
                     if (isAccept) {
                         presenter.acceptQuote(quoteId, reply);

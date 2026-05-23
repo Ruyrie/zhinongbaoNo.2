@@ -9,29 +9,29 @@
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:minHeight="720dp"
+        android:minHeight="690dp"
         android:orientation="vertical"
         android:paddingHorizontal="28dp"
-        android:paddingTop="48dp"
+        android:paddingTop="28dp"
         android:paddingBottom="28dp">
 
         <FrameLayout
             android:layout_width="match_parent"
-            android:layout_height="238dp"
-            android:layout_marginBottom="22dp">
+            android:layout_height="210dp"
+            android:layout_marginBottom="16dp">
 
             <LinearLayout
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_gravity="start|top"
-                android:layout_marginTop="54dp"
+                android:layout_marginTop="34dp"
                 android:gravity="center_vertical"
                 android:orientation="horizontal">
 
                 <ImageView
                     android:layout_width="54dp"
                     android:layout_height="54dp"
-                    android:src="@drawable/auth_logo"
+                    android:src="@drawable/zhinongbaoicon"
                     android:contentDescription="支农宝" />
 
                 <LinearLayout
@@ -60,11 +60,11 @@
 
             <ImageView
                 android:layout_width="250dp"
-                android:layout_height="180dp"
+                android:layout_height="172dp"
                 android:layout_gravity="end|bottom"
                 android:alpha="0.96"
                 android:scaleType="fitEnd"
-                android:src="@drawable/auth_login_hero"
+                android:src="@drawable/denglu1"
                 android:contentDescription="乡村助农插画" />
         </FrameLayout>
 
@@ -88,7 +88,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="18dp"
-            android:layout_marginBottom="42dp"
+            android:layout_marginBottom="32dp"
             android:text="登录账号，发现更多助农好物"
             android:textColor="#303633"
             android:textSize="15sp" />
@@ -151,9 +151,13 @@
                 android:textSize="15sp" />
 
             <ImageView
+                android:id="@+id/ivLoginPasswordToggle"
                 android:layout_width="24dp"
                 android:layout_height="24dp"
-                android:src="@drawable/ic_auth_eye" />
+                android:padding="2dp"
+                android:scaleType="centerInside"
+                android:src="@drawable/weichakan_auth"
+                android:contentDescription="显示或隐藏密码" />
         </LinearLayout>
 
         <TextView
@@ -215,12 +219,6 @@
             android:layout_height="wrap_content"
             android:gravity="center"
             android:orientation="horizontal">
-
-            <ImageView
-                android:layout_width="16dp"
-                android:layout_height="16dp"
-                android:layout_marginEnd="6dp"
-                android:src="@drawable/ic_auth_check" />
 
             <TextView
                 android:layout_width="wrap_content"

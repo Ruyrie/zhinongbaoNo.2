@@ -9,11 +9,11 @@ import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
-import androidx.appcompat.app.AlertDialog;
 import com.example.zhinongbao.base.BaseMvpActivity;
 import com.example.zhinongbao.model.Address;
 import com.example.zhinongbao.mvp.address.AddressContract;
 import com.example.zhinongbao.mvp.address.AddressPresenter;
+import com.example.zhinongbao.utils.DialogUtils;
 import java.util.List;
 
 public class AddressManagerActivity extends BaseMvpActivity<AddressContract.Presenter> implements AddressContract.View {
@@ -63,24 +63,18 @@ public class AddressManagerActivity extends BaseMvpActivity<AddressContract.Pres
         } else {
             cbDefault.setChecked(llAddresses.getChildCount() == 0);
         }
-        AlertDialog dialog = new AlertDialog.Builder(this)
-                .setTitle(address == null ? "新增收货地址" : "编辑收货地址")
-                .setView(view)
-                .setPositiveButton("保存", null)
-                .setNegativeButton("取消", null)
-                .create();
-        dialog.setOnShowListener(d -> dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener(v -> {
+        DialogUtils.showContent(this, address == null ? "新增收货地址" : "编辑收货地址",
+                null, view, "取消", "保存地址", false, () -> {
             String name = etName.getText().toString().trim();
             String phone = etPhone.getText().toString().trim();
             String addr = etAddress.getText().toString().trim();
             if (name.isEmpty() || phone.isEmpty() || addr.isEmpty()) {
                 Toast.makeText(this, "请完整填写地址信息", Toast.LENGTH_SHORT).show();
-                return;
+                return false;
             }
             presenter.saveAddress(address, name, phone, addr, cbDefault.isChecked());
-            dialog.dismiss();
-        }));
-        dialog.show();
+            return true;
+        });
     }
 
     @Override

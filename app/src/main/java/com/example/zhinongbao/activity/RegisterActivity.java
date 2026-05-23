@@ -2,12 +2,16 @@ package com.example.zhinongbao.activity;
 
 import com.example.zhinongbao.R;
 import android.content.Intent;
+import android.graphics.drawable.Drawable;
 import android.os.Bundle;
+import android.text.InputType;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ImageView;
 import android.widget.RadioButton;
 import android.widget.RadioGroup;
 import android.widget.Toast;
+import androidx.core.content.ContextCompat;
 import com.example.zhinongbao.base.BaseMvpActivity;
 import com.example.zhinongbao.model.User;
 import com.example.zhinongbao.mvp.register.RegisterContract;
@@ -17,7 +21,9 @@ import com.example.zhinongbao.mvp.register.RegisterPresenter;
 public class RegisterActivity extends BaseMvpActivity<RegisterContract.Presenter> implements RegisterContract.View {
 
     private EditText etUsername, etPassword, etPhone;
+    private ImageView ivPasswordToggle;
     private RadioGroup rgRole;
+    private boolean passwordVisible = false;
 
     // 是否从账号管理进入（添加账号模式）
     private boolean isAddMode = false;
@@ -33,8 +39,11 @@ public class RegisterActivity extends BaseMvpActivity<RegisterContract.Presenter
         etUsername = findViewById(R.id.etRegUsername);
         etPassword = findViewById(R.id.etRegPassword);
         etPhone = findViewById(R.id.etRegPhone);
+        ivPasswordToggle = findViewById(R.id.ivRegPasswordToggle);
         rgRole = findViewById(R.id.rgRole);
         Button btnRegister = findViewById(R.id.btnRegister);
+        configureRoleIcon(R.id.rbBuyer, R.drawable.zhucemaijia1);
+        configureRoleIcon(R.id.rbSeller, R.drawable.zhucemaijia2);
         findViewById(R.id.ivRegisterBack).setOnClickListener(v -> finish());
         String prefillUsername = getIntent().getStringExtra("prefill_username");
         if (prefillUsername != null && !prefillUsername.trim().isEmpty()) {
@@ -44,7 +53,36 @@ public class RegisterActivity extends BaseMvpActivity<RegisterContract.Presenter
 
         setTitle(isAddMode ? "添加账号" : "注册");
 
+        ivPasswordToggle.setOnClickListener(v -> togglePasswordVisibility());
         btnRegister.setOnClickListener(v -> doRegister());
+    }
+
+    private void configureRoleIcon(int radioButtonId, int drawableRes) {
+        RadioButton radioButton = findViewById(radioButtonId);
+        Drawable icon = ContextCompat.getDrawable(this, drawableRes);
+        if (radioButton == null || icon == null) {
+            return;
+        }
+        int size = dp(34);
+        icon.setBounds(0, 0, size, size);
+        radioButton.setCompoundDrawables(icon, null, null, null);
+        radioButton.setCompoundDrawablePadding(dp(10));
+    }
+
+    private int dp(int value) {
+        return Math.round(value * getResources().getDisplayMetrics().density);
+    }
+
+    private void togglePasswordVisibility() {
+        passwordVisible = !passwordVisible;
+        if (passwordVisible) {
+            etPassword.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_VISIBLE_PASSWORD);
+            ivPasswordToggle.setImageResource(R.drawable.chakan_auth);
+        } else {
+            etPassword.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_PASSWORD);
+            ivPasswordToggle.setImageResource(R.drawable.weichakan_auth);
+        }
+        etPassword.setSelection(etPassword.getText().length());
     }
 
     private void doRegister() {

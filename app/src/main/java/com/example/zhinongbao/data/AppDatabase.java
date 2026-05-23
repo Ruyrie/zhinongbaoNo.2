@@ -13,7 +13,7 @@ import android.database.sqlite.SQLiteOpenHelper;
 public class AppDatabase extends SQLiteOpenHelper {
 
         private static final String DB_NAME = "zhinongbao.db";
-        private static final int DB_VERSION = 18;
+        private static final int DB_VERSION = 19;
 
         private static AppDatabase instance;
 
@@ -111,6 +111,7 @@ public class AppDatabase extends SQLiteOpenHelper {
                                 "refund_reason TEXT," +
                                 "refund_requested_at INTEGER DEFAULT 0," +
                                 "refund_previous_status TEXT," +
+                                "completed_at INTEGER DEFAULT 0," +
                                 "receiver_name TEXT," +
                                 "receiver_phone TEXT," +
                                 "receiver_address TEXT)");
@@ -348,6 +349,9 @@ public class AppDatabase extends SQLiteOpenHelper {
                                         "address TEXT NOT NULL," +
                                         "is_default INTEGER DEFAULT 0)");
                 }
+                if (oldVersion < 19) {
+                        db.execSQL("ALTER TABLE orders ADD COLUMN completed_at INTEGER DEFAULT 0");
+                }
                 if (oldVersion < 17) {
                         db.execSQL("ALTER TABLE products ADD COLUMN brand TEXT");
                         db.execSQL("ALTER TABLE products ADD COLUMN origin TEXT");
@@ -363,8 +367,10 @@ public class AppDatabase extends SQLiteOpenHelper {
                 db.beginTransaction();
                 try {
                         ensureAdminUser(db);
+                        ensureTestSellerUser(db);
                         ensureDefaultProducts(db);
                         ensureDefaultArticles(db);
+                        ensureExpiredReturnTestOrder(db);
                         db.setTransactionSuccessful();
                 } finally {
                         db.endTransaction();
@@ -389,6 +395,27 @@ public class AppDatabase extends SQLiteOpenHelper {
                 update.put("store_name", "admin的店铺");
                 update.put("store_phone", "13800138000");
                 db.update("users", update, "username=?", new String[] { "admin" });
+        }
+
+        private void ensureTestSellerUser(SQLiteDatabase db) {
+                ContentValues values = new ContentValues();
+                values.put("username", "test_seller");
+                values.put("password", "123456");
+                values.put("nickname", "测试卖家");
+                values.put("phone", "13900139000");
+                values.put("store_name", "测试卖家的店铺");
+                values.put("store_phone", "13900139000");
+                values.put("role", 1);
+                db.insertWithOnConflict("users", null, values, SQLiteDatabase.CONFLICT_IGNORE);
+
+                ContentValues update = new ContentValues();
+                update.put("password", "123456");
+                update.put("role", 1);
+                update.put("nickname", "测试卖家");
+                update.put("phone", "13900139000");
+                update.put("store_name", "测试卖家的店铺");
+                update.put("store_phone", "13900139000");
+                db.update("users", update, "username=?", new String[] { "test_seller" });
         }
 
         private void ensureDefaultProducts(SQLiteDatabase db) {
@@ -416,6 +443,38 @@ public class AppDatabase extends SQLiteOpenHelper {
                 ContentValues update = new ContentValues();
                 update.put("seller", "admin");
                 db.update("products", update, "(seller IS NULL OR seller='') AND id BETWEEN 1 AND 10", null);
+        }
+
+        private void ensureExpiredReturnTestOrder(SQLiteDatabase db) {
+                long completedAt = System.currentTimeMillis() - 8L * 24 * 60 * 60 * 1000;
+                ContentValues values = new ContentValues();
+                values.put("order_id", "TEST_EXPIRED_RETURN_001");
+                values.put("username", "admin");
+                values.put("product_id", 7);
+                values.put("name", "新鲜铁棍山药（2.5kg）");
+                values.put("price", 55.00);
+                values.put("quantity", 1);
+                values.put("time", "2026-05-14 10:00");
+                values.put("status", "completed");
+                values.put("seller", "test_seller");
+                values.put("order_type", "retail");
+                values.put("purchase_request_id", -1);
+                values.put("ship_type", "express");
+                values.put("ship_name", "顺丰快递");
+                values.put("ship_no", "SFTEST20260514001");
+                values.put("ship_phone", "");
+                values.put("proof_images", "");
+                values.put("unit_price", 55.00);
+                values.put("discount", 0);
+                values.put("refund_amount", 0);
+                values.put("refund_reason", "");
+                values.put("refund_requested_at", 0);
+                values.putNull("refund_previous_status");
+                values.put("receiver_name", "测试用户");
+                values.put("receiver_phone", "13800138000");
+                values.put("receiver_address", "测试地址：用于验证超过七天联系客服按钮，并检查累计销售流水");
+                values.put("completed_at", completedAt);
+                db.insertWithOnConflict("orders", null, values, SQLiteDatabase.CONFLICT_REPLACE);
         }
 
         private void insertProduct(SQLiteDatabase db, int id, String name, String desc, double price, String category,

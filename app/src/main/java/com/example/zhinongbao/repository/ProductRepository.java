@@ -216,13 +216,13 @@ public class ProductRepository {
         String like = "%" + query + "%";
         try (Cursor cursor = resolver.query(
                 ZhiNongBaoProvider.CONTENT_URI_USERS,
-                new String[] { "username", "store_name", "nickname", "store_phone", "phone", "role" },
+                new String[] { "username", "store_name", "nickname", "store_phone", "phone", "avatar_uri", "role" },
                 "username LIKE ? OR nickname LIKE ? OR store_name LIKE ?",
                 new String[] { like, like, like },
                 "id ASC")) {
             while (cursor != null && cursor.moveToNext()) {
                 StoreSearchResult item = cursorToStoreSearchResult(cursor);
-                if (item.productCount > 0 || cursor.getInt(5) == User.ROLE_SELLER || cursor.getInt(5) == User.ROLE_BOTH
+                if (item.productCount > 0 || cursor.getInt(6) == User.ROLE_SELLER || cursor.getInt(6) == User.ROLE_BOTH
                         || (item.storeName != null && !item.storeName.isEmpty())) {
                     stores.add(item);
                 }
@@ -465,7 +465,7 @@ public class ProductRepository {
     private void fillStoreFootprint(StoreFootprint item) {
         try (Cursor cursor = resolver.query(
                 ZhiNongBaoProvider.CONTENT_URI_USERS,
-                new String[] { "store_name", "nickname", "store_phone", "phone" },
+                new String[] { "store_name", "nickname", "store_phone", "phone", "avatar_uri" },
                 "username=?",
                 new String[] { item.seller },
                 null)) {
@@ -478,9 +478,11 @@ public class ProductRepository {
                 String storePhone = cursor.getString(2);
                 String phone = cursor.getString(3);
                 item.storePhone = storePhone != null && !storePhone.isEmpty() ? storePhone : (phone == null ? "" : phone);
+                item.avatarUri = cursor.getString(4);
             } else {
                 item.storeName = item.seller + "的店铺";
                 item.storePhone = "";
+                item.avatarUri = "";
             }
         }
         item.productCount = getProductsBySeller(item.seller).size();
@@ -497,6 +499,7 @@ public class ProductRepository {
         String storePhone = cursor.getString(3);
         String phone = cursor.getString(4);
         item.storePhone = storePhone != null && !storePhone.trim().isEmpty() ? storePhone : (phone == null ? "" : phone);
+        item.avatarUri = cursor.getString(5);
         item.productCount = getProductsBySeller(item.seller).size();
         return item;
     }
@@ -504,7 +507,7 @@ public class ProductRepository {
     private void fillStoreSearchResult(StoreSearchResult item) {
         try (Cursor cursor = resolver.query(
                 ZhiNongBaoProvider.CONTENT_URI_USERS,
-                new String[] { "username", "store_name", "nickname", "store_phone", "phone", "role" },
+                new String[] { "username", "store_name", "nickname", "store_phone", "phone", "avatar_uri", "role" },
                 "username=?",
                 new String[] { item.seller },
                 null)) {
@@ -512,6 +515,7 @@ public class ProductRepository {
                 StoreSearchResult filled = cursorToStoreSearchResult(cursor);
                 item.storeName = filled.storeName;
                 item.storePhone = filled.storePhone;
+                item.avatarUri = filled.avatarUri;
                 item.productCount = filled.productCount;
             }
         }

@@ -11,6 +11,7 @@ import com.example.zhinongbao.provider.ZhiNongBaoProvider;
 
 import java.util.ArrayList;
 import java.text.SimpleDateFormat;
+import java.text.ParseException;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
@@ -153,6 +154,7 @@ public class OrderRepository {
     public boolean confirmReceipt(String username, String orderId) {
         ContentValues values = new ContentValues();
         values.put("status", Order.STATUS_COMPLETED);
+        values.put("completed_at", System.currentTimeMillis());
         return resolver.update(
                 ZhiNongBaoProvider.CONTENT_URI_ORDERS,
                 values,
@@ -162,7 +164,7 @@ public class OrderRepository {
 
     public boolean initiateRefund(String orderId, String reason) {
         Order order = getOrderById(orderId);
-        if (order == null) {
+        if (order == null || !canRequestRefund(order)) {
             return false;
         }
 
@@ -180,6 +182,9 @@ public class OrderRepository {
     }
 
     public boolean shipOrder(String orderId, String shipType, String shipName, String shipNo, String shipPhone) {
+        if (isBlank(shipName) || isBlank(shipNo) || ("custom".equals(shipType) && isBlank(shipPhone))) {
+            return false;
+        }
         ContentValues values = new ContentValues();
         values.put("status", Order.STATUS_SHIPPED);
         values.put("ship_type", shipType);
@@ -238,6 +243,43 @@ public class OrderRepository {
         }
     }
 
+    public boolean canRequestRefund(Order order) {
+        if (order == null || order.refundAmount > 0 || Order.STATUS_REFUND.equals(order.status)) {
+            return false;
+        }
+        if (Order.STATUS_PAID.equals(order.status) || Order.STATUS_SHIPPED.equals(order.status)) {
+            return true;
+        }
+        return Order.STATUS_COMPLETED.equals(order.status) && isCompletedRefundWindowOpen(order);
+    }
+
+    public boolean isCompletedRefundWindowOpen(Order order) {
+        if (order == null || !Order.STATUS_COMPLETED.equals(order.status)) {
+            return false;
+        }
+        long base = order.completedAt > 0 ? order.completedAt : parseOrderTime(order.time);
+        if (base <= 0) {
+            return false;
+        }
+        return System.currentTimeMillis() - base <= 7L * 24 * 60 * 60 * 1000;
+    }
+
+    private long parseOrderTime(String time) {
+        if (time == null || time.trim().isEmpty()) {
+            return 0;
+        }
+        try {
+            Date date = new SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.getDefault()).parse(time);
+            return date == null ? 0 : date.getTime();
+        } catch (ParseException e) {
+            return 0;
+        }
+    }
+
+    private boolean isBlank(String value) {
+        return value == null || value.trim().isEmpty();
+    }
+
     private List<Order> queryOrders(String selection, String[] selectionArgs, String sortOrder) {
         autoCompleteExpiredRefunds();
         List<Order> orders = new ArrayList<>();
@@ -292,7 +334,7 @@ public class OrderRepository {
                 "ship_type", "ship_name", "ship_no", "ship_phone", "proof_images",
                 "unit_price", "discount", "refund_amount", "refund_reason",
                 "refund_requested_at", "refund_previous_status",
-                "receiver_name", "receiver_phone", "receiver_address"
+                "receiver_name", "receiver_phone", "receiver_address", "completed_at"
         };
     }
 
@@ -324,6 +366,7 @@ public class OrderRepository {
         order.receiverName = cursor.getString(22);
         order.receiverPhone = cursor.getString(23);
         order.receiverAddress = cursor.getString(24);
+        order.completedAt = cursor.getLong(25);
         if (order.orderType == null) {
             order.orderType = Order.ORDER_TYPE_RETAIL;
         }

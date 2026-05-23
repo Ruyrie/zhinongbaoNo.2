@@ -50,7 +50,11 @@ public class ProductCommentAdapter extends RecyclerView.Adapter<ProductCommentAd
 
         if (c.avatarUri != null && !c.avatarUri.isEmpty()) {
             try {
-                holder.ivAvatar.setImageURI(Uri.parse(c.avatarUri));
+                if (c.avatarUri.startsWith("data:image")) {
+                    com.example.zhinongbao.utils.ImageUtils.setAvatarFromBase64(holder.ivAvatar, c.avatarUri);
+                } else {
+                    holder.ivAvatar.setImageURI(Uri.parse(c.avatarUri));
+                }
             } catch (Exception e) {
                 holder.ivAvatar.setImageResource(R.mipmap.ic_launcher_round);
             }

@@ -128,7 +128,7 @@
             </LinearLayout>
         </LinearLayout>
 
-        <!-- ── 销售数据卡片（悬浮在绿色header上） ── -->
+        <!-- ── 销售数据卡片 ── -->
         <com.google.android.material.card.MaterialCardView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -136,7 +136,7 @@
             app:cardElevation="4dp"
             app:strokeWidth="0dp"
             android:layout_marginHorizontal="16dp"
-            android:layout_marginTop="-16dp"
+            android:layout_marginTop="12dp"
             android:layout_marginBottom="12dp">
 
             <LinearLayout
@@ -342,7 +342,7 @@
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="订单管理"
+                        android:text="销售订单"
                         android:textSize="12sp"
                         android:textColor="#333333"
                         android:layout_marginTop="6dp" />
@@ -404,7 +404,7 @@
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
-                        android:text="我的订单"
+                        android:text="销售订单"
                         android:textSize="15sp"
                         android:textStyle="bold"
                         android:textColor="#1A1A1A" />

@@ -48,6 +48,7 @@ public class Order {
     public String refundReason;
     public long refundRequestedAt;
     public String refundPreviousStatus;
+    public long completedAt;
 
     public String receiverName;
     public String receiverPhone;

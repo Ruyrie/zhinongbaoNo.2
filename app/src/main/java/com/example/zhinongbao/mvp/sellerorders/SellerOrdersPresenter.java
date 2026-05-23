@@ -85,9 +85,18 @@ public class SellerOrdersPresenter implements SellerOrdersContract.Presenter {
 
     @Override
     public void shipOrder(Order order, String shipType, String shipName, String shipNo, String shipPhone) {
-        repository.shipOrder(order.orderId, shipType, shipName, shipNo, shipPhone);
-        view.showToast("已发货");
-        refresh();
+        String type = shipType == null ? "express" : shipType;
+        String name = shipName == null ? "" : shipName.trim();
+        String no = shipNo == null ? "" : shipNo.trim();
+        String phone = shipPhone == null ? "" : shipPhone.trim();
+        if (name.isEmpty() || no.isEmpty() || ("custom".equals(type) && phone.isEmpty())) {
+            view.showToast("请填写完整发货信息");
+            return;
+        }
+        if (repository.shipOrder(order.orderId, type, name, no, phone)) {
+            view.showToast("已发货");
+            refresh();
+        }
     }
 
     @Override

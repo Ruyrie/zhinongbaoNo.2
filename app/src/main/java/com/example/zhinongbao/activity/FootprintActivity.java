@@ -8,6 +8,7 @@ import android.os.Bundle;
 import android.view.Gravity;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
@@ -192,13 +193,38 @@ public class FootprintActivity extends BaseMvpActivity<FootprintContract.Present
             }
             if (viewType == Row.TYPE_STORE) {
                 LinearLayout box = new LinearLayout(parent.getContext());
-                box.setOrientation(LinearLayout.VERTICAL);
+                box.setOrientation(LinearLayout.HORIZONTAL);
                 box.setBackgroundColor(Color.WHITE);
                 box.setPadding(dp(14), dp(12), dp(14), dp(12));
+                box.setGravity(Gravity.CENTER_VERTICAL);
                 RecyclerView.LayoutParams lp = new RecyclerView.LayoutParams(
                         ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
                 lp.setMargins(dp(10), dp(5), dp(10), dp(7));
                 box.setLayoutParams(lp);
+
+                FrameLayout avatarWrap = new FrameLayout(parent.getContext());
+                ImageView avatar = new ImageView(parent.getContext());
+                avatar.setId(3);
+                avatar.setScaleType(ImageView.ScaleType.CENTER_CROP);
+                avatar.setBackgroundResource(R.drawable.bg_auth_logo);
+                avatar.setVisibility(View.GONE);
+                TextView placeholder = new TextView(parent.getContext());
+                placeholder.setId(4);
+                placeholder.setBackgroundResource(R.drawable.bg_auth_logo);
+                placeholder.setGravity(Gravity.CENTER);
+                placeholder.setTextColor(Color.WHITE);
+                placeholder.setTextSize(16);
+                placeholder.setTypeface(null, android.graphics.Typeface.BOLD);
+                avatarWrap.addView(avatar, new FrameLayout.LayoutParams(
+                        ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
+                avatarWrap.addView(placeholder, new FrameLayout.LayoutParams(
+                        ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
+                LinearLayout.LayoutParams avatarLp = new LinearLayout.LayoutParams(dp(48), dp(48));
+                avatarLp.setMargins(0, 0, dp(12), 0);
+                box.addView(avatarWrap, avatarLp);
+
+                LinearLayout info = new LinearLayout(parent.getContext());
+                info.setOrientation(LinearLayout.VERTICAL);
                 TextView name = new TextView(parent.getContext());
                 name.setId(1);
                 name.setTextColor(0xFF1F1F1F);
@@ -209,8 +235,21 @@ public class FootprintActivity extends BaseMvpActivity<FootprintContract.Present
                 sub.setTextColor(0xFF8A8A8A);
                 sub.setTextSize(13);
                 sub.setPadding(0, dp(4), 0, 0);
-                box.addView(name);
-                box.addView(sub);
+                info.addView(name);
+                info.addView(sub);
+                box.addView(info, new LinearLayout.LayoutParams(0,
+                        ViewGroup.LayoutParams.WRAP_CONTENT, 1));
+
+                TextView enter = new TextView(parent.getContext());
+                enter.setId(5);
+                enter.setText("进店逛逛");
+                enter.setTextColor(0xFF43A047);
+                enter.setTextSize(14);
+                enter.setTypeface(null, android.graphics.Typeface.BOLD);
+                enter.setGravity(Gravity.CENTER);
+                enter.setPadding(dp(10), dp(6), 0, dp(6));
+                box.addView(enter, new LinearLayout.LayoutParams(
+                        ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT));
                 return new RecyclerView.ViewHolder(box) {};
             }
 
@@ -253,15 +292,22 @@ public class FootprintActivity extends BaseMvpActivity<FootprintContract.Present
             if (row.type == Row.TYPE_STORE) {
                 TextView name = holder.itemView.findViewById(1);
                 TextView sub = holder.itemView.findViewById(2);
+                ImageView avatar = holder.itemView.findViewById(3);
+                TextView placeholder = holder.itemView.findViewById(4);
+                TextView enter = holder.itemView.findViewById(5);
                 name.setText(row.store.storeName);
                 String phone = row.store.storePhone == null || row.store.storePhone.isEmpty()
                         ? "未填写电话" : row.store.storePhone;
                 sub.setText("商品 " + row.store.productCount + " 件 · 电话 " + phone);
-                holder.itemView.setOnClickListener(v -> {
+                bindStoreAvatar(avatar, placeholder, row.store);
+                View.OnClickListener openStore = v -> {
                     Intent i = new Intent(FootprintActivity.this, SellerStoreActivity.class);
                     i.putExtra("seller", row.store.seller);
+                    i.putExtra("public_store", true);
                     startActivity(i);
-                });
+                };
+                holder.itemView.setOnClickListener(openStore);
+                enter.setOnClickListener(openStore);
                 return;
             }
             Product p = row.product;
@@ -282,6 +328,27 @@ public class FootprintActivity extends BaseMvpActivity<FootprintContract.Present
         public int getItemCount() {
             return rows.size();
         }
+    }
+
+    private void bindStoreAvatar(ImageView avatar, TextView placeholder, StoreFootprint store) {
+        String avatarUri = store.avatarUri;
+        if (avatarUri != null && !avatarUri.isEmpty()) {
+            try {
+                if (avatarUri.startsWith("data:image")) {
+                    com.example.zhinongbao.utils.ImageUtils.setAvatarFromBase64(avatar, avatarUri);
+                } else {
+                    avatar.setImageURI(Uri.parse(avatarUri));
+                }
+                avatar.setVisibility(View.VISIBLE);
+                placeholder.setVisibility(View.GONE);
+                return;
+            } catch (Exception ignored) {
+            }
+        }
+        avatar.setVisibility(View.GONE);
+        placeholder.setVisibility(View.VISIBLE);
+        String storeName = store.storeName;
+        placeholder.setText(storeName == null || storeName.isEmpty() ? "店" : storeName.substring(0, 1));
     }
 
     private void bindProductImage(ImageView image, Product p) {

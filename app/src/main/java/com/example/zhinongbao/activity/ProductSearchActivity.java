@@ -136,6 +136,7 @@ public class ProductSearchActivity extends BaseMvpActivity<ProductSearchContract
         storeAdapter = new StoreSearchAdapter(displayedStores, allProducts, store -> {
             Intent intent = new Intent(this, SellerStoreActivity.class);
             intent.putExtra("seller", store.seller);
+            intent.putExtra("public_store", true);
             startActivity(intent);
         }, product -> {
             Intent intent = new Intent(this, ProductDetailActivity.class);
@@ -355,6 +356,7 @@ public class ProductSearchActivity extends BaseMvpActivity<ProductSearchContract
             holder.tvStorePhone.setText(store.storePhone == null || store.storePhone.isEmpty()
                     ? "暂无联系电话"
                     : "电话：" + store.storePhone);
+            bindStoreAvatar(holder, store);
             bindMatchedProducts(holder, store.seller);
             holder.itemView.setOnClickListener(v -> {
                 if (listener != null) {
@@ -366,6 +368,28 @@ public class ProductSearchActivity extends BaseMvpActivity<ProductSearchContract
         @Override
         public int getItemCount() {
             return stores.size();
+        }
+
+        private void bindStoreAvatar(VH holder, StoreSearchResult store) {
+            String avatarUri = store.avatarUri;
+            if (avatarUri != null && !avatarUri.isEmpty()) {
+                try {
+                    if (avatarUri.startsWith("data:image")) {
+                        com.example.zhinongbao.utils.ImageUtils.setAvatarFromBase64(holder.ivStoreAvatar, avatarUri);
+                    } else {
+                        holder.ivStoreAvatar.setImageURI(Uri.parse(avatarUri));
+                    }
+                    holder.ivStoreAvatar.setVisibility(View.VISIBLE);
+                    holder.tvStoreAvatar.setVisibility(View.GONE);
+                    return;
+                } catch (Exception ignored) {
+                }
+            }
+            holder.ivStoreAvatar.setVisibility(View.GONE);
+            holder.tvStoreAvatar.setVisibility(View.VISIBLE);
+            holder.tvStoreAvatar.setText(store.storeName == null || store.storeName.isEmpty()
+                    ? "店"
+                    : store.storeName.substring(0, 1));
         }
 
         private void bindMatchedProducts(VH holder, String seller) {
@@ -463,11 +487,14 @@ public class ProductSearchActivity extends BaseMvpActivity<ProductSearchContract
         }
 
         static class VH extends RecyclerView.ViewHolder {
-            TextView tvStoreName, tvStoreMeta, tvStorePhone, tvStoreProducts;
+            ImageView ivStoreAvatar;
+            TextView tvStoreAvatar, tvStoreName, tvStoreMeta, tvStorePhone, tvStoreProducts;
             LinearLayout llStoreProducts;
 
             VH(View view) {
                 super(view);
+                ivStoreAvatar = view.findViewById(R.id.ivSearchStoreAvatar);
+                tvStoreAvatar = view.findViewById(R.id.tvSearchStoreAvatar);
                 tvStoreName = view.findViewById(R.id.tvSearchStoreName);
                 tvStoreMeta = view.findViewById(R.id.tvSearchStoreMeta);
                 tvStorePhone = view.findViewById(R.id.tvSearchStorePhone);

@@ -3,43 +3,74 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:orientation="vertical"
-    android:padding="20dp">
+    android:paddingTop="18dp">
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="收货人"
+        android:textColor="#4F5B52"
+        android:textSize="13sp"
+        android:textStyle="bold" />
 
     <EditText
         android:id="@+id/etReceiverName"
         android:layout_width="match_parent"
-        android:layout_height="48dp"
-        android:background="@drawable/bg_auth_input"
-        android:hint="收货人"
-        android:paddingHorizontal="14dp"
+        android:layout_height="52dp"
+        android:layout_marginTop="7dp"
+        android:background="@drawable/bg_dialog_input"
+        android:hint="请输入收货人姓名"
+        android:paddingHorizontal="16dp"
         android:singleLine="true" />
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="14dp"
+        android:text="手机号"
+        android:textColor="#4F5B52"
+        android:textSize="13sp"
+        android:textStyle="bold" />
 
     <EditText
         android:id="@+id/etReceiverPhone"
         android:layout_width="match_parent"
-        android:layout_height="48dp"
-        android:layout_marginTop="12dp"
-        android:background="@drawable/bg_auth_input"
-        android:hint="手机号"
+        android:layout_height="52dp"
+        android:layout_marginTop="7dp"
+        android:background="@drawable/bg_dialog_input"
+        android:hint="请输入联系电话"
         android:inputType="phone"
-        android:paddingHorizontal="14dp"
+        android:paddingHorizontal="16dp"
         android:singleLine="true" />
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="14dp"
+        android:text="详细地址"
+        android:textColor="#4F5B52"
+        android:textSize="13sp"
+        android:textStyle="bold" />
 
     <EditText
         android:id="@+id/etReceiverAddress"
         android:layout_width="match_parent"
-        android:layout_height="84dp"
-        android:layout_marginTop="12dp"
-        android:background="@drawable/bg_auth_input"
+        android:layout_height="96dp"
+        android:layout_marginTop="7dp"
+        android:background="@drawable/bg_dialog_input"
         android:gravity="top"
         android:hint="省市区、街道、门牌号"
-        android:padding="14dp" />
+        android:padding="16dp" />
 
     <CheckBox
         android:id="@+id/cbDefaultAddress"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="10dp"
+        android:layout_width="match_parent"
+        android:layout_height="48dp"
+        android:layout_marginTop="14dp"
+        android:background="@drawable/bg_address_default_row"
+        android:buttonTint="#4CAF50"
+        android:gravity="center_vertical"
+        android:paddingHorizontal="14dp"
         android:text="设为默认地址"
         android:textColor="#333333"
         android:textSize="14sp" />

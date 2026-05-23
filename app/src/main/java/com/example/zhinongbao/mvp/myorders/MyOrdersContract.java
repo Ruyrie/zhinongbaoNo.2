@@ -19,10 +19,14 @@ public interface MyOrdersContract {
         void openOrderDetail(String orderId);
 
         void openReview(int productId);
+
+        void openStoreChat(Order order);
     }
 
     interface Presenter extends BasePresenter {
         void refresh();
+
+        void setFilter(String filter);
 
         void onOrderClicked(Order order);
 

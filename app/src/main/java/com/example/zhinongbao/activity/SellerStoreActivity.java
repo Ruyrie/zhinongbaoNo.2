@@ -19,6 +19,7 @@ import com.example.zhinongbao.base.BaseMvpActivity;
 import com.example.zhinongbao.model.Product;
 import com.example.zhinongbao.mvp.sellerstore.SellerStoreContract;
 import com.example.zhinongbao.mvp.sellerstore.SellerStorePresenter;
+import com.example.zhinongbao.repository.UserRepository;
 import com.example.zhinongbao.utils.DialogUtils;
 import java.util.ArrayList;
 import java.util.List;
@@ -27,6 +28,8 @@ public class SellerStoreActivity extends BaseMvpActivity<SellerStoreContract.Pre
 
     private String seller;
     private boolean isOwnStore;
+    private boolean publicStoreMode;
+    private UserRepository userRepository;
     private final List<Product> products = new ArrayList<>();
     private StoreProductAdapter adapter;
 
@@ -37,7 +40,9 @@ public class SellerStoreActivity extends BaseMvpActivity<SellerStoreContract.Pre
         if (getSupportActionBar() != null) getSupportActionBar().hide();
 
         new SellerStorePresenter(this, this);
+        userRepository = new UserRepository(getApplicationContext());
         seller = getIntent().getStringExtra("seller");
+        publicStoreMode = getIntent().getBooleanExtra("public_store", false);
         if (seller == null || seller.isEmpty()) seller = presenter.getCurrentUser();
 
         // 返回
@@ -81,22 +86,28 @@ public class SellerStoreActivity extends BaseMvpActivity<SellerStoreContract.Pre
     @Override
     public void showStoreMeta(String seller, String storeName, String storePhone, String avatarUri, boolean ownStore) {
         this.seller = seller;
-        this.isOwnStore = ownStore;
-        findViewById(R.id.tvAddProduct).setVisibility(ownStore ? View.VISIBLE : View.GONE);
-        findViewById(R.id.tvEditStoreInfo).setVisibility(ownStore ? View.VISIBLE : View.GONE);
-        findViewById(R.id.llSalesStats).setVisibility(ownStore ? View.VISIBLE : View.GONE);
+        boolean editableOwnStore = ownStore && !publicStoreMode;
+        this.isOwnStore = editableOwnStore;
+        findViewById(R.id.tvAddProduct).setVisibility(editableOwnStore ? View.VISIBLE : View.GONE);
+        findViewById(R.id.tvEditStoreInfo).setVisibility(editableOwnStore ? View.VISIBLE : View.GONE);
+        findViewById(R.id.llSalesStats).setVisibility(editableOwnStore ? View.VISIBLE : View.GONE);
         if (adapter != null) {
-            adapter.setOwnStore(ownStore);
+            adapter.setOwnStore(editableOwnStore);
         }
-        ((TextView) findViewById(R.id.tvStoreName)).setText(ownStore ? "我的店铺" : storeName);
+        ((TextView) findViewById(R.id.tvStoreName)).setText(editableOwnStore ? "我的店铺" : storeName);
         ((TextView) findViewById(R.id.tvStoreDisplayName)).setText(storeName);
         String phone = storePhone;
         ((TextView) findViewById(R.id.tvStorePhone)).setText(
                 phone == null || phone.isEmpty() ? "电话：未填写" : "电话：" + phone);
-        bindStoreAvatar((ImageView) findViewById(R.id.ivStoreAvatar), avatarUri, storeName);
+        String latestAvatarUri = userRepository == null ? avatarUri : userRepository.getAvatarUri(seller);
+        if (latestAvatarUri == null || latestAvatarUri.isEmpty()) {
+            latestAvatarUri = avatarUri;
+        }
+        bindStoreAvatar((ImageView) findViewById(R.id.ivStoreAvatar),
+                (TextView) findViewById(R.id.tvStoreAvatarPlaceholder), latestAvatarUri, storeName);
     }
 
-    private void bindStoreAvatar(ImageView avatar, String avatarUri, String storeName) {
+    private void bindStoreAvatar(ImageView avatar, TextView placeholder, String avatarUri, String storeName) {
         if (avatarUri != null && !avatarUri.isEmpty()) {
             try {
                 if (avatarUri.startsWith("data:image")) {
@@ -104,12 +115,16 @@ public class SellerStoreActivity extends BaseMvpActivity<SellerStoreContract.Pre
                 } else {
                     avatar.setImageURI(Uri.parse(avatarUri));
                 }
+                avatar.setVisibility(View.VISIBLE);
+                placeholder.setVisibility(View.GONE);
                 return;
             } catch (Exception ignored) {
                 // Fall through to default avatar.
             }
         }
-        avatar.setImageResource(R.mipmap.ic_launcher_round);
+        avatar.setVisibility(View.GONE);
+        placeholder.setVisibility(View.VISIBLE);
+        placeholder.setText(storeName == null || storeName.isEmpty() ? "店" : storeName.substring(0, 1));
         avatar.setContentDescription((storeName == null ? "店铺" : storeName) + "头像");
     }
 

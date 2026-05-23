@@ -74,7 +74,7 @@ public class MineFragment extends BaseMvpFragment<MineContract.Presenter> implem
                 view.findViewById(R.id.orderShipping).setOnClickListener(v -> openOrders("shipping"));
                 view.findViewById(R.id.orderReceiving).setOnClickListener(v -> openOrders("receiving"));
                 view.findViewById(R.id.orderReviewing).setOnClickListener(v -> openOrders("reviewing"));
-                view.findViewById(R.id.orderRefund).setOnClickListener(v -> openOrders("refund"));
+                view.findViewById(R.id.orderRefund).setOnClickListener(v -> openOrders("refundable"));
                 view.findViewById(R.id.tvMyArticles).setOnClickListener(
                                 v -> startActivity(new Intent(getContext(), MyArticlesActivity.class)));
                 view.findViewById(R.id.tvMyFavorites).setOnClickListener(

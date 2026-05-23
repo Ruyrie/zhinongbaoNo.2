@@ -12,7 +12,10 @@ import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 import com.example.zhinongbao.R;
 import com.example.zhinongbao.model.Order;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.List;
+import java.util.Locale;
 
 public class OrderAdapter extends RecyclerView.Adapter<OrderAdapter.VH> {
 
@@ -120,7 +123,7 @@ public class OrderAdapter extends RecyclerView.Adapter<OrderAdapter.VH> {
                 holder.tvCountdown.setTextColor(0xFF34C759);
                 holder.layoutActions.setVisibility(View.VISIBLE);
                 holder.btnCancel.setVisibility(View.GONE);
-                holder.btnPay.setText("申请退款");
+                holder.btnPay.setText(isCompletedRefundWindowOpen(o) ? "申请退款" : "联系客服");
                 if (o.refundAmount > 0) {
                     holder.layoutActions.setVisibility(View.GONE);
                     holder.tvCountdown.setText("已退款");
@@ -185,6 +188,23 @@ public class OrderAdapter extends RecyclerView.Adapter<OrderAdapter.VH> {
 
     private int dp(Context ctx, int dp) {
         return Math.round(dp * ctx.getResources().getDisplayMetrics().density);
+    }
+
+    private boolean isCompletedRefundWindowOpen(Order order) {
+        long base = order.completedAt > 0 ? order.completedAt : parseOrderTime(order.time);
+        return base > 0 && System.currentTimeMillis() - base <= 7L * 24 * 60 * 60 * 1000;
+    }
+
+    private long parseOrderTime(String time) {
+        if (time == null || time.trim().isEmpty()) {
+            return 0;
+        }
+        try {
+            java.util.Date date = new SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.getDefault()).parse(time);
+            return date == null ? 0 : date.getTime();
+        } catch (ParseException e) {
+            return 0;
+        }
     }
 
     @Override

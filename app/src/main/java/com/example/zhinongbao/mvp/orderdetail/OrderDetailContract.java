@@ -6,13 +6,16 @@ import com.example.zhinongbao.model.Order;
 
 public interface OrderDetailContract {
     interface View extends BaseView<Presenter> {
-        void showOrder(Order order, double paidAmount, boolean canComment);
+        void showOrder(Order order, double paidAmount, boolean canComment, boolean canRequestRefund,
+                String storeName, String storePhone, String storeAvatarUri);
 
         void showCancelConfirm();
 
         void showRefundDialog();
 
         void showToast(String message);
+
+        void openStoreChat();
 
         void closePage();
     }
@@ -25,5 +28,7 @@ public interface OrderDetailContract {
         void confirmCancel();
 
         void requestRefund(String reason);
+
+        void addToCart();
     }
 }

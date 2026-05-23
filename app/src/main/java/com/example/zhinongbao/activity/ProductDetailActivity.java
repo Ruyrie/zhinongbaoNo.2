@@ -310,7 +310,11 @@ public class ProductDetailActivity extends BaseMvpActivity<ProductDetailContract
 
         if (latest.avatarUri != null && !latest.avatarUri.isEmpty()) {
             try {
-                ivAvatar.setImageURI(android.net.Uri.parse(latest.avatarUri));
+                if (latest.avatarUri.startsWith("data:image")) {
+                    com.example.zhinongbao.utils.ImageUtils.setAvatarFromBase64(ivAvatar, latest.avatarUri);
+                } else {
+                    ivAvatar.setImageURI(android.net.Uri.parse(latest.avatarUri));
+                }
             } catch (Exception e) {
                 ivAvatar.setImageResource(R.mipmap.ic_launcher_round);
             }

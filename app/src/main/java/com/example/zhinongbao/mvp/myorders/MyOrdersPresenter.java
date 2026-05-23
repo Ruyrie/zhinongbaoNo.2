@@ -12,7 +12,7 @@ public class MyOrdersPresenter implements MyOrdersContract.Presenter {
     private final MyOrdersContract.View view;
     private final OrderRepository repository;
     private final String username;
-    private final String filter;
+    private String filter;
 
     public MyOrdersPresenter(Context context, MyOrdersContract.View view, String filter) {
         this.view = view;
@@ -34,6 +34,12 @@ public class MyOrdersPresenter implements MyOrdersContract.Presenter {
             return;
         }
         view.showOrders(loadOrders());
+    }
+
+    @Override
+    public void setFilter(String filter) {
+        this.filter = filter;
+        refresh();
     }
 
     @Override
@@ -73,14 +79,21 @@ public class MyOrdersPresenter implements MyOrdersContract.Presenter {
 
     @Override
     public void onRequestRefund(Order order) {
-        view.showRefundDialog(order);
+        if (repository.canRequestRefund(order)) {
+            view.showRefundDialog(order);
+        } else {
+            view.openStoreChat(order);
+        }
     }
 
     @Override
     public void onRefundConfirmed(Order order, String reason) {
         String finalReason = reason == null || reason.trim().isEmpty() ? "买家申请退款" : reason.trim();
-        repository.initiateRefund(order.orderId, finalReason);
-        view.showToast("退款申请已提交");
+        if (repository.initiateRefund(order.orderId, finalReason)) {
+            view.showToast("退款申请已提交");
+        } else {
+            view.showToast("当前订单已超过退款时限，请联系客服");
+        }
         refresh();
     }
 
@@ -91,7 +104,7 @@ public class MyOrdersPresenter implements MyOrdersContract.Presenter {
 
         List<Order> result = new ArrayList<>();
         for (Order order : repository.getOrders(username)) {
-            if (filter == null || filter.isEmpty()) {
+            if (filter == null || filter.isEmpty() || "all".equals(filter)) {
                 result.add(order);
             } else if ("shipping".equals(filter) && Order.STATUS_PAID.equals(order.status)) {
                 result.add(order);
@@ -100,6 +113,8 @@ public class MyOrdersPresenter implements MyOrdersContract.Presenter {
             } else if ("pending".equals(filter) && Order.STATUS_PENDING.equals(order.status)) {
                 result.add(order);
             } else if ("refund".equals(filter) && Order.STATUS_REFUND.equals(order.status)) {
+                result.add(order);
+            } else if ("refundable".equals(filter) && repository.canRequestRefund(order)) {
                 result.add(order);
             }
         }

@@ -3,6 +3,7 @@ package com.example.zhinongbao.activity;
 import com.example.zhinongbao.R;
 import android.content.Intent;
 import android.os.Bundle;
+import android.widget.TextView;
 import androidx.appcompat.app.AlertDialog;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -19,15 +20,20 @@ public class MyOrdersActivity extends BaseMvpActivity<MyOrdersContract.Presenter
 
     private final List<Order> orders = new ArrayList<>();
     private OrderAdapter adapter;
-    private String filter;
+    private String filter = "all";
+    private TextView tabAll, tabPending, tabShipping, tabReceiving, tabReviewing;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_order_list);
 
-        filter = getIntent().getStringExtra("filter");
+        String intentFilter = getIntent().getStringExtra("filter");
+        if (intentFilter != null && !intentFilter.isEmpty()) {
+            filter = intentFilter;
+        }
         updateTitle();
+        bindTabs();
 
         RecyclerView rv = findViewById(R.id.rvOrders);
         rv.setLayoutManager(new LinearLayoutManager(this));
@@ -68,6 +74,7 @@ public class MyOrdersActivity extends BaseMvpActivity<MyOrdersContract.Presenter
 
         rv.setAdapter(adapter);
         new MyOrdersPresenter(this, this, filter).start();
+        updateTabStyles();
     }
 
     @Override
@@ -138,14 +145,60 @@ public class MyOrdersActivity extends BaseMvpActivity<MyOrdersContract.Presenter
         startActivity(intent);
     }
 
+    @Override
+    public void openStoreChat(Order order) {
+        if (order == null || order.seller == null || order.seller.isEmpty()) {
+            showToast("暂无商家联系方式");
+            return;
+        }
+        Intent intent = new Intent(this, ChatActivity.class);
+        intent.putExtra("other_user", order.seller);
+        intent.putExtra("product_name", order.name);
+        startActivity(intent);
+    }
+
     private void updateTitle() {
-        android.widget.TextView title = findViewById(R.id.tvOrderListTitle);
+        TextView title = findViewById(R.id.tvOrderListTitle);
         if (title == null)
             return;
-        if ("reviewing".equals(filter)) {
-            title.setText("待评价");
-        } else {
-            title.setText("我的订单");
+        title.setText("refundable".equals(filter) ? "可退款/售后订单" : "我的订单");
+    }
+
+    private void bindTabs() {
+        tabAll = findViewById(R.id.tabOrderAll);
+        tabPending = findViewById(R.id.tabOrderPending);
+        tabShipping = findViewById(R.id.tabOrderShipping);
+        tabReceiving = findViewById(R.id.tabOrderReceiving);
+        tabReviewing = findViewById(R.id.tabOrderReviewing);
+
+        tabAll.setOnClickListener(v -> switchFilter("all"));
+        tabPending.setOnClickListener(v -> switchFilter("pending"));
+        tabShipping.setOnClickListener(v -> switchFilter("shipping"));
+        tabReceiving.setOnClickListener(v -> switchFilter("receiving"));
+        tabReviewing.setOnClickListener(v -> switchFilter("reviewing"));
+    }
+
+    private void switchFilter(String nextFilter) {
+        filter = nextFilter;
+        adapter.setReviewMode("reviewing".equals(filter));
+        updateTitle();
+        updateTabStyles();
+        presenter.setFilter(filter);
+    }
+
+    private void updateTabStyles() {
+        styleTab(tabAll, "all".equals(filter));
+        styleTab(tabPending, "pending".equals(filter));
+        styleTab(tabShipping, "shipping".equals(filter));
+        styleTab(tabReceiving, "receiving".equals(filter));
+        styleTab(tabReviewing, "reviewing".equals(filter));
+    }
+
+    private void styleTab(TextView tab, boolean selected) {
+        if (tab == null) {
+            return;
         }
+        tab.setTextColor(selected ? 0xFF43A047 : 0xFF666666);
+        tab.setTypeface(null, selected ? android.graphics.Typeface.BOLD : android.graphics.Typeface.NORMAL);
     }
 }

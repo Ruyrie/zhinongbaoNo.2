@@ -3,8 +3,10 @@ package com.example.zhinongbao.activity;
 import com.example.zhinongbao.R;
 import android.content.Intent;
 import android.os.Bundle;
+import android.text.InputType;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 import com.example.zhinongbao.base.BaseMvpActivity;
@@ -17,6 +19,8 @@ import com.example.zhinongbao.utils.DialogUtils;
 public class LoginActivity extends BaseMvpActivity<LoginContract.Presenter> implements LoginContract.View {
 
     private EditText etUsername, etPassword;
+    private ImageView ivPasswordToggle;
+    private boolean passwordVisible = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -29,10 +33,12 @@ public class LoginActivity extends BaseMvpActivity<LoginContract.Presenter> impl
         setContentView(R.layout.activity_login);
         etUsername = findViewById(R.id.etLoginUsername);
         etPassword = findViewById(R.id.etLoginPassword);
+        ivPasswordToggle = findViewById(R.id.ivLoginPasswordToggle);
         Button btnLogin = findViewById(R.id.btnLogin);
         TextView tvRegister = findViewById(R.id.tvGoRegister);
         TextView tvForgotPassword = findViewById(R.id.tvForgotPassword);
 
+        ivPasswordToggle.setOnClickListener(v -> togglePasswordVisibility());
         btnLogin.setOnClickListener(v -> doLogin());
         tvRegister.setOnClickListener(v -> {
             Intent intent = new Intent(this, RegisterActivity.class);
@@ -43,6 +49,18 @@ public class LoginActivity extends BaseMvpActivity<LoginContract.Presenter> impl
             startActivity(intent);
         });
         tvForgotPassword.setOnClickListener(v -> startActivity(new Intent(this, ForgotPasswordActivity.class)));
+    }
+
+    private void togglePasswordVisibility() {
+        passwordVisible = !passwordVisible;
+        if (passwordVisible) {
+            etPassword.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_VISIBLE_PASSWORD);
+            ivPasswordToggle.setImageResource(R.drawable.chakan_auth);
+        } else {
+            etPassword.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_PASSWORD);
+            ivPasswordToggle.setImageResource(R.drawable.weichakan_auth);
+        }
+        etPassword.setSelection(etPassword.getText().length());
     }
 
     private void doLogin() {

@@ -9,6 +9,8 @@ import com.example.zhinongbao.base.BaseMvpActivity;
 import com.example.zhinongbao.model.Order;
 import com.example.zhinongbao.mvp.sellersales.SellerSalesContract;
 import com.example.zhinongbao.mvp.sellersales.SellerSalesPresenter;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
@@ -106,13 +108,13 @@ public class SellerSalesAnalysisActivity extends BaseMvpActivity<SellerSalesCont
             status.setPadding(10, 4, 10, 4);
             row.addView(status);
 
-            TextView sub = createText(
-                    order.time + "  买家：" + order.buyerNickname + "  单价¥"
-                            + String.format(Locale.getDefault(), "%.2f", order.unitPrice > 0 ? order.unitPrice : order.price)
-                            + " x" + order.quantity,
-                    0xFF999999, 12, 1, false);
-            sub.setPadding(0, 4, 0, 0);
-            row.addView(sub);
+            row.addView(createInfoText("订单编号：" + order.orderId, 0xFF8A8F98));
+            row.addView(createInfoText("到账时间：" + formatIncomeTime(order), 0xFF333333));
+            row.addView(createInfoText("下单时间：" + (order.time == null ? "未记录" : order.time), 0xFF8A8F98));
+            row.addView(createInfoText("买家：" + safeText(order.buyerNickname) + "  单价¥"
+                    + String.format(Locale.getDefault(), "%.2f", order.unitPrice > 0 ? order.unitPrice : order.price)
+                    + " x" + order.quantity, 0xFF8A8F98));
+            row.addView(createInfoText("发货信息：" + shipmentText(order), 0xFF8A8F98));
             if (order.refundAmount > 0) {
                 TextView refund = createText(
                         String.format(Locale.getDefault(), "已退款 ¥%.2f  原因：%s",
@@ -125,6 +127,18 @@ public class SellerSalesAnalysisActivity extends BaseMvpActivity<SellerSalesCont
             container.addView(row);
             addDivider(container);
         }
+    }
+
+    private TextView createInfoText(String text, int color) {
+        TextView tv = new TextView(this);
+        tv.setLayoutParams(new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT));
+        tv.setText(text);
+        tv.setTextColor(color);
+        tv.setTextSize(12);
+        tv.setLineSpacing(dp(2), 1.0f);
+        tv.setPadding(0, 4, 0, 0);
+        return tv;
     }
 
     private LinearLayout createRow() {
@@ -173,6 +187,29 @@ public class SellerSalesAnalysisActivity extends BaseMvpActivity<SellerSalesCont
 
     private int dp(int value) {
         return (int) (value * getResources().getDisplayMetrics().density + 0.5f);
+    }
+
+    private String formatIncomeTime(Order order) {
+        if (order.completedAt > 0) {
+            return new SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.getDefault()).format(new Date(order.completedAt));
+        }
+        return order.time == null || order.time.isEmpty() ? "未记录" : order.time;
+    }
+
+    private String shipmentText(Order order) {
+        if (order.shipName == null || order.shipName.isEmpty()) {
+            return "未记录";
+        }
+        String no = order.shipNo == null || order.shipNo.isEmpty() ? "未填写单号" : order.shipNo;
+        if ("custom".equals(order.shipType)) {
+            String phone = order.shipPhone == null || order.shipPhone.isEmpty() ? "未填写电话" : order.shipPhone;
+            return order.shipName + " / " + no + " / " + phone;
+        }
+        return order.shipName + " / " + no;
+    }
+
+    private String safeText(String text) {
+        return text == null || text.isEmpty() ? "未记录" : text;
     }
 
     private String scopeName(String scope) {

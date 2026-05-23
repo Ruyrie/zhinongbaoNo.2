@@ -9,25 +9,25 @@
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:minHeight="760dp"
+        android:minHeight="720dp"
         android:orientation="vertical"
         android:paddingHorizontal="28dp"
-        android:paddingTop="44dp"
+        android:paddingTop="26dp"
         android:paddingBottom="28dp">
 
         <ImageView
             android:id="@+id/ivRegisterBack"
             android:layout_width="30dp"
             android:layout_height="30dp"
-            android:layout_marginBottom="42dp"
+            android:layout_marginBottom="20dp"
             android:padding="4dp"
             android:src="@mipmap/fanhui"
             android:contentDescription="返回" />
 
         <FrameLayout
             android:layout_width="match_parent"
-            android:layout_height="128dp"
-            android:layout_marginBottom="22dp">
+            android:layout_height="116dp"
+            android:layout_marginBottom="18dp">
 
             <LinearLayout
                 android:layout_width="wrap_content"
@@ -39,7 +39,7 @@
                 <ImageView
                     android:layout_width="54dp"
                     android:layout_height="54dp"
-                    android:src="@drawable/auth_logo"
+                    android:src="@drawable/zhinongbaoicon"
                     android:contentDescription="支农宝" />
 
                 <TextView
@@ -54,10 +54,10 @@
 
             <ImageView
                 android:layout_width="190dp"
-                android:layout_height="138dp"
+                android:layout_height="128dp"
                 android:layout_gravity="end|center_vertical"
                 android:scaleType="fitEnd"
-                android:src="@drawable/auth_register_hero"
+                android:src="@drawable/zhuce1"
                 android:contentDescription="农产品插画" />
         </FrameLayout>
 
@@ -119,7 +119,8 @@
             <ImageView
                 android:layout_width="24dp"
                 android:layout_height="24dp"
-                android:src="@drawable/ic_auth_phone" />
+                android:src="@drawable/shouji"
+                android:tint="#24B34D" />
 
             <EditText
                 android:id="@+id/etRegPhone"
@@ -165,9 +166,13 @@
                 android:textSize="15sp" />
 
             <ImageView
+                android:id="@+id/ivRegPasswordToggle"
                 android:layout_width="24dp"
                 android:layout_height="24dp"
-                android:src="@drawable/ic_auth_eye" />
+                android:padding="2dp"
+                android:scaleType="centerInside"
+                android:src="@drawable/weichakan_auth"
+                android:contentDescription="显示或隐藏密码" />
         </LinearLayout>
 
         <TextView
@@ -194,7 +199,7 @@
                 android:background="@drawable/bg_auth_role_card"
                 android:button="@null"
                 android:checked="true"
-                android:drawableStart="@drawable/ic_role_buyer"
+                android:drawableStart="@drawable/zhucemaijia1"
                 android:drawablePadding="10dp"
                 android:gravity="center"
                 android:paddingHorizontal="14dp"
@@ -211,7 +216,7 @@
                 android:layout_weight="1"
                 android:background="@drawable/bg_auth_role_card"
                 android:button="@null"
-                android:drawableStart="@drawable/ic_role_seller"
+                android:drawableStart="@drawable/zhucemaijia2"
                 android:drawablePadding="10dp"
                 android:gravity="center"
                 android:paddingHorizontal="14dp"
@@ -243,12 +248,6 @@
             android:layout_marginTop="26dp"
             android:gravity="center"
             android:orientation="horizontal">
-
-            <ImageView
-                android:layout_width="16dp"
-                android:layout_height="16dp"
-                android:layout_marginEnd="6dp"
-                android:src="@drawable/ic_auth_check" />
 
             <TextView
                 android:layout_width="wrap_content"

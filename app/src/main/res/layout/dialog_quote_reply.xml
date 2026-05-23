@@ -6,23 +6,41 @@
     android:paddingTop="18dp">
 
     <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="操作说明"
+        android:textColor="#4F5B52"
+        android:textSize="13sp"
+        android:textStyle="bold" />
+
+    <TextView
         android:id="@+id/tvQuoteReplyInfo"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:layout_marginTop="7dp"
         android:background="@drawable/bg_quote_summary"
         android:lineSpacingExtra="2dp"
-        android:paddingHorizontal="14dp"
-        android:paddingVertical="11dp"
+        android:paddingHorizontal="16dp"
+        android:paddingVertical="13dp"
         android:textColor="#2E7D32"
         android:textSize="15sp"
         android:text="确定操作该报价吗？"/>
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="15dp"
+        android:text="回复备注"
+        android:textColor="#4F5B52"
+        android:textSize="13sp"
+        android:textStyle="bold" />
 
     <EditText
         android:id="@+id/etReplyDesc"
         android:layout_width="match_parent"
         android:layout_height="92dp"
-        android:layout_marginTop="15dp"
-        android:hint="填写回复备注（可选）"
+        android:layout_marginTop="7dp"
+        android:hint="填写备注（可选）"
         android:textColor="#333333"
         android:textColorHint="#AAB0B4"
         android:textSize="14sp"
