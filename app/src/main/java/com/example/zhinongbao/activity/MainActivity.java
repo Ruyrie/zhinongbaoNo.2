@@ -273,11 +273,6 @@ public class MainActivity extends BaseMvpActivity<MainContract.Presenter> implem
         tx.replace(R.id.fragmentContainer, f).commit();
     }
 
-    @Override
-    public void onBackPressed() {
-        handleDoubleBackToDesktop();
-    }
-
     private void handleDoubleBackToDesktop() {
         long now = System.currentTimeMillis();
         if (now - lastBackPressedTime < 2000) {

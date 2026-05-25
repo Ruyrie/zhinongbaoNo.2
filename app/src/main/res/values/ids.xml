@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <item name="footprint_store_avatar" type="id" />
+    <item name="footprint_store_placeholder" type="id" />
+    <item name="footprint_store_name" type="id" />
+    <item name="footprint_store_subtitle" type="id" />
+    <item name="footprint_store_enter" type="id" />
+    <item name="footprint_product_image" type="id" />
+    <item name="footprint_product_name" type="id" />
+    <item name="footprint_product_price" type="id" />
+</resources>

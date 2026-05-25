@@ -33,7 +33,7 @@
                     android:layout_width="16dp"
                     android:layout_height="16dp"
                     android:src="@mipmap/sousuo"
-                    android:tint="#999999"/>
+                    app:tint="#999999"/>
 
                 <EditText
                     android:id="@+id/etSearch"

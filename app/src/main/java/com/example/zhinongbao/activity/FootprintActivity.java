@@ -204,12 +204,12 @@ public class FootprintActivity extends BaseMvpActivity<FootprintContract.Present
 
                 FrameLayout avatarWrap = new FrameLayout(parent.getContext());
                 ImageView avatar = new ImageView(parent.getContext());
-                avatar.setId(3);
+                avatar.setId(R.id.footprint_store_avatar);
                 avatar.setScaleType(ImageView.ScaleType.CENTER_CROP);
                 avatar.setBackgroundResource(R.drawable.bg_auth_logo);
                 avatar.setVisibility(View.GONE);
                 TextView placeholder = new TextView(parent.getContext());
-                placeholder.setId(4);
+                placeholder.setId(R.id.footprint_store_placeholder);
                 placeholder.setBackgroundResource(R.drawable.bg_auth_logo);
                 placeholder.setGravity(Gravity.CENTER);
                 placeholder.setTextColor(Color.WHITE);
@@ -226,12 +226,12 @@ public class FootprintActivity extends BaseMvpActivity<FootprintContract.Present
                 LinearLayout info = new LinearLayout(parent.getContext());
                 info.setOrientation(LinearLayout.VERTICAL);
                 TextView name = new TextView(parent.getContext());
-                name.setId(1);
+                name.setId(R.id.footprint_store_name);
                 name.setTextColor(0xFF1F1F1F);
                 name.setTextSize(16);
                 name.setTypeface(null, android.graphics.Typeface.BOLD);
                 TextView sub = new TextView(parent.getContext());
-                sub.setId(2);
+                sub.setId(R.id.footprint_store_subtitle);
                 sub.setTextColor(0xFF8A8A8A);
                 sub.setTextSize(13);
                 sub.setPadding(0, dp(4), 0, 0);
@@ -241,7 +241,7 @@ public class FootprintActivity extends BaseMvpActivity<FootprintContract.Present
                         ViewGroup.LayoutParams.WRAP_CONTENT, 1));
 
                 TextView enter = new TextView(parent.getContext());
-                enter.setId(5);
+                enter.setId(R.id.footprint_store_enter);
                 enter.setText("进店逛逛");
                 enter.setTextColor(0xFF43A047);
                 enter.setTextSize(14);
@@ -261,20 +261,20 @@ public class FootprintActivity extends BaseMvpActivity<FootprintContract.Present
             lp.setMargins(dp(3), dp(3), dp(3), dp(6));
             box.setLayoutParams(lp);
             ImageView image = new ImageView(parent.getContext());
-            image.setId(1);
+            image.setId(R.id.footprint_product_image);
             image.setScaleType(ImageView.ScaleType.CENTER_CROP);
             image.setBackgroundColor(0xFFE8F5E9);
             box.addView(image, new LinearLayout.LayoutParams(
                     ViewGroup.LayoutParams.MATCH_PARENT, dp(112)));
             TextView name = new TextView(parent.getContext());
-            name.setId(2);
+            name.setId(R.id.footprint_product_name);
             name.setTextColor(0xFF333333);
             name.setTextSize(12);
             name.setMaxLines(1);
             name.setPadding(0, dp(5), 0, 0);
             box.addView(name);
             TextView price = new TextView(parent.getContext());
-            price.setId(3);
+            price.setId(R.id.footprint_product_price);
             price.setTextColor(0xFFF04142);
             price.setTextSize(14);
             price.setTypeface(null, android.graphics.Typeface.BOLD);
@@ -290,11 +290,11 @@ public class FootprintActivity extends BaseMvpActivity<FootprintContract.Present
                 return;
             }
             if (row.type == Row.TYPE_STORE) {
-                TextView name = holder.itemView.findViewById(1);
-                TextView sub = holder.itemView.findViewById(2);
-                ImageView avatar = holder.itemView.findViewById(3);
-                TextView placeholder = holder.itemView.findViewById(4);
-                TextView enter = holder.itemView.findViewById(5);
+                TextView name = holder.itemView.findViewById(R.id.footprint_store_name);
+                TextView sub = holder.itemView.findViewById(R.id.footprint_store_subtitle);
+                ImageView avatar = holder.itemView.findViewById(R.id.footprint_store_avatar);
+                TextView placeholder = holder.itemView.findViewById(R.id.footprint_store_placeholder);
+                TextView enter = holder.itemView.findViewById(R.id.footprint_store_enter);
                 name.setText(row.store.storeName);
                 String phone = row.store.storePhone == null || row.store.storePhone.isEmpty()
                         ? "未填写电话" : row.store.storePhone;
@@ -311,9 +311,9 @@ public class FootprintActivity extends BaseMvpActivity<FootprintContract.Present
                 return;
             }
             Product p = row.product;
-            ImageView image = holder.itemView.findViewById(1);
-            TextView name = holder.itemView.findViewById(2);
-            TextView price = holder.itemView.findViewById(3);
+            ImageView image = holder.itemView.findViewById(R.id.footprint_product_image);
+            TextView name = holder.itemView.findViewById(R.id.footprint_product_name);
+            TextView price = holder.itemView.findViewById(R.id.footprint_product_price);
             bindProductImage(image, p);
             name.setText(p.name);
             price.setText(String.format(Locale.CHINA, "¥%.2f", p.price));
