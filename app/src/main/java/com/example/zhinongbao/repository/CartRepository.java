@@ -43,7 +43,10 @@ public class CartRepository {
                 new String[] { username },
                 "id DESC")) {
             while (cursor != null && cursor.moveToNext()) {
-                items.add(new CartItem(cursor.getInt(0), cursor.getString(1), cursor.getDouble(2), cursor.getInt(3)));
+                int productId = cursor.getInt(0);
+                Product product = getProductById(productId);
+                String coverUri = product == null ? "" : product.coverUri;
+                items.add(new CartItem(productId, cursor.getString(1), cursor.getDouble(2), cursor.getInt(3), coverUri));
             }
         }
         return items;

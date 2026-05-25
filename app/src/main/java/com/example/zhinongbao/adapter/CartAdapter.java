@@ -1,5 +1,6 @@
 package com.example.zhinongbao.adapter;
 
+import android.net.Uri;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -103,41 +104,75 @@ public class CartAdapter extends RecyclerView.Adapter<CartAdapter.VH> {
         holder.tvPrice.setText(String.format("¥%.2f", c.price));
         holder.tvQty.setText(String.valueOf(c.quantity));
 
-        switch (c.productId) {
-            case 1:
-                holder.ivImage.setImageResource(R.mipmap.dami1);
-                break;
-            case 2:
-                holder.ivImage.setImageResource(R.mipmap.muer);
-                break;
-            case 3:
-                holder.ivImage.setImageResource(R.mipmap.fengmi1);
-                break;
-            case 4:
-                holder.ivImage.setImageResource(R.mipmap.shucai1);
-                break;
-            case 5:
-                holder.ivImage.setImageResource(R.mipmap.dongchongxiacao1);
-                break;
-            case 6:
-                holder.ivImage.setImageResource(R.mipmap.hongshu1);
-                break;
-            case 7:
-                holder.ivImage.setImageResource(R.mipmap.shanyao1);
-                break;
-            case 8:
-                holder.ivImage.setImageResource(R.mipmap.yangdujun1);
-                break;
-            case 9:
-                holder.ivImage.setImageResource(R.mipmap.luronggu1);
-                break;
-            case 10:
-                holder.ivImage.setImageResource(R.mipmap.tuedan1);
-                break;
-            default:
-                holder.ivImage.setImageResource(R.drawable.ic_product_placeholder);
+        if (bindCoverImage(holder.ivImage, c.coverUri)) {
+            bindControls(holder, c);
+            return;
         }
 
+        bindFallbackImage(holder.ivImage, c.productId);
+        bindControls(holder, c);
+    }
+
+    private boolean bindCoverImage(ImageView imageView, String coverUri) {
+        if (coverUri == null || coverUri.trim().isEmpty()) {
+            return false;
+        }
+        String firstUri = coverUri.contains(",") ? coverUri.split(",")[0].trim() : coverUri.trim();
+        if (firstUri.isEmpty()) {
+            return false;
+        }
+        try {
+            if (firstUri.startsWith("res://")) {
+                imageView.setImageResource(Integer.parseInt(firstUri.replace("res://", "")));
+            } else {
+                imageView.setImageResource(R.drawable.ic_product_placeholder);
+                imageView.setImageURI(Uri.parse(firstUri));
+            }
+            return true;
+        } catch (Exception e) {
+            imageView.setImageResource(R.drawable.ic_product_placeholder);
+            return true;
+        }
+    }
+
+    private void bindFallbackImage(ImageView imageView, int productId) {
+        switch (productId) {
+            case 1:
+                imageView.setImageResource(R.mipmap.dami1);
+                break;
+            case 2:
+                imageView.setImageResource(R.mipmap.muer);
+                break;
+            case 3:
+                imageView.setImageResource(R.mipmap.fengmi1);
+                break;
+            case 4:
+                imageView.setImageResource(R.mipmap.shucai1);
+                break;
+            case 5:
+                imageView.setImageResource(R.mipmap.dongchongxiacao1);
+                break;
+            case 6:
+                imageView.setImageResource(R.mipmap.hongshu1);
+                break;
+            case 7:
+                imageView.setImageResource(R.mipmap.shanyao1);
+                break;
+            case 8:
+                imageView.setImageResource(R.mipmap.yangdujun1);
+                break;
+            case 9:
+                imageView.setImageResource(R.mipmap.luronggu1);
+                break;
+            case 10:
+                imageView.setImageResource(R.mipmap.tuedan1);
+                break;
+            default:
+                imageView.setImageResource(R.drawable.ic_product_placeholder);
+        }
+    }
+
+    private void bindControls(@NonNull VH holder, CartItem c) {
         holder.cbItem.setOnCheckedChangeListener(null);
         holder.cbItem.setChecked(checkedIds.contains(c.productId));
         holder.cbItem.setOnCheckedChangeListener((btn, checked) -> {
