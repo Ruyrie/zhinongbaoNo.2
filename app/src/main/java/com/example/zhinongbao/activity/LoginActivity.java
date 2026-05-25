@@ -38,6 +38,13 @@ public class LoginActivity extends BaseMvpActivity<LoginContract.Presenter> impl
         TextView tvRegister = findViewById(R.id.tvGoRegister);
         TextView tvForgotPassword = findViewById(R.id.tvForgotPassword);
 
+        String prefillUsername = getIntent().getStringExtra("prefill_username");
+        if (prefillUsername != null && !prefillUsername.trim().isEmpty()) {
+            etUsername.setText(prefillUsername.trim());
+            etUsername.setSelection(etUsername.getText().length());
+            etPassword.requestFocus();
+        }
+
         ivPasswordToggle.setOnClickListener(v -> togglePasswordVisibility());
         btnLogin.setOnClickListener(v -> doLogin());
         tvRegister.setOnClickListener(v -> {

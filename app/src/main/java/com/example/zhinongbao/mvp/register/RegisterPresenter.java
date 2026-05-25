@@ -32,6 +32,11 @@ public class RegisterPresenter implements RegisterContract.Presenter {
             view.showToast("密码至少6位");
             return;
         }
+        String existingUsername = repository.findUsernameByAccount(username);
+        if (existingUsername != null) {
+            view.showAccountRegisteredDialog(existingUsername);
+            return;
+        }
         if (!phone.isEmpty()) {
             if (phone.length() != 11 || !phone.matches("^1[3-9]\\d{9}$") || phone.matches("^(\\d)\\1{10}$")) {
                 view.showToast("请输入有效的11位手机号");

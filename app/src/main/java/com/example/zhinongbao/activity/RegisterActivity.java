@@ -102,6 +102,42 @@ public class RegisterActivity extends BaseMvpActivity<RegisterContract.Presenter
     }
 
     @Override
+    public void showAccountRegisteredDialog(String username) {
+        android.view.View view = getLayoutInflater().inflate(R.layout.dialog_confirm, null);
+        android.widget.TextView tvTitle = view.findViewById(R.id.tvDialogTitle);
+        android.widget.TextView tvMessage = view.findViewById(R.id.tvDialogMessage);
+        android.widget.TextView btnCancel = view.findViewById(R.id.btnDialogCancel);
+        android.widget.TextView btnConfirm = view.findViewById(R.id.btnDialogConfirm);
+
+        tvTitle.setText("账号已注册");
+        tvMessage.setText("账号 \"" + username + "\" 已经存在\n可以直接登录继续使用支农宝");
+        btnCancel.setText("换个账号");
+        btnConfirm.setText("直接登录");
+        btnConfirm.setBackgroundResource(R.drawable.bg_auth_green_button);
+
+        androidx.appcompat.app.AlertDialog dialog = new androidx.appcompat.app.AlertDialog.Builder(this)
+                .setView(view)
+                .create();
+        if (dialog.getWindow() != null) {
+            dialog.getWindow().setBackgroundDrawableResource(android.R.color.transparent);
+        }
+
+        btnCancel.setOnClickListener(v -> {
+            dialog.dismiss();
+            etUsername.requestFocus();
+            etUsername.selectAll();
+        });
+        btnConfirm.setOnClickListener(v -> {
+            dialog.dismiss();
+            Intent intent = new Intent(this, LoginActivity.class);
+            intent.putExtra("prefill_username", username);
+            startActivity(intent);
+            finish();
+        });
+        dialog.show();
+    }
+
+    @Override
     public void closePage() {
         finish();
     }

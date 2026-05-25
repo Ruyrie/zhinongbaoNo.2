@@ -32,6 +32,7 @@ public class SearchActivity extends BaseMvpActivity<SearchContract.Presenter>
     private RecyclerView  rvResults;
     private LinearLayout  llHome, llNoResults;
     private TextView      tvNoResultsHint;
+    private EditText      etQuery;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -43,7 +44,7 @@ public class SearchActivity extends BaseMvpActivity<SearchContract.Presenter>
         results     = new ArrayList<>();
 
         // Views
-        EditText    etQuery   = findViewById(R.id.etSearchQuery);
+        etQuery               = findViewById(R.id.etSearchQuery);
         TextView    tvCancel  = findViewById(R.id.tvSearchCancel);
         TextView    tvClear   = findViewById(R.id.tvClearSearch);
         rvResults             = findViewById(R.id.rvSearchResults);
@@ -86,12 +87,12 @@ public class SearchActivity extends BaseMvpActivity<SearchContract.Presenter>
         });
 
         // Hot-topic tag clicks
-        wireTag(R.id.tagRice,    "水稻",   etQuery);
-        wireTag(R.id.tagSmart,   "智慧农业", etQuery);
-        wireTag(R.id.tagRural,   "乡村振兴", etQuery);
-        wireTag(R.id.tagEco,     "农业经济", etQuery);
-        wireTag(R.id.tagTech,    "科技节",  etQuery);
-        wireTag(R.id.tagOrganic, "有机",   etQuery);
+        wireTag(R.id.tagSpring, "春耕", etQuery);
+        wireTag(R.id.tagFruit, "果树", etQuery);
+        wireTag(R.id.tagFresh, "保鲜", etQuery);
+        wireTag(R.id.tagStartup, "创业", etQuery);
+        wireTag(R.id.tagPlatform, "支农宝", etQuery);
+        wireTag(R.id.tagMarket, "农产品", etQuery);
 
         // Auto-show keyboard
         etQuery.requestFocus();
@@ -131,6 +132,7 @@ public class SearchActivity extends BaseMvpActivity<SearchContract.Presenter>
             }
         }, currentUser);
         rvResults.setAdapter(searchAdapter);
+        performSearch(etQuery.getText().toString().trim());
     }
 
     private void wireTag(int viewId, String query, EditText et) {
