@@ -7,7 +7,6 @@ import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.TextView;
 import android.widget.Toast;
-import androidx.appcompat.app.AlertDialog;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import com.example.zhinongbao.adapter.CartAdapter;
@@ -15,6 +14,7 @@ import com.example.zhinongbao.base.BaseMvpActivity;
 import com.example.zhinongbao.model.CartItem;
 import com.example.zhinongbao.mvp.cart.CartContract;
 import com.example.zhinongbao.mvp.cart.CartPresenter;
+import com.example.zhinongbao.utils.DialogUtils;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -36,7 +36,7 @@ public class CartActivity extends BaseMvpActivity<CartContract.Presenter> implem
         rv.setLayoutManager(new LinearLayoutManager(this));
 
         adapter = new CartAdapter(items);
-        adapter.setOnChangeListener(this::refreshBottomBar);
+        adapter.setOnChangeListener(this::onCartItemsChanged);
         rv.setAdapter(adapter);
 
         cbSelectAll = findViewById(R.id.cbSelectAll);
@@ -49,15 +49,23 @@ public class CartActivity extends BaseMvpActivity<CartContract.Presenter> implem
 
         btnCheckout.setOnClickListener(v -> checkout());
 
-        tvClear.setOnClickListener(v -> new AlertDialog.Builder(this)
-                .setTitle("清空购物车")
-                .setMessage("确定要清空所有商品吗？")
-                .setPositiveButton("清空", (d, w) -> {
-                    adapter.clearAll();
-                    presenter.onClearCart(items);
-                })
-                .setNegativeButton("取消", null)
-                .show());
+        tvClear.setOnClickListener(v -> {
+            if (items.isEmpty()) {
+                showToast("购物车已经是空的");
+                return;
+            }
+            DialogUtils.showConfirm(this,
+                    "清空购物车",
+                    "将移除购物车中的全部商品，清空后需要重新添加。",
+                    "再想想",
+                    "确认清空",
+                    true,
+                    () -> {
+                        adapter.clearAll();
+                        presenter.onClearCart(items);
+                        return true;
+                    });
+        });
 
         new CartPresenter(this, this).start();
         refreshBottomBar();
@@ -66,6 +74,11 @@ public class CartActivity extends BaseMvpActivity<CartContract.Presenter> implem
     private void refreshBottomBar() {
         double total = adapter.getSelectedTotal();
         presenter.onCartSelectionChanged(total, items.size(), adapter.areAllChecked());
+    }
+
+    private void onCartItemsChanged() {
+        refreshBottomBar();
+        presenter.onCartItemsChanged(items);
     }
 
     private void checkout() {

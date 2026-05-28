@@ -24,6 +24,8 @@ public interface CartContract {
     interface Presenter extends BasePresenter {
         void onCartSelectionChanged(double total, int itemCount, boolean allChecked);
 
+        void onCartItemsChanged(List<CartItem> currentItems);
+
         void onClearCart(List<CartItem> currentItems);
 
         void checkout(List<CartItem> currentItems, List<CartItem> checkedItems);

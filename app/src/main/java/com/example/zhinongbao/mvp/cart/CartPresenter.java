@@ -31,6 +31,11 @@ public class CartPresenter implements CartContract.Presenter {
     }
 
     @Override
+    public void onCartItemsChanged(List<CartItem> currentItems) {
+        repository.saveCart(username, currentItems);
+    }
+
+    @Override
     public void onClearCart(List<CartItem> currentItems) {
         currentItems.clear();
         repository.saveCart(username, currentItems);
