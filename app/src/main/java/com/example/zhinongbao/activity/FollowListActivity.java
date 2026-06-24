@@ -13,6 +13,8 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.example.zhinongbao.base.BaseMvpActivity;
 import com.example.zhinongbao.mvp.followlist.FollowListContract;
 import com.example.zhinongbao.mvp.followlist.FollowListPresenter;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -22,7 +24,12 @@ import java.util.List;
 public class FollowListActivity extends BaseMvpActivity<FollowListContract.Presenter> implements FollowListContract.View {
 
     private RecyclerView rv;
+    private View tabContainer;
+    private TextView tvUserFollowTab;
+    private TextView tvStoreFollowTab;
     private String type;
+    private List<String> allUsers = Collections.emptyList();
+    private String currentUser;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -53,13 +60,46 @@ public class FollowListActivity extends BaseMvpActivity<FollowListContract.Prese
 
         rv = findViewById(R.id.rvFollowList);
         rv.setLayoutManager(new LinearLayoutManager(this));
+        tabContainer = findViewById(R.id.llFollowTabs);
+        tvUserFollowTab = findViewById(R.id.tvUserFollowTab);
+        tvStoreFollowTab = findViewById(R.id.tvStoreFollowTab);
+        tvUserFollowTab.setOnClickListener(v -> showFollowingTab(false));
+        tvStoreFollowTab.setOnClickListener(v -> showFollowingTab(true));
 
         new FollowListPresenter(this, this, type, username).start();
     }
 
     @Override
     public void showUsers(List<String> users, String currentUser) {
-        rv.setAdapter(new FollowUserAdapter(users, currentUser, presenter, "following".equals(type)));
+        this.allUsers = users == null ? Collections.emptyList() : users;
+        this.currentUser = currentUser;
+        if ("following".equals(type)) {
+            tabContainer.setVisibility(View.VISIBLE);
+            showFollowingTab(false);
+        } else {
+            tabContainer.setVisibility(View.GONE);
+            rv.setAdapter(new FollowUserAdapter(this.allUsers, currentUser, presenter, false));
+        }
+    }
+
+    private void showFollowingTab(boolean storeTab) {
+        updateFollowTabStyle(storeTab);
+        List<String> filteredUsers = new ArrayList<>();
+        for (String user : allUsers) {
+            if (presenter.isStoreAccount(user) == storeTab) {
+                filteredUsers.add(user);
+            }
+        }
+        rv.setAdapter(new FollowUserAdapter(filteredUsers, currentUser, presenter, storeTab));
+    }
+
+    private void updateFollowTabStyle(boolean storeTab) {
+        tvUserFollowTab.setTextColor(storeTab ? 0xFF666666 : 0xFF2F80ED);
+        tvStoreFollowTab.setTextColor(storeTab ? 0xFF2F80ED : 0xFF666666);
+        tvUserFollowTab.setTypeface(android.graphics.Typeface.DEFAULT,
+                storeTab ? android.graphics.Typeface.NORMAL : android.graphics.Typeface.BOLD);
+        tvStoreFollowTab.setTypeface(android.graphics.Typeface.DEFAULT,
+                storeTab ? android.graphics.Typeface.BOLD : android.graphics.Typeface.NORMAL);
     }
 
     // ─── Inner adapter ───────────────────────────────────────────────────────
@@ -69,69 +109,33 @@ public class FollowListActivity extends BaseMvpActivity<FollowListContract.Prese
         private final List<String> users;
         private final String currentUser;
         private final FollowListContract.Presenter presenter;
-        private final boolean splitFollowing;
+        private final boolean storeRows;
         private final java.util.List<Row> rows = new java.util.ArrayList<>();
-        private static final int TYPE_HEADER = 0;
-        private static final int TYPE_USER = 1;
 
         FollowUserAdapter(List<String> users, String currentUser, FollowListContract.Presenter presenter,
-                boolean splitFollowing) {
+                boolean storeRows) {
             this.users = users;
             this.currentUser = currentUser;
             this.presenter = presenter;
-            this.splitFollowing = splitFollowing;
+            this.storeRows = storeRows;
             buildRows();
         }
 
         private void buildRows() {
             rows.clear();
-            if (!splitFollowing) {
-                for (String user : users) {
-                    rows.add(Row.user(user, false));
-                }
-                return;
-            }
-
-            java.util.List<String> userFollows = new java.util.ArrayList<>();
-            java.util.List<String> storeFollows = new java.util.ArrayList<>();
             for (String user : users) {
-                if (presenter.isStoreAccount(user)) {
-                    storeFollows.add(user);
-                } else {
-                    userFollows.add(user);
-                }
-            }
-
-            rows.add(Row.header("用户关注"));
-            for (String user : userFollows) {
-                rows.add(Row.user(user, false));
-            }
-            rows.add(Row.header("店铺关注"));
-            for (String store : storeFollows) {
-                rows.add(Row.user(store, true));
+                rows.add(Row.user(user, storeRows));
             }
         }
 
         @Override
         public int getItemViewType(int position) {
-            return rows.get(position).header ? TYPE_HEADER : TYPE_USER;
+            return 0;
         }
 
         @NonNull
         @Override
         public RecyclerView.ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-            if (viewType == TYPE_HEADER) {
-                TextView title = new TextView(parent.getContext());
-                title.setLayoutParams(new RecyclerView.LayoutParams(
-                        ViewGroup.LayoutParams.MATCH_PARENT, dp(parent, 44)));
-                title.setGravity(android.view.Gravity.CENTER_VERTICAL);
-                title.setPadding(dp(parent, 16), dp(parent, 10), dp(parent, 16), 0);
-                title.setTextColor(0xFF666666);
-                title.setTextSize(14);
-                title.setTypeface(android.graphics.Typeface.DEFAULT, android.graphics.Typeface.BOLD);
-                title.setBackgroundColor(0xFFF2F2F7);
-                return new HeaderVH(title);
-            }
             View v = LayoutInflater.from(parent.getContext())
                     .inflate(R.layout.item_follow_user, parent, false);
             return new VH(v);
@@ -140,10 +144,6 @@ public class FollowListActivity extends BaseMvpActivity<FollowListContract.Prese
         @Override
         public void onBindViewHolder(@NonNull RecyclerView.ViewHolder holder, int position) {
             Row row = rows.get(position);
-            if (holder instanceof HeaderVH) {
-                ((HeaderVH) holder).title.setText(row.title);
-                return;
-            }
             VH h = (VH) holder;
             String username = row.username;
 
@@ -218,19 +218,6 @@ public class FollowListActivity extends BaseMvpActivity<FollowListContract.Prese
             h.itemView.getContext().startActivity(intent);
         }
 
-        private int dp(View view, int value) {
-            return (int) (value * view.getResources().getDisplayMetrics().density + 0.5f);
-        }
-
-        static class HeaderVH extends RecyclerView.ViewHolder {
-            TextView title;
-
-            HeaderVH(View v) {
-                super(v);
-                title = (TextView) v;
-            }
-        }
-
         static class VH extends RecyclerView.ViewHolder {
             TextView tvAvatar, tvUsername, tvToggle;
             android.widget.ImageView ivAvatar;
@@ -245,17 +232,8 @@ public class FollowListActivity extends BaseMvpActivity<FollowListContract.Prese
         }
 
         static class Row {
-            boolean header;
             boolean store;
-            String title;
             String username;
-
-            static Row header(String title) {
-                Row row = new Row();
-                row.header = true;
-                row.title = title;
-                return row;
-            }
 
             static Row user(String username, boolean store) {
                 Row row = new Row();

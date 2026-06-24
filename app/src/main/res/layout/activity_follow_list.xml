@@ -37,6 +37,37 @@
             android:text="粉丝" />
     </LinearLayout>
 
+    <LinearLayout
+        android:id="@+id/llFollowTabs"
+        android:layout_width="match_parent"
+        android:layout_height="48dp"
+        android:orientation="horizontal"
+        android:gravity="center"
+        android:background="@color/white"
+        android:visibility="gone">
+
+        <TextView
+            android:id="@+id/tvUserFollowTab"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:gravity="center"
+            android:text="用户关注"
+            android:textColor="#2F80ED"
+            android:textSize="15sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/tvStoreFollowTab"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:gravity="center"
+            android:text="店铺关注"
+            android:textColor="#666666"
+            android:textSize="15sp" />
+    </LinearLayout>
+
     <!-- User list -->
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/rvFollowList"
