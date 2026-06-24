@@ -72,6 +72,60 @@ public final class DialogUtils {
         boolean onConfirm(String text);
     }
 
+    /** 买家退款原因选择回调，返回 true 时关闭弹窗 */
+    public interface RefundReasonAction {
+        boolean onSubmit(String reason);
+    }
+
+    /**
+     * 买家申请退款弹窗：预置原因「胶囊」单选 + 选填补充说明。
+     * 仅选择类别即可提交；补充说明可选。
+     */
+    public static AlertDialog showRefundReason(Context context, RefundReasonAction action) {
+        android.view.View view = android.view.LayoutInflater.from(context)
+                .inflate(com.example.zhinongbao.R.layout.dialog_refund_reason, null);
+        final int[] chipIds = {
+                com.example.zhinongbao.R.id.chipRefundReason1,
+                com.example.zhinongbao.R.id.chipRefundReason2,
+                com.example.zhinongbao.R.id.chipRefundReason3,
+                com.example.zhinongbao.R.id.chipRefundReason4,
+                com.example.zhinongbao.R.id.chipRefundReason5,
+                com.example.zhinongbao.R.id.chipRefundReason6
+        };
+        final TextView[] chips = new TextView[chipIds.length];
+        final int[] selected = { -1 };
+        for (int i = 0; i < chipIds.length; i++) {
+            chips[i] = view.findViewById(chipIds[i]);
+            final int index = i;
+            chips[i].setOnClickListener(v -> {
+                selected[0] = index;
+                for (int j = 0; j < chips.length; j++) {
+                    chips[j].setSelected(j == index);
+                }
+            });
+        }
+
+        final EditText manual = view.findViewById(com.example.zhinongbao.R.id.etRefundManual);
+
+        AlertDialog dialog = new AlertDialog.Builder(context).setView(view).create();
+        view.findViewById(com.example.zhinongbao.R.id.btnRefundCancel)
+                .setOnClickListener(v -> dialog.dismiss());
+        view.findViewById(com.example.zhinongbao.R.id.btnRefundSubmit).setOnClickListener(v -> {
+            if (selected[0] < 0) {
+                android.widget.Toast.makeText(context, "请选择退款原因", android.widget.Toast.LENGTH_SHORT).show();
+                return;
+            }
+            String category = chips[selected[0]].getText().toString();
+            String extra = manual.getText().toString().trim();
+            String reason = extra.isEmpty() ? category : category + "：" + extra;
+            if (action == null || action.onSubmit(reason)) {
+                dialog.dismiss();
+            }
+        });
+        showRounded(dialog, context);
+        return dialog;
+    }
+
     public static AlertDialog showRoleSelection(Context context, String title, String[] options,
             OptionAction action) {
         LinearLayout root = createRoot(context);

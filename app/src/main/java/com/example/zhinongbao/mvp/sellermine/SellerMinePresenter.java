@@ -2,6 +2,7 @@ package com.example.zhinongbao.mvp.sellermine;
 
 import android.content.Context;
 
+import com.example.zhinongbao.model.Order;
 import com.example.zhinongbao.model.User;
 import com.example.zhinongbao.repository.ArticleRepository;
 import com.example.zhinongbao.repository.OrderRepository;
@@ -29,6 +30,11 @@ public class SellerMinePresenter implements SellerMineContract.Presenter {
         view.renderSeller(username, userRepository.getStoreName(username), userRepository.getNickname(username),
                 userRepository.getAvatarUri(username), orderRepository.getRevenueForSeller(username, "today"),
                 orderRepository.getRevenueForSeller(username, "month"), orderRepository.getRevenueForSeller(username, "all"));
+        view.renderOrderBadges(
+                orderRepository.getSellerOrderCountByStatus(username, Order.STATUS_PENDING),
+                orderRepository.getSellerOrderCountByStatus(username, Order.STATUS_PAID),
+                orderRepository.getSellerOrderCountByStatus(username, Order.STATUS_SHIPPED),
+                orderRepository.getSellerOrderCountByStatus(username, Order.STATUS_REFUND));
         view.renderNews(articleRepository.getArticles());
     }
 

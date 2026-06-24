@@ -4,7 +4,11 @@ import com.example.zhinongbao.R;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.Canvas;
 import android.graphics.Color;
+import android.graphics.Paint;
+import android.graphics.Rect;
+import android.graphics.Typeface;
 import android.graphics.drawable.ColorDrawable;
 import android.net.Uri;
 import android.os.Bundle;
@@ -25,8 +29,15 @@ import com.example.zhinongbao.mvp.productdetail.ProductDetailContract;
 import com.example.zhinongbao.mvp.productdetail.ProductDetailPresenter;
 import com.example.zhinongbao.utils.DialogUtils;
 
+import androidx.core.content.FileProvider;
+
+import android.content.ClipData;
+
+import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 
 /** 商品详情界面：图片、名称、介绍、价格、加入购物车/购买/购物车入口 */
 public class ProductDetailActivity extends BaseMvpActivity<ProductDetailContract.Presenter>
@@ -55,7 +66,7 @@ public class ProductDetailActivity extends BaseMvpActivity<ProductDetailContract
         java.util.List<Object> images = buildImages(product);
 
         com.example.zhinongbao.adapter.ProductImageAdapter imageAdapter =
-                new com.example.zhinongbao.adapter.ProductImageAdapter(images);
+                new com.example.zhinongbao.adapter.ProductImageAdapter(images, ImageView.ScaleType.FIT_XY);
         vpProductImage.setAdapter(imageAdapter);
 
         tvImageIndicator.setVisibility(images.size() <= 1 ? android.view.View.GONE : android.view.View.VISIBLE);
@@ -239,13 +250,197 @@ public class ProductDetailActivity extends BaseMvpActivity<ProductDetailContract
 
     private void bindFavoriteAndShare(Product product) {
         findViewById(R.id.btnFavoriteProduct).setOnClickListener(v -> presenter.toggleFavorite());
-        findViewById(R.id.btnShareProduct).setOnClickListener(v -> {
-            Intent share = new Intent(Intent.ACTION_SEND);
+        findViewById(R.id.btnShareProduct).setOnClickListener(v -> shareProduct(product));
+    }
+
+    private void shareProduct(Product product) {
+        String shareText = buildShareText(product);
+        Uri imageUri = createShareImageUri(product);
+        Intent share = new Intent(Intent.ACTION_SEND);
+        share.putExtra(Intent.EXTRA_TEXT, shareText);
+        share.putExtra(Intent.EXTRA_TITLE, product.name);
+        if (imageUri != null) {
+            share.setType("image/jpeg");
+            share.putExtra(Intent.EXTRA_STREAM, imageUri);
+            share.setClipData(ClipData.newUri(getContentResolver(), "商品分享图", imageUri));
+            share.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+        } else {
             share.setType("text/plain");
-            share.putExtra(Intent.EXTRA_TEXT,
-                    product.name + "\n价格：" + String.format("¥%.2f", product.price) + "\n来自支农宝");
-            startActivity(Intent.createChooser(share, "分享商品"));
-        });
+        }
+        startActivity(Intent.createChooser(share, "分享商品"));
+    }
+
+    private String buildShareText(Product product) {
+        StringBuilder builder = new StringBuilder();
+        builder.append(product.name)
+                .append("\n价格：")
+                .append(String.format("¥%.2f", product.price));
+        if (product.desc != null && !product.desc.trim().isEmpty()) {
+            builder.append("\n").append(product.desc.trim());
+        }
+        builder.append("\n来自支农宝");
+        return builder.toString();
+    }
+
+    private Uri createShareImageUri(Product product) {
+        Bitmap bitmap = createSharePosterBitmap(product);
+        if (bitmap == null) {
+            return null;
+        }
+        File imagePath = new File(getCacheDir(), "images");
+        if (!imagePath.exists() && !imagePath.mkdirs()) {
+            return null;
+        }
+        File imageFile = new File(imagePath, "share_product_" + product.id + ".jpg");
+        try (OutputStream os = new FileOutputStream(imageFile)) {
+            bitmap.compress(Bitmap.CompressFormat.JPEG, 92, os);
+            os.flush();
+            return FileProvider.getUriForFile(this, getPackageName() + ".fileprovider", imageFile);
+        } catch (Exception ignored) {
+            return null;
+        }
+    }
+
+    private Bitmap createSharePosterBitmap(Product product) {
+        final int width = 1080;
+        final int height = 1500;
+        final int imageHeight = 760;
+        Bitmap poster = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
+        Canvas canvas = new Canvas(poster);
+        canvas.drawColor(Color.WHITE);
+
+        Paint paint = new Paint(Paint.ANTI_ALIAS_FLAG | Paint.DITHER_FLAG);
+        Bitmap productBitmap = loadShareBitmap(product);
+        if (productBitmap != null) {
+            canvas.drawBitmap(productBitmap, null, new Rect(0, 0, width, imageHeight), paint);
+        } else {
+            paint.setColor(0xFFF2F3F5);
+            canvas.drawRect(0, 0, width, imageHeight, paint);
+            paint.setColor(0xFF9AA0A6);
+            paint.setTextAlign(Paint.Align.CENTER);
+            paint.setTextSize(44);
+            canvas.drawText("支农宝优选商品", width / 2f, imageHeight / 2f, paint);
+            paint.setTextAlign(Paint.Align.LEFT);
+        }
+
+        int left = 70;
+        int right = width - 70;
+        float y = imageHeight + 86;
+
+        paint.setTypeface(Typeface.create(Typeface.DEFAULT, Typeface.BOLD));
+        paint.setColor(0xFFE53935);
+        paint.setTextSize(58);
+        canvas.drawText(String.format("¥%.2f", product.price), left, y, paint);
+
+        y += 88;
+        paint.setColor(0xFF202124);
+        paint.setTextSize(48);
+        y = drawWrappedText(canvas, product.name, paint, left, y, right - left, 2, 64);
+
+        String desc = product.desc == null ? "" : product.desc.trim();
+        if (!desc.isEmpty()) {
+            y += 30;
+            paint.setTypeface(Typeface.DEFAULT);
+            paint.setColor(0xFF5F6368);
+            paint.setTextSize(34);
+            y = drawWrappedText(canvas, desc, paint, left, y, right - left, 3, 48);
+        }
+
+        y += 54;
+        paint.setColor(0xFFF4F7F4);
+        canvas.drawRoundRect(left, y, right, y + 104, dp(14), dp(14), paint);
+        paint.setColor(0xFF2E7D32);
+        paint.setTextSize(32);
+        paint.setTypeface(Typeface.create(Typeface.DEFAULT, Typeface.BOLD));
+        String params = "品牌 " + displayParam(product.brand) + "  产地 " + displayParam(product.origin)
+                + "  规格 " + displayParam(product.spec);
+        drawWrappedText(canvas, params, paint, left + 28, y + 42, right - left - 56, 1, 42);
+
+        paint.setColor(0xFFE8EAED);
+        canvas.drawLine(left, height - 160, right, height - 160, paint);
+        paint.setColor(0xFF202124);
+        paint.setTextSize(38);
+        paint.setTypeface(Typeface.create(Typeface.DEFAULT, Typeface.BOLD));
+        canvas.drawText("支农宝", left, height - 92, paint);
+        paint.setColor(0xFF6B7280);
+        paint.setTextSize(30);
+        paint.setTypeface(Typeface.DEFAULT);
+        canvas.drawText("发现优质农产品，分享给身边的人", left, height - 46, paint);
+
+        return poster;
+    }
+
+    private float drawWrappedText(Canvas canvas, String text, Paint paint, float x, float y,
+                                  float maxWidth, int maxLines, float lineHeight) {
+        if (text == null || text.trim().isEmpty()) {
+            return y;
+        }
+        String rest = text.trim();
+        int line = 0;
+        while (!rest.isEmpty() && line < maxLines) {
+            int count = paint.breakText(rest, true, maxWidth, null);
+            String current = rest.substring(0, count).trim();
+            rest = rest.substring(count).trim();
+            if (line == maxLines - 1 && !rest.isEmpty()) {
+                current = trimToWidth(current + "...", paint, maxWidth);
+            }
+            canvas.drawText(current, x, y, paint);
+            y += lineHeight;
+            line++;
+        }
+        return y;
+    }
+
+    private String trimToWidth(String text, Paint paint, float maxWidth) {
+        String value = text;
+        while (value.length() > 3 && paint.measureText(value) > maxWidth) {
+            value = value.substring(0, value.length() - 4) + "...";
+        }
+        return value;
+    }
+
+    private Bitmap loadShareBitmap(Product product) {
+        java.util.List<Object> images = buildImages(product);
+        if (images.isEmpty()) {
+            return null;
+        }
+        Object first = images.get(0);
+        if (first instanceof Integer) {
+            BitmapFactory.Options bounds = new BitmapFactory.Options();
+            bounds.inJustDecodeBounds = true;
+            BitmapFactory.decodeResource(getResources(), (Integer) first, bounds);
+            BitmapFactory.Options options = new BitmapFactory.Options();
+            options.inSampleSize = calculateInSampleSize(bounds, 1080, 760);
+            return BitmapFactory.decodeResource(getResources(), (Integer) first, options);
+        }
+        if (first instanceof String) {
+            Uri uri = Uri.parse((String) first);
+            BitmapFactory.Options bounds = new BitmapFactory.Options();
+            bounds.inJustDecodeBounds = true;
+            try (InputStream is = getContentResolver().openInputStream(uri)) {
+                BitmapFactory.decodeStream(is, null, bounds);
+            } catch (Exception ignored) {
+                return null;
+            }
+            BitmapFactory.Options options = new BitmapFactory.Options();
+            options.inSampleSize = calculateInSampleSize(bounds, 1080, 760);
+            try (InputStream is = getContentResolver().openInputStream(uri)) {
+                return BitmapFactory.decodeStream(is, null, options);
+            } catch (Exception ignored) {
+                return null;
+            }
+        }
+        return null;
+    }
+
+    private int calculateInSampleSize(BitmapFactory.Options options, int reqWidth, int reqHeight) {
+        int height = options.outHeight;
+        int width = options.outWidth;
+        int inSampleSize = 1;
+        while (height / inSampleSize > reqHeight * 2 || width / inSampleSize > reqWidth * 2) {
+            inSampleSize *= 2;
+        }
+        return inSampleSize;
     }
 
     private void bindBottomActions(Product product, boolean ownProduct) {
@@ -332,9 +527,12 @@ public class ProductDetailActivity extends BaseMvpActivity<ProductDetailContract
     public void setFavoriteState(boolean favorited) {
         if (tvFavorite != null) {
             tvFavorite.setText(favorited ? "已收藏" : "收藏");
+            tvFavorite.setTextColor(favorited ? 0xFFE53935 : 0xFF999999);
         }
         if (ivFavorite != null) {
-            loadAssetImage(ivFavorite, favorited ? "yishoucang.png" : "shoucang.png");
+            ivFavorite.setImageResource(favorited
+                    ? R.drawable.ic_star_filled_red
+                    : R.drawable.ic_star_outline_gray);
         }
     }
 

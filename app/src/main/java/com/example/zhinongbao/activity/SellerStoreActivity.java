@@ -96,6 +96,7 @@ public class SellerStoreActivity extends BaseMvpActivity<SellerStoreContract.Pre
         }
         ((TextView) findViewById(R.id.tvStoreName)).setText(editableOwnStore ? "我的店铺" : storeName);
         ((TextView) findViewById(R.id.tvStoreDisplayName)).setText(storeName);
+        ((TextView) findViewById(R.id.tvStoreSeller)).setText("卖家 " + seller);
         String phone = storePhone;
         ((TextView) findViewById(R.id.tvStorePhone)).setText(
                 phone == null || phone.isEmpty() ? "电话：未填写" : "电话：" + phone);
@@ -183,6 +184,8 @@ public class SellerStoreActivity extends BaseMvpActivity<SellerStoreContract.Pre
 
         RecyclerView rv = findViewById(R.id.rvProducts);
         TextView tvEmpty = findViewById(R.id.tvEmpty);
+        ((TextView) findViewById(R.id.tvStoreProductCount)).setText("商品 " + products.size() + " 件");
+        ((TextView) findViewById(R.id.tvProductSummary)).setText(products.size() + " 件在售");
         boolean empty = products.isEmpty();
         rv.setVisibility(empty ? View.GONE : View.VISIBLE);
         tvEmpty.setVisibility(empty ? View.VISIBLE : View.GONE);

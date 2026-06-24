@@ -51,7 +51,7 @@ public class AddProductActivity extends BaseMvpActivity<AddProductContract.Prese
                     }
                     if (imageUris.size() < 9) {
                         imageUris.add(uri);
-                        imageAdapter.notifyItemInserted(imageUris.size() - 1);
+                        refreshImagePicker();
                     } else {
                         Toast.makeText(this, "最多只能添加9张图片", Toast.LENGTH_SHORT).show();
                     }
@@ -63,7 +63,7 @@ public class AddProductActivity extends BaseMvpActivity<AddProductContract.Prese
                 if (success && currentCameraUri != null) {
                     if (imageUris.size() < 9) {
                         imageUris.add(currentCameraUri);
-                        imageAdapter.notifyItemInserted(imageUris.size() - 1);
+                        refreshImagePicker();
                     } else {
                         Toast.makeText(this, "最多只能添加9张图片", Toast.LENGTH_SHORT).show();
                     }
@@ -118,8 +118,11 @@ public class AddProductActivity extends BaseMvpActivity<AddProductContract.Prese
 
             @Override
             public void onDeleteClick(int position) {
+                if (position < 0 || position >= imageUris.size()) {
+                    return;
+                }
                 imageUris.remove(position);
-                imageAdapter.notifyItemRemoved(position);
+                refreshImagePicker();
             }
         });
 
@@ -256,6 +259,12 @@ public class AddProductActivity extends BaseMvpActivity<AddProductContract.Prese
         for (int i = 0; i < CATEGORIES.length; i++) {
             if (categoryChips[i] != null)
                 applyCategoryChipStyle(categoryChips[i], selectedCategories.contains(CATEGORIES[i]));
+        }
+    }
+
+    private void refreshImagePicker() {
+        if (imageAdapter != null) {
+            imageAdapter.notifyDataSetChanged();
         }
     }
 

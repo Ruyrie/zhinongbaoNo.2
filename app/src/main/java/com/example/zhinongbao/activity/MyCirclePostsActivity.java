@@ -22,6 +22,7 @@ public class MyCirclePostsActivity extends BaseMvpActivity<MyCirclePostsContract
     private TextView tvEmpty;
     private AgriCircleAdapter adapter;
     private final List<Article> items = new ArrayList<>();
+    private boolean favoritesMode;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -29,15 +30,19 @@ public class MyCirclePostsActivity extends BaseMvpActivity<MyCirclePostsContract
         setContentView(R.layout.activity_my_circle_posts);
         if (getSupportActionBar() != null) getSupportActionBar().hide();
 
+        favoritesMode = getIntent().getBooleanExtra("circle_favorites", false);
+        ((TextView) findViewById(R.id.tvCirclePostsTitle))
+                .setText(favoritesMode ? "农友圈点赞" : "我的动态");
         findViewById(R.id.ivBack).setOnClickListener(v -> finish());
-        findViewById(R.id.fabPost).setOnClickListener(v ->
-                startActivity(new Intent(this, AddCirclePostActivity.class)));
+        View fabPost = findViewById(R.id.fabPost);
+        fabPost.setVisibility(favoritesMode ? View.GONE : View.VISIBLE);
+        fabPost.setOnClickListener(v -> startActivity(new Intent(this, AddCirclePostActivity.class)));
 
         rv = findViewById(R.id.rvMyPosts);
         tvEmpty = findViewById(R.id.tvEmpty);
         rv.setLayoutManager(new LinearLayoutManager(this));
 
-        new MyCirclePostsPresenter(this, this).start();
+        new MyCirclePostsPresenter(this, this, favoritesMode).start();
     }
 
     @Override
@@ -63,8 +68,22 @@ public class MyCirclePostsActivity extends BaseMvpActivity<MyCirclePostsContract
                     }
                     @Override
                     public void onLikeClick(Article article, int position) {
-                        presenter.toggleArticleLike(article.id);
-                        adapter.notifyItemChanged(position);
+                        if (position < 0) {
+                            return;
+                        }
+                        presenter.toggleCircleLike(article.id);
+                        if (favoritesMode) {
+                            items.remove(position);
+                            adapter.notifyItemRemoved(position);
+                            boolean empty = items.isEmpty();
+                            rv.setVisibility(empty ? View.GONE : View.VISIBLE);
+                            tvEmpty.setVisibility(empty ? View.VISIBLE : View.GONE);
+                            if (empty) {
+                                tvEmpty.setText("还没有点赞收藏农友圈动态");
+                            }
+                        } else {
+                            adapter.notifyItemChanged(position);
+                        }
                     }
                     @Override
                     public void onCommentClick(Article article) {
@@ -92,13 +111,18 @@ public class MyCirclePostsActivity extends BaseMvpActivity<MyCirclePostsContract
         boolean empty = items.isEmpty();
         rv.setVisibility(empty ? View.GONE : View.VISIBLE);
         tvEmpty.setVisibility(empty ? View.VISIBLE : View.GONE);
+        if (empty) {
+            tvEmpty.setText(favoritesMode
+                    ? "还没有点赞收藏农友圈动态"
+                    : "您还没有发布过动态\n点右下角 + 发布第一条吧");
+        }
     }
 
     private AgriCircleAdapter.CircleInteractionDelegate circleDelegate() {
         return new AgriCircleAdapter.CircleInteractionDelegate() {
             @Override
-            public int getArticleLikeCount(int articleId) {
-                return presenter.getArticleLikeCount(articleId);
+            public int getCircleLikeCount(int articleId) {
+                return presenter.getCircleLikeCount(articleId);
             }
 
             @Override
@@ -107,8 +131,8 @@ public class MyCirclePostsActivity extends BaseMvpActivity<MyCirclePostsContract
             }
 
             @Override
-            public boolean isArticleLiked(int articleId) {
-                return presenter.isArticleLiked(articleId);
+            public boolean isCircleLiked(int articleId) {
+                return presenter.isCircleLiked(articleId);
             }
 
             @Override

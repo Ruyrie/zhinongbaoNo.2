@@ -36,6 +36,8 @@ public class MallFragment extends BaseMvpFragment<MallContract.Presenter>
     private List<Product> allProducts;
     private List<Product> displayed;
     private ProductAdapter adapter;
+    private RecyclerView rvProducts;
+    private StaggeredGridLayoutManager productLayoutManager;
     private String selectedCategory = "推荐";
 
     @Nullable
@@ -51,28 +53,27 @@ public class MallFragment extends BaseMvpFragment<MallContract.Presenter>
         allProducts = new ArrayList<>();
         displayed = new ArrayList<>();
 
-        RecyclerView rv = view.findViewById(R.id.rvProducts);
-        StaggeredGridLayoutManager layoutManager =
-                new StaggeredGridLayoutManager(2, StaggeredGridLayoutManager.VERTICAL);
-        layoutManager.setGapStrategy(StaggeredGridLayoutManager.GAP_HANDLING_MOVE_ITEMS_BETWEEN_SPANS);
-        rv.setLayoutManager(layoutManager);
+        rvProducts = view.findViewById(R.id.rvProducts);
+        productLayoutManager = new StaggeredGridLayoutManager(2, StaggeredGridLayoutManager.VERTICAL);
+        productLayoutManager.setGapStrategy(StaggeredGridLayoutManager.GAP_HANDLING_MOVE_ITEMS_BETWEEN_SPANS);
+        rvProducts.setLayoutManager(productLayoutManager);
 
         ImageView btnScrollTop = view.findViewById(R.id.btnScrollTop);
         if (btnScrollTop != null) {
             loadAssetImage(btnScrollTop, "xiangshangfanhui.png");
             btnScrollTop.setOnClickListener(v -> {
-                rv.stopScroll();
-                layoutManager.invalidateSpanAssignments();
-                layoutManager.scrollToPositionWithOffset(0, 0);
+                rvProducts.stopScroll();
+                productLayoutManager.invalidateSpanAssignments();
+                productLayoutManager.scrollToPositionWithOffset(0, 0);
                 btnScrollTop.setVisibility(View.GONE);
             });
-            rv.addOnScrollListener(new RecyclerView.OnScrollListener() {
+            rvProducts.addOnScrollListener(new RecyclerView.OnScrollListener() {
                 @Override
                 public void onScrolled(@NonNull RecyclerView recyclerView, int dx, int dy) {
                     super.onScrolled(recyclerView, dx, dy);
                     int offset = recyclerView.computeVerticalScrollOffset();
                     if (offset == 0) {
-                        layoutManager.invalidateSpanAssignments();
+                        productLayoutManager.invalidateSpanAssignments();
                     }
                     boolean show = offset > recyclerView.getHeight();
                     btnScrollTop.setVisibility(show ? View.VISIBLE : View.GONE);
@@ -88,7 +89,7 @@ public class MallFragment extends BaseMvpFragment<MallContract.Presenter>
         adapter.setOnAddCartListener(product -> {
             presenter.addToCart(product);
         });
-        rv.setAdapter(adapter);
+        rvProducts.setAdapter(adapter);
 
         // 搜索框点击进入搜索页面
         EditText etSearch = view.findViewById(R.id.etSearch);
@@ -157,6 +158,20 @@ public class MallFragment extends BaseMvpFragment<MallContract.Presenter>
             }
         }
         adapter.notifyDataSetChanged();
+        resetProductListPosition();
+    }
+
+    private void resetProductListPosition() {
+        if (rvProducts == null || productLayoutManager == null) {
+            return;
+        }
+        rvProducts.stopScroll();
+        productLayoutManager.invalidateSpanAssignments();
+        productLayoutManager.scrollToPositionWithOffset(0, 0);
+        rvProducts.post(() -> {
+            productLayoutManager.invalidateSpanAssignments();
+            productLayoutManager.scrollToPositionWithOffset(0, 0);
+        });
     }
 
     @Override

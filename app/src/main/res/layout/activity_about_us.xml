@@ -1,0 +1,125 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="#F4F6F8"
+    android:fitsSystemWindows="true">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="56dp"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:paddingEnd="16dp"
+        android:background="#FFFFFF"
+        android:elevation="3dp">
+
+        <ImageView
+            android:id="@+id/tvBack"
+            android:layout_width="20dp"
+            android:layout_height="20dp"
+            android:src="@mipmap/fanhui"
+            android:scaleType="fitCenter"
+            android:layout_marginStart="8dp"
+            android:layout_marginEnd="8dp" />
+
+        <TextView
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="关于我们"
+            android:textSize="18sp"
+            android:textStyle="bold"
+            android:textColor="#1F1F1F"
+            android:gravity="center" />
+
+        <View
+            android:layout_width="36dp"
+            android:layout_height="1dp" />
+    </LinearLayout>
+
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:clipToPadding="false"
+        android:padding="16dp">
+
+        <com.google.android.material.card.MaterialCardView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="24dp"
+            app:cardCornerRadius="16dp"
+            app:cardElevation="2dp"
+            app:strokeWidth="0dp"
+            app:cardBackgroundColor="#FFFFFF">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="22dp">
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="支农宝项目小组"
+                    android:textSize="23sp"
+                    android:textStyle="bold"
+                    android:textColor="#1A1A1A" />
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:text="关于我们"
+                    android:textSize="13sp"
+                    android:textColor="#43A047" />
+
+                <View
+                    android:layout_width="40dp"
+                    android:layout_height="3dp"
+                    android:layout_marginTop="18dp"
+                    android:background="#43A047" />
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="22dp"
+                    android:text="支农宝由张恒畅、陈思瑾、杜羽梅、路广琪、邓祥瑞共同完成。我们希望通过这个平台，把农产品展示、采购需求、农友交流和店铺经营连接起来，让农户、卖家和买家能够更方便地沟通与交易。"
+                    android:textSize="16sp"
+                    android:textColor="#333333"
+                    android:lineSpacingExtra="7dp" />
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="18dp"
+                    android:text="在项目设计中，小组成员围绕用户资料、文章资讯、农友圈、商品发布、订单管理和卖家店铺等模块协作推进。每一个页面都服务于同一个目标：让乡村优质产品被看见，让农业经验更容易分享。"
+                    android:textSize="16sp"
+                    android:textColor="#333333"
+                    android:lineSpacingExtra="7dp" />
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="22dp"
+                    android:text="小组成员"
+                    android:textSize="17sp"
+                    android:textStyle="bold"
+                    android:textColor="#1F1F1F" />
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="10dp"
+                    android:text="张恒畅   陈思瑾   杜羽梅\n路广琪   邓祥瑞"
+                    android:textSize="16sp"
+                    android:textColor="#555555"
+                    android:lineSpacingExtra="8dp" />
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
+    </ScrollView>
+</LinearLayout>

@@ -9,22 +9,21 @@
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:minHeight="690dp"
         android:orientation="vertical"
         android:paddingHorizontal="28dp"
-        android:paddingTop="28dp"
-        android:paddingBottom="28dp">
+        android:paddingTop="24dp"
+        android:paddingBottom="20dp">
 
         <FrameLayout
             android:layout_width="match_parent"
-            android:layout_height="210dp"
-            android:layout_marginBottom="16dp">
+            android:layout_height="160dp"
+            android:layout_marginBottom="8dp">
 
             <LinearLayout
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_gravity="start|top"
-                android:layout_marginTop="34dp"
+                android:layout_marginTop="20dp"
                 android:gravity="center_vertical"
                 android:orientation="horizontal">
 
@@ -59,8 +58,8 @@
             </LinearLayout>
 
             <ImageView
-                android:layout_width="250dp"
-                android:layout_height="172dp"
+                android:layout_width="220dp"
+                android:layout_height="138dp"
                 android:layout_gravity="end|bottom"
                 android:alpha="0.96"
                 android:scaleType="fitEnd"
@@ -87,8 +86,8 @@
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="18dp"
-            android:layout_marginBottom="32dp"
+            android:layout_marginTop="14dp"
+            android:layout_marginBottom="22dp"
             android:text="登录账号，发现更多助农好物"
             android:textColor="#303633"
             android:textSize="15sp" />
@@ -175,8 +174,8 @@
             android:id="@+id/btnLogin"
             android:layout_width="match_parent"
             android:layout_height="58dp"
-            android:layout_marginTop="22dp"
-            android:layout_marginBottom="26dp"
+            android:layout_marginTop="16dp"
+            android:layout_marginBottom="18dp"
             android:background="@drawable/bg_auth_green_button"
             android:stateListAnimator="@null"
             android:text="登录"

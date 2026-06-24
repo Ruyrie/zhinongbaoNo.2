@@ -13,12 +13,12 @@ public interface MyCirclePostsContract {
 
     interface Presenter extends BasePresenter {
         void refresh();
-        int getArticleLikeCount(int articleId);
+        int getCircleLikeCount(int articleId);
         int getCommentCount(int articleId);
-        boolean isArticleLiked(int articleId);
+        boolean isCircleLiked(int articleId);
         boolean isFollowing(String author);
         int getUserRole(String username);
-        void toggleArticleLike(int articleId);
+        void toggleCircleLike(int articleId);
         void followUser(String author);
     }
 }

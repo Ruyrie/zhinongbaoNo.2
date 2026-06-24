@@ -13,7 +13,7 @@ import android.database.sqlite.SQLiteOpenHelper;
 public class AppDatabase extends SQLiteOpenHelper {
 
         private static final String DB_NAME = "zhinongbao.db";
-        private static final int DB_VERSION = 19;
+        private static final int DB_VERSION = 20;
 
         private static AppDatabase instance;
 
@@ -131,6 +131,18 @@ public class AppDatabase extends SQLiteOpenHelper {
                                 "article_id INTEGER NOT NULL," +
                                 "UNIQUE(username, article_id))");
 
+                db.execSQL("CREATE TABLE circle_likes (" +
+                                "id INTEGER PRIMARY KEY AUTOINCREMENT," +
+                                "username TEXT NOT NULL," +
+                                "article_id INTEGER NOT NULL," +
+                                "UNIQUE(username, article_id))");
+
+                db.execSQL("CREATE TABLE circle_favorites (" +
+                                "id INTEGER PRIMARY KEY AUTOINCREMENT," +
+                                "username TEXT NOT NULL," +
+                                "article_id INTEGER NOT NULL," +
+                                "UNIQUE(username, article_id))");
+
                 db.execSQL("CREATE TABLE product_favorites (" +
                                 "id INTEGER PRIMARY KEY AUTOINCREMENT," +
                                 "username TEXT NOT NULL," +
@@ -221,6 +233,8 @@ public class AppDatabase extends SQLiteOpenHelper {
                 db.execSQL("CREATE INDEX idx_articles_author ON articles(author)");
                 db.execSQL("CREATE INDEX idx_comments_article ON comments(article_id)");
                 db.execSQL("CREATE INDEX idx_article_likes_article ON article_likes(article_id)");
+                db.execSQL("CREATE INDEX idx_circle_likes_article ON circle_likes(article_id)");
+                db.execSQL("CREATE INDEX idx_circle_favorites_user ON circle_favorites(username, id)");
                 db.execSQL("CREATE INDEX idx_follows_following ON follows(`following`)");
                 db.execSQL("CREATE INDEX idx_product_comments_product ON product_comments(product_id)");
                 db.execSQL("CREATE INDEX idx_product_footprints_user ON product_footprints(username, viewed_at)");
@@ -360,6 +374,25 @@ public class AppDatabase extends SQLiteOpenHelper {
                 }
                 if (oldVersion < 18) {
                         db.execSQL("ALTER TABLE purchase_quotes ADD COLUMN images TEXT");
+                }
+                if (oldVersion < 20) {
+                        db.execSQL("CREATE TABLE IF NOT EXISTS circle_likes (" +
+                                        "id INTEGER PRIMARY KEY AUTOINCREMENT," +
+                                        "username TEXT NOT NULL," +
+                                        "article_id INTEGER NOT NULL," +
+                                        "UNIQUE(username, article_id))");
+                        db.execSQL("CREATE TABLE IF NOT EXISTS circle_favorites (" +
+                                        "id INTEGER PRIMARY KEY AUTOINCREMENT," +
+                                        "username TEXT NOT NULL," +
+                                        "article_id INTEGER NOT NULL," +
+                                        "UNIQUE(username, article_id))");
+                        db.execSQL("CREATE INDEX IF NOT EXISTS idx_circle_likes_article ON circle_likes(article_id)");
+                        db.execSQL("CREATE INDEX IF NOT EXISTS idx_circle_favorites_user ON circle_favorites(username, id)");
+                        db.execSQL("INSERT OR IGNORE INTO circle_likes(username, article_id) " +
+                                        "SELECT username, article_id FROM article_likes " +
+                                        "WHERE article_id IN (SELECT id FROM articles WHERE category='农友圈')");
+                        db.execSQL("DELETE FROM article_likes " +
+                                        "WHERE article_id IN (SELECT id FROM articles WHERE category='农友圈')");
                 }
         }
 

@@ -21,6 +21,8 @@ public class MyArticlesActivity extends BaseMvpActivity<MyArticlesContract.Prese
 
     private RecyclerView rv;
     private LinearLayout llEmptyState;
+    private String targetAuthor;
+    private boolean viewingSelf;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -30,6 +32,7 @@ public class MyArticlesActivity extends BaseMvpActivity<MyArticlesContract.Prese
             getSupportActionBar().hide();
 
         findViewById(R.id.tvBack).setOnClickListener(v -> finish());
+        targetAuthor = getIntent().getStringExtra("author");
 
         rv = findViewById(R.id.rvArticles);
         llEmptyState = findViewById(R.id.llEmptyState);
@@ -40,7 +43,7 @@ public class MyArticlesActivity extends BaseMvpActivity<MyArticlesContract.Prese
         btnAddArticle.setOnClickListener(goAdd);
         ivAddArticleIcon.setOnClickListener(goAdd);
 
-        new MyArticlesPresenter(this, this).start();
+        new MyArticlesPresenter(this, this, targetAuthor).start();
     }
 
     @Override
@@ -53,6 +56,11 @@ public class MyArticlesActivity extends BaseMvpActivity<MyArticlesContract.Prese
 
     @Override
     public void showArticles(List<Article> articles, String currentUser) {
+        viewingSelf = targetAuthor == null || targetAuthor.isEmpty() || targetAuthor.equals(currentUser);
+        TextView title = findViewById(R.id.tvArticleListTitle);
+        title.setText(viewingSelf ? "我的文章" : targetAuthor + "的文章");
+        findViewById(R.id.ivAddArticleIcon).setVisibility(viewingSelf ? View.VISIBLE : View.INVISIBLE);
+        findViewById(R.id.btnAddArticle).setVisibility(viewingSelf ? View.VISIBLE : View.GONE);
         if (articles == null || articles.isEmpty()) {
             rv.setVisibility(View.GONE);
             llEmptyState.setVisibility(View.VISIBLE);

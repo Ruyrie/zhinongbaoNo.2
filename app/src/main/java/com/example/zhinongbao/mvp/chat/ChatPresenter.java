@@ -2,6 +2,7 @@ package com.example.zhinongbao.mvp.chat;
 
 import android.content.Context;
 
+import com.example.zhinongbao.model.ChatMessage;
 import com.example.zhinongbao.repository.MessageRepository;
 
 public class ChatPresenter implements ChatContract.Presenter {
@@ -55,6 +56,16 @@ public class ChatPresenter implements ChatContract.Presenter {
             return;
         }
         repository.sendMessage(currentUser, otherUser, content);
+        view.clearInput();
+        refresh();
+    }
+
+    @Override
+    public void sendImage(String imageUri) {
+        if (imageUri == null || imageUri.isEmpty()) {
+            return;
+        }
+        repository.sendMessage(currentUser, otherUser, ChatMessage.imageContent(imageUri));
         view.clearInput();
         refresh();
     }

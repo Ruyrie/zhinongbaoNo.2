@@ -38,8 +38,8 @@ public class AgriCirclePresenter implements AgriCircleContract.Presenter {
     }
 
     @Override
-    public int getArticleLikeCount(int articleId) {
-        return repository.getArticleLikeCount(articleId);
+    public int getCircleLikeCount(int articleId) {
+        return repository.getCirclePostLikeCount(articleId);
     }
 
     @Override
@@ -48,8 +48,8 @@ public class AgriCirclePresenter implements AgriCircleContract.Presenter {
     }
 
     @Override
-    public boolean isArticleLiked(int articleId) {
-        return repository.isArticleLiked(currentUser, articleId);
+    public boolean isCircleLiked(int articleId) {
+        return repository.isCirclePostLiked(currentUser, articleId);
     }
 
     @Override
@@ -63,11 +63,11 @@ public class AgriCirclePresenter implements AgriCircleContract.Presenter {
     }
 
     @Override
-    public void toggleArticleLike(int articleId) {
-        if (repository.isArticleLiked(currentUser, articleId)) {
-            repository.unlikeArticle(currentUser, articleId);
+    public void toggleCircleLike(int articleId) {
+        if (repository.isCirclePostLiked(currentUser, articleId)) {
+            repository.unlikeCirclePost(currentUser, articleId);
         } else {
-            repository.likeArticle(currentUser, articleId);
+            repository.likeCirclePost(currentUser, articleId);
         }
     }
 

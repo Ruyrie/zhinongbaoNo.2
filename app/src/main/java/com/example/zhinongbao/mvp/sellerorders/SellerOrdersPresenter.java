@@ -110,7 +110,7 @@ public class SellerOrdersPresenter implements SellerOrdersContract.Presenter {
     @Override
     public void processRefund(Order order, double amount, String reason, boolean approve) {
         repository.processRefund(order.orderId, amount, reason, approve);
-        view.showToast(approve ? "已同意退款" : "已拒绝退款，恢复为发货状态");
+        view.showToast(approve ? "已同意退款" : "已拒绝退款申请");
         refresh();
     }
 

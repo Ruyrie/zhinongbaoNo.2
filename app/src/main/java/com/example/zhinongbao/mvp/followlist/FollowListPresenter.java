@@ -50,6 +50,16 @@ public class FollowListPresenter implements FollowListContract.Presenter {
     }
 
     @Override
+    public String getStoreName(String username) {
+        return userRepository.getStoreName(username);
+    }
+
+    @Override
+    public boolean isStoreAccount(String username) {
+        return userRepository.canUseSellerRole(username);
+    }
+
+    @Override
     public boolean isFollowing(String username) {
         return articleRepository.isFollowing(currentUser, username);
     }

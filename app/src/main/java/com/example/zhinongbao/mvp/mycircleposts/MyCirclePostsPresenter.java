@@ -2,17 +2,27 @@ package com.example.zhinongbao.mvp.mycircleposts;
 
 import android.content.Context;
 
+import com.example.zhinongbao.model.Article;
 import com.example.zhinongbao.repository.ArticleRepository;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class MyCirclePostsPresenter implements MyCirclePostsContract.Presenter {
     private final MyCirclePostsContract.View view;
     private final ArticleRepository repository;
     private final String currentUser;
+    private final boolean favoritesMode;
 
     public MyCirclePostsPresenter(Context context, MyCirclePostsContract.View view) {
+        this(context, view, false);
+    }
+
+    public MyCirclePostsPresenter(Context context, MyCirclePostsContract.View view, boolean favoritesMode) {
         this.view = view;
         this.repository = new ArticleRepository(context.getApplicationContext());
         this.currentUser = repository.getLoggedUser();
+        this.favoritesMode = favoritesMode;
         this.view.setPresenter(this);
     }
 
@@ -23,12 +33,16 @@ public class MyCirclePostsPresenter implements MyCirclePostsContract.Presenter {
 
     @Override
     public void refresh() {
-        view.showPosts(repository.getCirclePostsByAuthor(currentUser), currentUser);
+        if (favoritesMode) {
+            view.showPosts(getLikedCirclePosts(), currentUser);
+        } else {
+            view.showPosts(repository.getCirclePostsByAuthor(currentUser), currentUser);
+        }
     }
 
     @Override
-    public int getArticleLikeCount(int articleId) {
-        return repository.getArticleLikeCount(articleId);
+    public int getCircleLikeCount(int articleId) {
+        return repository.getCirclePostLikeCount(articleId);
     }
 
     @Override
@@ -37,8 +51,8 @@ public class MyCirclePostsPresenter implements MyCirclePostsContract.Presenter {
     }
 
     @Override
-    public boolean isArticleLiked(int articleId) {
-        return repository.isArticleLiked(currentUser, articleId);
+    public boolean isCircleLiked(int articleId) {
+        return repository.isCirclePostLiked(currentUser, articleId);
     }
 
     @Override
@@ -52,16 +66,26 @@ public class MyCirclePostsPresenter implements MyCirclePostsContract.Presenter {
     }
 
     @Override
-    public void toggleArticleLike(int articleId) {
-        if (repository.isArticleLiked(currentUser, articleId)) {
-            repository.unlikeArticle(currentUser, articleId);
+    public void toggleCircleLike(int articleId) {
+        if (repository.isCirclePostLiked(currentUser, articleId)) {
+            repository.unlikeCirclePost(currentUser, articleId);
         } else {
-            repository.likeArticle(currentUser, articleId);
+            repository.likeCirclePost(currentUser, articleId);
         }
     }
 
     @Override
     public void followUser(String author) {
         repository.followUser(currentUser, author);
+    }
+
+    private List<Article> getLikedCirclePosts() {
+        List<Article> likedPosts = new ArrayList<>();
+        for (Article article : repository.getCirclePosts()) {
+            if (repository.isCirclePostLiked(currentUser, article.id)) {
+                likedPosts.add(article);
+            }
+        }
+        return likedPosts;
     }
 }

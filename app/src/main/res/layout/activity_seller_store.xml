@@ -3,29 +3,28 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    android:background="#F5F5F5"
+    android:background="@drawable/bg_store_page"
     android:fitsSystemWindows="true">
 
-    <!-- 顶部工具栏 -->
     <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="56dp"
+        android:layout_height="52dp"
         android:orientation="horizontal"
         android:gravity="center_vertical"
-        android:paddingEnd="12dp"
-        android:background="#FFFFFF"
-        android:elevation="4dp">
+        android:paddingStart="8dp"
+        android:paddingEnd="14dp"
+        android:background="#FFFFFF">
 
         <ImageView
             android:id="@+id/ivBack"
-            android:layout_width="20dp"
-            android:layout_height="20dp"
+            android:layout_width="36dp"
+            android:layout_height="36dp"
+            android:padding="8dp"
             android:src="@mipmap/fanhui"
             android:scaleType="fitCenter"
-            android:layout_marginStart="8dp"
-            android:layout_marginEnd="8dp"
             android:clickable="true"
-            android:focusable="true" />
+            android:focusable="true"
+            android:background="?attr/selectableItemBackgroundBorderless" />
 
         <TextView
             android:id="@+id/tvStoreName"
@@ -33,21 +32,24 @@
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:text="店铺"
-            android:textSize="18sp"
+            android:textSize="17sp"
             android:textStyle="bold"
-            android:textColor="#333333"
-            android:gravity="center" />
+            android:textColor="#1F2A22"
+            android:gravity="center"
+            android:maxLines="1"
+            android:ellipsize="end" />
 
         <TextView
             android:id="@+id/tvAddProduct"
             android:layout_width="wrap_content"
-            android:layout_height="32dp"
+            android:layout_height="34dp"
             android:text="+ 上架"
             android:textSize="13sp"
-            android:textColor="#4CAF50"
-            android:background="@drawable/bg_circle_btn"
+            android:textStyle="bold"
+            android:textColor="#2F7D46"
+            android:background="@drawable/bg_store_chip"
             android:gravity="center"
-            android:paddingHorizontal="10dp"
+            android:paddingHorizontal="12dp"
             android:visibility="gone"
             android:clickable="true"
             android:focusable="true" />
@@ -57,87 +59,132 @@
         android:id="@+id/llStoreInfo"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:gravity="center_vertical"
-        android:background="#FFFFFF"
-        android:paddingHorizontal="16dp"
-        android:paddingVertical="12dp"
-        android:layout_marginBottom="8dp">
-
-        <FrameLayout
-            android:layout_width="52dp"
-            android:layout_height="52dp"
-            android:layout_marginEnd="12dp">
-
-            <ImageView
-                android:id="@+id/ivStoreAvatar"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:background="@drawable/bg_avatar_chat"
-                android:scaleType="centerCrop"
-                android:src="@mipmap/ic_launcher_round" />
-
-            <TextView
-                android:id="@+id/tvStoreAvatarPlaceholder"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:background="@drawable/bg_auth_logo"
-                android:gravity="center"
-                android:text="店"
-                android:textColor="@color/white"
-                android:textSize="18sp"
-                android:textStyle="bold"
-                android:visibility="gone" />
-        </FrameLayout>
+        android:orientation="vertical"
+        android:background="@drawable/bg_store_hero"
+        android:padding="18dp"
+        android:layout_marginHorizontal="14dp"
+        android:layout_marginTop="12dp"
+        android:layout_marginBottom="10dp">
 
         <LinearLayout
-            android:layout_width="0dp"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:orientation="vertical">
+            android:orientation="horizontal"
+            android:gravity="center_vertical">
+
+            <FrameLayout
+                android:layout_width="62dp"
+                android:layout_height="62dp"
+                android:layout_marginEnd="14dp">
+
+                <ImageView
+                    android:id="@+id/ivStoreAvatar"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:background="@drawable/bg_store_avatar"
+                    android:padding="2dp"
+                    android:scaleType="centerCrop"
+                    android:src="@mipmap/ic_launcher_round" />
+
+                <TextView
+                    android:id="@+id/tvStoreAvatarPlaceholder"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:background="@drawable/bg_store_avatar"
+                    android:gravity="center"
+                    android:text="店"
+                    android:textColor="@color/white"
+                    android:textSize="22sp"
+                    android:textStyle="bold"
+                    android:visibility="gone" />
+            </FrameLayout>
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:orientation="vertical">
+
+                <TextView
+                    android:id="@+id/tvStoreDisplayName"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="店铺名称"
+                    android:textSize="20sp"
+                    android:textStyle="bold"
+                    android:textColor="#FFFFFF"
+                    android:maxLines="1"
+                    android:ellipsize="end" />
+
+                <TextView
+                    android:id="@+id/tvStorePhone"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="电话：未填写"
+                    android:textSize="12sp"
+                    android:textColor="#E9F7E8"
+                    android:layout_marginTop="6dp" />
+            </LinearLayout>
 
             <TextView
-                android:id="@+id/tvStoreDisplayName"
+                android:id="@+id/tvEditStoreInfo"
                 android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="店铺名称"
-                android:textSize="15sp"
-                android:textStyle="bold"
-                android:textColor="#333333" />
-
-            <TextView
-                android:id="@+id/tvStorePhone"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="电话：未填写"
-                android:textSize="12sp"
-                android:textColor="#888888"
-                android:layout_marginTop="4dp" />
+                android:layout_height="32dp"
+                android:text="修改"
+                android:textSize="13sp"
+                android:textColor="#FFFFFF"
+                android:gravity="center"
+                android:paddingHorizontal="12dp"
+                android:background="@drawable/bg_role_switch_green"
+                android:visibility="gone"
+                android:clickable="true"
+                android:focusable="true" />
         </LinearLayout>
 
-        <TextView
-            android:id="@+id/tvEditStoreInfo"
-            android:layout_width="wrap_content"
-            android:layout_height="32dp"
-            android:text="修改"
-            android:textSize="13sp"
-            android:textColor="#4CAF50"
-            android:gravity="center"
-            android:paddingHorizontal="12dp"
-            android:background="@drawable/bg_circle_btn"
-            android:visibility="gone" />
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_marginTop="16dp">
+
+            <TextView
+                android:id="@+id/tvStoreSeller"
+                android:layout_width="0dp"
+                android:layout_height="28dp"
+                android:layout_weight="1"
+                android:text="卖家"
+                android:textSize="12sp"
+                android:textColor="#1F5F34"
+                android:gravity="center"
+                android:background="@drawable/bg_store_chip"
+                android:maxLines="1"
+                android:ellipsize="end" />
+
+            <TextView
+                android:id="@+id/tvStoreProductCount"
+                android:layout_width="0dp"
+                android:layout_height="28dp"
+                android:layout_weight="1"
+                android:text="商品 0 件"
+                android:textSize="12sp"
+                android:textColor="#1F5F34"
+                android:gravity="center"
+                android:background="@drawable/bg_store_chip"
+                android:layout_marginStart="8dp" />
+        </LinearLayout>
     </LinearLayout>
 
-    <!-- 销售统计（仅自己的店铺显示） -->
     <LinearLayout
         android:id="@+id/llSalesStats"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
-        android:background="#FFFFFF"
-        android:paddingHorizontal="16dp"
+        android:background="@drawable/bg_store_stats_card"
+        android:paddingHorizontal="18dp"
         android:paddingVertical="14dp"
-        android:layout_marginBottom="8dp"
+        android:layout_marginHorizontal="14dp"
+        android:layout_marginBottom="10dp"
+        android:elevation="1dp"
         android:visibility="gone">
 
         <LinearLayout
@@ -152,23 +199,23 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="0"
-                android:textSize="22sp"
+                android:textSize="21sp"
                 android:textStyle="bold"
-                android:textColor="#E53935" />
+                android:textColor="#2F7D46" />
 
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="总订单数"
                 android:textSize="11sp"
-                android:textColor="#999999"
+                android:textColor="#7B8A7E"
                 android:layout_marginTop="3dp" />
         </LinearLayout>
 
         <View
             android:layout_width="0.5dp"
             android:layout_height="40dp"
-            android:background="#EEEEEE"
+            android:background="#E3E9E1"
             android:layout_gravity="center_vertical" />
 
         <LinearLayout
@@ -183,31 +230,58 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="¥0.00"
-                android:textSize="22sp"
+                android:textSize="21sp"
                 android:textStyle="bold"
-                android:textColor="#333333" />
+                android:textColor="#D84315" />
 
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="总销售额(元)"
                 android:textSize="11sp"
-                android:textColor="#999999"
+                android:textColor="#7B8A7E"
                 android:layout_marginTop="3dp" />
         </LinearLayout>
     </LinearLayout>
 
-    <!-- 商品列表 -->
+    <LinearLayout
+        android:id="@+id/llProductSectionHeader"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:paddingHorizontal="16dp"
+        android:paddingTop="2dp"
+        android:paddingBottom="8dp">
+
+        <TextView
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="全部商品"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            android:textColor="#1F2A22" />
+
+        <TextView
+            android:id="@+id/tvProductSummary"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="0 件在售"
+            android:textSize="12sp"
+            android:textColor="#7B8A7E" />
+    </LinearLayout>
+
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/rvProducts"
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_weight="1"
         android:clipToPadding="false"
-        android:paddingBottom="16dp"
+        android:paddingHorizontal="14dp"
+        android:paddingBottom="18dp"
         android:visibility="gone" />
 
-    <!-- 空状态 -->
     <TextView
         android:id="@+id/tvEmpty"
         android:layout_width="match_parent"
@@ -216,7 +290,7 @@
         android:gravity="center"
         android:text="暂无上架商品"
         android:textSize="15sp"
-        android:textColor="#BBBBBB"
+        android:textColor="#94A097"
         android:visibility="gone" />
 
 </LinearLayout>

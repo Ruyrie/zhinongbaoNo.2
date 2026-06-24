@@ -13,6 +13,8 @@ public interface FollowListContract {
     interface Presenter extends BasePresenter {
         String getNickname(String username);
         String getAvatarUri(String username);
+        String getStoreName(String username);
+        boolean isStoreAccount(String username);
         boolean isFollowing(String username);
         void toggleFollow(String username);
     }

@@ -24,9 +24,9 @@ public class AgriCircleAdapter extends RecyclerView.Adapter<AgriCircleAdapter.Vi
     }
 
     public interface CircleInteractionDelegate {
-        int getArticleLikeCount(int articleId);
+        int getCircleLikeCount(int articleId);
         int getCommentCount(int articleId);
-        boolean isArticleLiked(int articleId);
+        boolean isCircleLiked(int articleId);
         boolean isFollowing(String author);
         int getUserRole(String username);
     }
@@ -106,8 +106,8 @@ public class AgriCircleAdapter extends RecyclerView.Adapter<AgriCircleAdapter.Vi
         }
 
         // 点赞
-        int likeCount = interactionDelegate.getArticleLikeCount(a.id);
-        boolean liked = interactionDelegate.isArticleLiked(a.id);
+        int likeCount = interactionDelegate.getCircleLikeCount(a.id);
+        boolean liked = interactionDelegate.isCircleLiked(a.id);
         h.tvLikeCount.setText(String.valueOf(likeCount));
         h.ivLikeIcon.setImageResource(liked ? R.drawable.ic_like_filled : R.drawable.ic_like_outline);
 

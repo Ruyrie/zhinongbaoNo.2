@@ -92,7 +92,8 @@ public class MessageRepository {
                     ConversationItem item = new ConversationItem();
                     item.otherUser = other;
                     item.displayName = getNickname(other);
-                    item.lastMessage = cursor.getString(2);
+                    String content = cursor.getString(2);
+                    item.lastMessage = ChatMessage.isImageContent(content) ? "[图片]" : content;
                     item.lastTimestamp = cursor.getLong(3);
                     item.unreadCount = getUnreadCount(username, other);
                     map.put(other, item);

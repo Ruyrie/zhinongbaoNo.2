@@ -90,6 +90,23 @@ public class OrderRepository {
         return queryOrders("seller=? AND status=?", new String[] { seller, status }, "id DESC");
     }
 
+    /** 已退款订单（卖家已同意退款）：refund_amount>0，与正常销售订单分开统计 */
+    public List<Order> getSellerRefundedOrders(String seller) {
+        return queryOrders("seller=? AND refund_amount>0", new String[] { seller }, "id DESC");
+    }
+
+    /** 统计卖家某一状态下的订单数量（用于红点提醒） */
+    public int getSellerOrderCountByStatus(String seller, String status) {
+        try (Cursor cursor = resolver.query(
+                ZhiNongBaoProvider.CONTENT_URI_ORDERS,
+                new String[] { "id" },
+                "seller=? AND status=?",
+                new String[] { seller, status },
+                null)) {
+            return cursor == null ? 0 : cursor.getCount();
+        }
+    }
+
     public List<Order> searchSellerSoldOrders(String seller, String keyword) {
         String query = keyword == null ? "" : keyword.trim();
         if (query.isEmpty()) {
@@ -104,7 +121,8 @@ public class OrderRepository {
 
     public List<Order> getSellerSalesOrders(String seller, String scope) {
         String dateFilter = salesDateFilter(scope);
-        String selection = "seller=? AND status=?" + dateFilter;
+        // 已退款订单（refund_amount>0）不计入正常销售订单/销售分析
+        String selection = "seller=? AND status=? AND refund_amount=0" + dateFilter;
         return queryOrders(selection, new String[] { seller, Order.STATUS_COMPLETED }, "id DESC");
     }
 

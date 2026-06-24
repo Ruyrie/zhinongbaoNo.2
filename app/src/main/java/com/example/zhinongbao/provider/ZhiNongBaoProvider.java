@@ -19,6 +19,8 @@ public class ZhiNongBaoProvider extends ContentProvider {
     public static final Uri CONTENT_URI_CART = Uri.parse("content://" + AUTHORITY + "/cart");
     public static final Uri CONTENT_URI_ORDERS = Uri.parse("content://" + AUTHORITY + "/orders");
     public static final Uri CONTENT_URI_ARTICLE_LIKES = Uri.parse("content://" + AUTHORITY + "/article_likes");
+    public static final Uri CONTENT_URI_CIRCLE_LIKES = Uri.parse("content://" + AUTHORITY + "/circle_likes");
+    public static final Uri CONTENT_URI_CIRCLE_FAVORITES = Uri.parse("content://" + AUTHORITY + "/circle_favorites");
     public static final Uri CONTENT_URI_PRODUCT_FAVORITES = Uri.parse("content://" + AUTHORITY + "/product_favorites");
     public static final Uri CONTENT_URI_PRODUCT_FOOTPRINTS = Uri.parse("content://" + AUTHORITY + "/product_footprints");
     public static final Uri CONTENT_URI_STORE_FOOTPRINTS = Uri.parse("content://" + AUTHORITY + "/store_footprints");
@@ -48,6 +50,8 @@ public class ZhiNongBaoProvider extends ContentProvider {
     private static final int PURCHASE_REQUESTS = 15;
     private static final int PURCHASE_QUOTES = 16;
     private static final int ADDRESSES = 17;
+    private static final int CIRCLE_LIKES = 18;
+    private static final int CIRCLE_FAVORITES = 19;
 
     private static final UriMatcher uriMatcher = new UriMatcher(UriMatcher.NO_MATCH);
 
@@ -58,6 +62,8 @@ public class ZhiNongBaoProvider extends ContentProvider {
         uriMatcher.addURI(AUTHORITY, "cart", CART);
         uriMatcher.addURI(AUTHORITY, "orders", ORDERS);
         uriMatcher.addURI(AUTHORITY, "article_likes", ARTICLE_LIKES);
+        uriMatcher.addURI(AUTHORITY, "circle_likes", CIRCLE_LIKES);
+        uriMatcher.addURI(AUTHORITY, "circle_favorites", CIRCLE_FAVORITES);
         uriMatcher.addURI(AUTHORITY, "product_favorites", PRODUCT_FAVORITES);
         uriMatcher.addURI(AUTHORITY, "product_footprints", PRODUCT_FOOTPRINTS);
         uriMatcher.addURI(AUTHORITY, "store_footprints", STORE_FOOTPRINTS);
@@ -144,6 +150,10 @@ public class ZhiNongBaoProvider extends ContentProvider {
                 return "orders";
             case ARTICLE_LIKES:
                 return "article_likes";
+            case CIRCLE_LIKES:
+                return "circle_likes";
+            case CIRCLE_FAVORITES:
+                return "circle_favorites";
             case PRODUCT_FAVORITES:
                 return "product_favorites";
             case PRODUCT_FOOTPRINTS:

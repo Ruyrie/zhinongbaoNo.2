@@ -65,6 +65,8 @@ public class SellerMineFragment extends BaseMvpFragment<SellerMineContract.Prese
         loadAssetImage(view.findViewById(R.id.ivSellerOrderAfterSale), "tuikuanshouhou.png");
 
         view.findViewById(R.id.btnGoShopping).setOnClickListener(v -> presenter.switchToBuyer());
+        view.findViewById(R.id.tvSellerShopName).setOnClickListener(
+                v -> startActivity(new Intent(getContext(), SellerStoreActivity.class)));
         view.findViewById(R.id.layoutSellerProfile).setOnClickListener(
                 v -> startActivity(new Intent(getContext(), ProfileEditActivity.class)));
         view.findViewById(R.id.quickMyProducts).setOnClickListener(
@@ -129,6 +131,26 @@ public class SellerMineFragment extends BaseMvpFragment<SellerMineContract.Prese
                 .setText(String.format(java.util.Locale.getDefault(), "%.2f", monthRevenue));
         ((TextView) view.findViewById(R.id.tvTotalSales))
                 .setText(String.format(java.util.Locale.getDefault(), "%.2f", totalRevenue));
+    }
+
+    @Override
+    public void renderOrderBadges(int pendingCount, int paidCount, int shippedCount, int refundCount) {
+        View view = getView();
+        if (view == null) return;
+        bindBadge(view.findViewById(R.id.badgeSellerOrderPending), pendingCount);
+        bindBadge(view.findViewById(R.id.badgeSellerOrderShipping), paidCount);
+        bindBadge(view.findViewById(R.id.badgeSellerOrderSent), shippedCount);
+        bindBadge(view.findViewById(R.id.badgeSellerOrderAfterSale), refundCount);
+    }
+
+    private void bindBadge(TextView badge, int count) {
+        if (badge == null) return;
+        if (count <= 0) {
+            badge.setVisibility(View.GONE);
+        } else {
+            badge.setText(count > 99 ? "99+" : String.valueOf(count));
+            badge.setVisibility(View.VISIBLE);
+        }
     }
 
     @Override

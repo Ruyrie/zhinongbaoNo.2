@@ -12,9 +12,15 @@ import java.util.List;
 public class ProductImageAdapter extends RecyclerView.Adapter<ProductImageAdapter.ImageViewHolder> {
 
     private List<Object> imageList; // 可以是 Integer (资源 ID) 或 String (Uri)
+    private final ImageView.ScaleType scaleType;
 
     public ProductImageAdapter(List<Object> imageList) {
+        this(imageList, ImageView.ScaleType.CENTER_CROP);
+    }
+
+    public ProductImageAdapter(List<Object> imageList, ImageView.ScaleType scaleType) {
         this.imageList = imageList;
+        this.scaleType = scaleType;
     }
 
     public void setImageList(List<Object> imageList) {
@@ -29,7 +35,7 @@ public class ProductImageAdapter extends RecyclerView.Adapter<ProductImageAdapte
         imageView.setLayoutParams(new ViewGroup.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT,
                 ViewGroup.LayoutParams.MATCH_PARENT));
-        imageView.setScaleType(ImageView.ScaleType.CENTER_CROP);
+        imageView.setScaleType(scaleType);
         return new ImageViewHolder(imageView);
     }
 

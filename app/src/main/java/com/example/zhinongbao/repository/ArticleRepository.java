@@ -26,6 +26,7 @@ public class ArticleRepository {
     public ArticleRepository(Context context) {
         this.context = context.getApplicationContext();
         this.resolver = this.context.getContentResolver();
+        migrateCircleLikesFromArticleLikes();
     }
 
     public String getLoggedUser() {
@@ -129,6 +130,12 @@ public class ArticleRepository {
                 "id=?", new String[] { String.valueOf(articleId) });
         resolver.delete(ZhiNongBaoProvider.CONTENT_URI_COMMENTS,
                 "article_id=?", new String[] { String.valueOf(articleId) });
+        resolver.delete(ZhiNongBaoProvider.CONTENT_URI_ARTICLE_LIKES,
+                "article_id=?", new String[] { String.valueOf(articleId) });
+        resolver.delete(ZhiNongBaoProvider.CONTENT_URI_CIRCLE_LIKES,
+                "article_id=?", new String[] { String.valueOf(articleId) });
+        resolver.delete(ZhiNongBaoProvider.CONTENT_URI_CIRCLE_FAVORITES,
+                "article_id=?", new String[] { String.valueOf(articleId) });
     }
 
     public List<Article> getLikedArticles(String username) {
@@ -140,7 +147,12 @@ public class ArticleRepository {
                 new String[] { username },
                 "id DESC")) {
             while (likes != null && likes.moveToNext()) {
-                articles.add(getArticleOrDeleted(likes.getInt(0)));
+                Article article = getArticleOrDeleted(likes.getInt(0));
+                // 农友圈动态的点赞不计入「文章收藏」，仅展示资讯文章
+                if (!article.isDeleted && "农友圈".equals(article.category)) {
+                    continue;
+                }
+                articles.add(article);
             }
         }
         return articles;
@@ -186,6 +198,101 @@ public class ArticleRepository {
         return count(ZhiNongBaoProvider.CONTENT_URI_ARTICLE_LIKES,
                 "article_id=?",
                 new String[] { String.valueOf(articleId) });
+    }
+
+    public void likeCirclePost(String username, int articleId) {
+        if (username == null || username.isEmpty() || !isCirclePost(articleId)
+                || isCirclePostLiked(username, articleId)) {
+            return;
+        }
+        ContentValues values = new ContentValues();
+        values.put("username", username);
+        values.put("article_id", articleId);
+        resolver.insert(ZhiNongBaoProvider.CONTENT_URI_CIRCLE_LIKES, values);
+    }
+
+    public void unlikeCirclePost(String username, int articleId) {
+        if (username == null || username.isEmpty()) {
+            return;
+        }
+        resolver.delete(ZhiNongBaoProvider.CONTENT_URI_CIRCLE_LIKES,
+                "username=? AND article_id=?",
+                new String[] { username, String.valueOf(articleId) });
+    }
+
+    public boolean isCirclePostLiked(String username, int articleId) {
+        if (username == null || username.isEmpty()) {
+            return false;
+        }
+        try (Cursor cursor = resolver.query(
+                ZhiNongBaoProvider.CONTENT_URI_CIRCLE_LIKES,
+                new String[] { "id" },
+                "username=? AND article_id=?",
+                new String[] { username, String.valueOf(articleId) },
+                null)) {
+            return cursor != null && cursor.moveToFirst();
+        }
+    }
+
+    public int getCirclePostLikeCount(int articleId) {
+        return count(ZhiNongBaoProvider.CONTENT_URI_CIRCLE_LIKES,
+                "article_id=?",
+                new String[] { String.valueOf(articleId) });
+    }
+
+    public void favoriteCirclePost(String username, int articleId) {
+        if (username == null || username.isEmpty() || !isCirclePost(articleId)
+                || isCirclePostFavorited(username, articleId)) {
+            return;
+        }
+        ContentValues values = new ContentValues();
+        values.put("username", username);
+        values.put("article_id", articleId);
+        resolver.insert(ZhiNongBaoProvider.CONTENT_URI_CIRCLE_FAVORITES, values);
+    }
+
+    public void unfavoriteCirclePost(String username, int articleId) {
+        if (username == null || username.isEmpty()) {
+            return;
+        }
+        resolver.delete(ZhiNongBaoProvider.CONTENT_URI_CIRCLE_FAVORITES,
+                "username=? AND article_id=?",
+                new String[] { username, String.valueOf(articleId) });
+    }
+
+    public boolean isCirclePostFavorited(String username, int articleId) {
+        if (username == null || username.isEmpty()) {
+            return false;
+        }
+        try (Cursor cursor = resolver.query(
+                ZhiNongBaoProvider.CONTENT_URI_CIRCLE_FAVORITES,
+                new String[] { "id" },
+                "username=? AND article_id=?",
+                new String[] { username, String.valueOf(articleId) },
+                null)) {
+            return cursor != null && cursor.moveToFirst();
+        }
+    }
+
+    public List<Article> getFavoriteCirclePosts(String username) {
+        List<Article> articles = new ArrayList<>();
+        if (username == null || username.isEmpty()) {
+            return articles;
+        }
+        try (Cursor favorites = resolver.query(
+                ZhiNongBaoProvider.CONTENT_URI_CIRCLE_FAVORITES,
+                new String[] { "article_id" },
+                "username=?",
+                new String[] { username },
+                "id DESC")) {
+            while (favorites != null && favorites.moveToNext()) {
+                Article article = getArticleOrDeleted(favorites.getInt(0));
+                if (!article.isDeleted && "农友圈".equals(article.category)) {
+                    articles.add(article);
+                }
+            }
+        }
+        return articles;
     }
 
     public int getCommentCount(int articleId) {
@@ -352,7 +459,9 @@ public class ArticleRepository {
     public int getTotalLikesReceived(String username) {
         int total = 0;
         for (Article article : getArticlesByAuthor(username)) {
-            total += getArticleLikeCount(article.id);
+            total += "农友圈".equals(article.category)
+                    ? getCirclePostLikeCount(article.id)
+                    : getArticleLikeCount(article.id);
         }
         return total;
     }
@@ -450,6 +559,34 @@ public class ArticleRepository {
                 new String[] { String.valueOf(articleId) },
                 null)) {
             return cursor != null && cursor.moveToFirst();
+        }
+    }
+
+    private boolean isCirclePost(int articleId) {
+        Article article = getArticleById(articleId);
+        return article != null && "农友圈".equals(article.category);
+    }
+
+    private void migrateCircleLikesFromArticleLikes() {
+        try (Cursor likes = resolver.query(
+                ZhiNongBaoProvider.CONTENT_URI_ARTICLE_LIKES,
+                new String[] { "username", "article_id" },
+                "article_id IN (SELECT id FROM articles WHERE category=?)",
+                new String[] { "农友圈" },
+                null)) {
+            while (likes != null && likes.moveToNext()) {
+                ContentValues values = new ContentValues();
+                values.put("username", likes.getString(0));
+                values.put("article_id", likes.getInt(1));
+                resolver.insert(ZhiNongBaoProvider.CONTENT_URI_CIRCLE_LIKES, values);
+            }
+        } catch (Exception ignored) {
+        }
+        try {
+            resolver.delete(ZhiNongBaoProvider.CONTENT_URI_ARTICLE_LIKES,
+                    "article_id IN (SELECT id FROM articles WHERE category=?)",
+                    new String[] { "农友圈" });
+        } catch (Exception ignored) {
         }
     }
 

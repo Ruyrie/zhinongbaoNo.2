@@ -219,8 +219,8 @@ public class AgriCircleFragment extends BaseMvpFragment<AgriCircleContract.Prese
     private AgriCircleAdapter.CircleInteractionDelegate circleDelegate() {
         return new AgriCircleAdapter.CircleInteractionDelegate() {
             @Override
-            public int getArticleLikeCount(int articleId) {
-                return presenter.getArticleLikeCount(articleId);
+            public int getCircleLikeCount(int articleId) {
+                return presenter.getCircleLikeCount(articleId);
             }
 
             @Override
@@ -229,8 +229,8 @@ public class AgriCircleFragment extends BaseMvpFragment<AgriCircleContract.Prese
             }
 
             @Override
-            public boolean isArticleLiked(int articleId) {
-                return presenter.isArticleLiked(articleId);
+            public boolean isCircleLiked(int articleId) {
+                return presenter.isCircleLiked(articleId);
             }
 
             @Override
@@ -256,7 +256,10 @@ public class AgriCircleFragment extends BaseMvpFragment<AgriCircleContract.Prese
 
             @Override
             public void onLikeClick(Article article, int position) {
-                presenter.toggleArticleLike(article.id);
+                if (position < 0) {
+                    return;
+                }
+                presenter.toggleCircleLike(article.id);
                 adapter.notifyItemChanged(position);
             }
 
@@ -277,6 +280,9 @@ public class AgriCircleFragment extends BaseMvpFragment<AgriCircleContract.Prese
 
             @Override
             public void onFollow(Article article, int position) {
+                if (position < 0) {
+                    return;
+                }
                 presenter.followUser(article.author);
                 adapter.notifyItemChanged(position);
             }

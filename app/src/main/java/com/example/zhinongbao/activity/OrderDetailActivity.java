@@ -340,12 +340,10 @@ public class OrderDetailActivity extends BaseMvpActivity<OrderDetailContract.Pre
 
     @Override
     public void showRefundDialog() {
-        DialogUtils.showTextInput(this, "申请退款",
-                "退款申请提交后，卖家 24 小时内未处理将自动退款。",
-                "请输入退款原因", "取消", "提交申请", false, reason -> {
-                    presenter.requestRefund(reason);
-                    return true;
-                });
+        DialogUtils.showRefundReason(this, reason -> {
+            presenter.requestRefund(reason);
+            return true;
+        });
     }
 
     @Override

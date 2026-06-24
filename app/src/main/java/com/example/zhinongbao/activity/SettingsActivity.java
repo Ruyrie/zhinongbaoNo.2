@@ -39,6 +39,9 @@ public class SettingsActivity extends BaseMvpActivity<SettingsContract.Presenter
 
         findViewById(R.id.tvAddProduct)
                 .setOnClickListener(v -> startActivity(new Intent(this, AddProductActivity.class)));
+
+        findViewById(R.id.tvAboutUs)
+                .setOnClickListener(v -> startActivity(new Intent(this, AboutUsActivity.class)));
     }
 
     private void confirmLogout() {

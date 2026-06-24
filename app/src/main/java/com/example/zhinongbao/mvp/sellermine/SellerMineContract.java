@@ -10,6 +10,7 @@ public interface SellerMineContract {
     interface View extends BaseView<Presenter> {
         void renderSeller(String username, String storeName, String nickname, String avatarUri,
                 double todayRevenue, double monthRevenue, double totalRevenue);
+        void renderOrderBadges(int pendingCount, int paidCount, int shippedCount, int refundCount);
         void renderNews(List<Article> articles);
         void restartMain();
     }

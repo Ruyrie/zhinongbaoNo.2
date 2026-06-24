@@ -55,6 +55,7 @@
 
     <!-- Input bar -->
     <LinearLayout
+        android:id="@+id/llChatInputBar"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
@@ -78,6 +79,18 @@
             android:imeOptions="actionSend"
             android:layout_marginEnd="8dp" />
 
+        <TextView
+            android:id="@+id/btnChatMore"
+            android:layout_width="38dp"
+            android:layout_height="38dp"
+            android:background="@drawable/bg_chat_more_button"
+            android:gravity="center"
+            android:text="+"
+            android:textColor="#333333"
+            android:textSize="28sp"
+            android:clickable="true"
+            android:focusable="true" />
+
         <Button
             android:id="@+id/btnChatSend"
             android:layout_width="wrap_content"
@@ -86,6 +99,75 @@
             android:textSize="14sp"
             android:textColor="@color/white"
             android:backgroundTint="#4CAF50"
-            android:paddingHorizontal="16dp" />
+            android:paddingHorizontal="16dp"
+            android:visibility="gone" />
+    </LinearLayout>
+
+    <LinearLayout
+        android:id="@+id/llChatMorePanel"
+        android:layout_width="match_parent"
+        android:layout_height="104dp"
+        android:background="@color/white"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:paddingHorizontal="18dp"
+        android:paddingTop="8dp"
+        android:paddingBottom="16dp"
+        android:visibility="gone">
+
+        <LinearLayout
+            android:id="@+id/btnChatCamera"
+            android:layout_width="72dp"
+            android:layout_height="match_parent"
+            android:gravity="center"
+            android:orientation="vertical"
+            android:clickable="true"
+            android:focusable="true"
+            android:background="?android:attr/selectableItemBackground">
+
+            <ImageView
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                android:background="@drawable/bg_chat_more_tile"
+                android:padding="12dp"
+                android:src="@drawable/ic_chat_camera"
+                android:scaleType="centerInside" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="6dp"
+                android:text="拍照"
+                android:textColor="#333333"
+                android:textSize="12sp" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/btnChatAlbum"
+            android:layout_width="72dp"
+            android:layout_height="match_parent"
+            android:layout_marginStart="14dp"
+            android:gravity="center"
+            android:orientation="vertical"
+            android:clickable="true"
+            android:focusable="true"
+            android:background="?android:attr/selectableItemBackground">
+
+            <ImageView
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                android:background="@drawable/bg_chat_more_tile"
+                android:padding="12dp"
+                android:src="@drawable/ic_chat_photo"
+                android:scaleType="centerInside" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="6dp"
+                android:text="照片"
+                android:textColor="#333333"
+                android:textSize="12sp" />
+        </LinearLayout>
     </LinearLayout>
 </LinearLayout>

@@ -296,31 +296,65 @@ public class SellerOrdersActivity extends BaseMvpActivity<SellerOrdersContract.P
     @Override
     public void showRefundDialog(Order o) {
         View v = LayoutInflater.from(this).inflate(R.layout.dialog_partial_refund, null);
+        TextView tvProduct = v.findViewById(R.id.tvRefundProduct);
+        TextView tvOrderNo = v.findViewById(R.id.tvRefundOrderNo);
         TextView tvInfo = v.findViewById(R.id.tvRefundOrderInfo);
+        TextView tvReason = v.findViewById(R.id.tvRefundReasonText);
+        TextView tvCountdown = v.findViewById(R.id.tvRefundCountdown);
+        TextView tvHint = v.findViewById(R.id.tvRefundAmountHint);
         EditText etAmt = v.findViewById(R.id.etRefundAmount);
-        EditText etReason = v.findViewById(R.id.etRefundReason);
 
         double u = o.unitPrice > 0 ? o.unitPrice : o.price;
-        double total = u * o.quantity - o.discount;
-        tvInfo.setText(String.format("订单实付: ¥%.2f", total));
+        final double paid = Math.max(0, u * o.quantity - o.discount);
 
-        etAmt.setText(String.valueOf(o.refundAmount > 0 ? o.refundAmount : total));
-        etReason.setText(o.refundReason);
+        tvProduct.setText(o.name + "  x" + o.quantity);
+        tvOrderNo.setText("订单号：" + o.orderId);
+        tvInfo.setText(String.format(java.util.Locale.getDefault(), "¥%.2f", paid));
+        tvReason.setText(o.refundReason == null || o.refundReason.trim().isEmpty()
+                ? "买家申请退款" : o.refundReason);
+        tvHint.setText(String.format(java.util.Locale.getDefault(),
+                "可退金额范围：¥0.00 ~ ¥%.2f", paid));
+        etAmt.setText(String.format(java.util.Locale.getDefault(), "%.2f",
+                o.refundAmount > 0 ? o.refundAmount : paid));
 
-        new AlertDialog.Builder(this)
-                .setTitle("处理售后/退款")
-                .setView(v)
-                .setPositiveButton("同意退款", (d, w) -> {
-                    try {
-                        double amt = Double.parseDouble(etAmt.getText().toString());
-                        presenter.processRefund(o, amt, etReason.getText().toString(), true);
-                    } catch (Exception e) {
-                    }
-                })
-                .setNeutralButton("拒绝退款", (d, w) -> {
-                    presenter.processRefund(o, 0, etReason.getText().toString(), false);
-                })
-                .setNegativeButton("取消", null)
-                .show();
+        // 处理倒计时（买家申请后 24 小时未处理自动退款）
+        if (o.refundRequestedAt > 0) {
+            long remaining = o.refundRequestedAt + 24L * 60 * 60 * 1000 - System.currentTimeMillis();
+            if (remaining > 0) {
+                long h = remaining / 3600000;
+                long m = (remaining % 3600000) / 60000;
+                tvCountdown.setText(String.format(java.util.Locale.getDefault(),
+                        "剩余处理时间 %02d:%02d，超时将自动退款", h, m));
+                tvCountdown.setVisibility(View.VISIBLE);
+            }
+        }
+
+        AlertDialog dialog = new AlertDialog.Builder(this).setView(v).create();
+        if (dialog.getWindow() != null) {
+            dialog.getWindow().setBackgroundDrawableResource(android.R.color.transparent);
+        }
+
+        v.findViewById(R.id.btnRefundCancel).setOnClickListener(view -> dialog.dismiss());
+        v.findViewById(R.id.btnRefundReject).setOnClickListener(view -> {
+            presenter.processRefund(o, 0, o.refundReason, false);
+            dialog.dismiss();
+        });
+        v.findViewById(R.id.btnRefundApprove).setOnClickListener(view -> {
+            double amt;
+            try {
+                amt = Double.parseDouble(etAmt.getText().toString().trim());
+            } catch (Exception e) {
+                etAmt.setError("请输入有效的退款金额");
+                return;
+            }
+            if (amt <= 0 || amt > paid) {
+                etAmt.setError(String.format(java.util.Locale.getDefault(),
+                        "退款金额需在 0 ~ %.2f 之间", paid));
+                return;
+            }
+            presenter.processRefund(o, amt, o.refundReason, true);
+            dialog.dismiss();
+        });
+        dialog.show();
     }
 }

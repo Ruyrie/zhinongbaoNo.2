@@ -46,7 +46,13 @@ public class ArticleDetailPresenter implements ArticleDetailContract.Presenter {
 
     @Override
     public void refreshLikeState() {
-        view.showLikeState(repository.isArticleLiked(currentUser, articleId), repository.getArticleLikeCount(articleId));
+        if (isCircleArticle()) {
+            view.showLikeState(repository.isCirclePostLiked(currentUser, articleId),
+                    repository.getCirclePostLikeCount(articleId));
+        } else {
+            view.showLikeState(repository.isArticleLiked(currentUser, articleId),
+                    repository.getArticleLikeCount(articleId));
+        }
     }
 
     @Override
@@ -79,7 +85,13 @@ public class ArticleDetailPresenter implements ArticleDetailContract.Presenter {
             view.showToast("请先登录");
             return;
         }
-        if (repository.isArticleLiked(currentUser, articleId)) {
+        if (isCircleArticle()) {
+            if (repository.isCirclePostLiked(currentUser, articleId)) {
+                repository.unlikeCirclePost(currentUser, articleId);
+            } else {
+                repository.likeCirclePost(currentUser, articleId);
+            }
+        } else if (repository.isArticleLiked(currentUser, articleId)) {
             repository.unlikeArticle(currentUser, articleId);
         } else {
             repository.likeArticle(currentUser, articleId);
@@ -114,5 +126,12 @@ public class ArticleDetailPresenter implements ArticleDetailContract.Presenter {
     @Override
     public void unlikeComment(int commentId) {
         repository.unlikeComment(currentUser, commentId);
+    }
+
+    private boolean isCircleArticle() {
+        if (article == null) {
+            article = repository.getArticleById(articleId);
+        }
+        return article != null && "农友圈".equals(article.category);
     }
 }

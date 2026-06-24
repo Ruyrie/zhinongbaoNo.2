@@ -17,6 +17,7 @@ import com.example.zhinongbao.activity.FollowListActivity;
 import com.example.zhinongbao.activity.FootprintActivity;
 import com.example.zhinongbao.activity.MainActivity;
 import com.example.zhinongbao.activity.MyArticlesActivity;
+import com.example.zhinongbao.activity.MyCirclePostsActivity;
 import com.example.zhinongbao.activity.MyFavoritesActivity;
 import com.example.zhinongbao.activity.MyOrdersActivity;
 import com.example.zhinongbao.activity.ProductFavoritesActivity;
@@ -74,11 +75,16 @@ public class MineFragment extends BaseMvpFragment<MineContract.Presenter> implem
                 view.findViewById(R.id.orderShipping).setOnClickListener(v -> openOrders("shipping"));
                 view.findViewById(R.id.orderReceiving).setOnClickListener(v -> openOrders("receiving"));
                 view.findViewById(R.id.orderReviewing).setOnClickListener(v -> openOrders("reviewing"));
-                view.findViewById(R.id.orderRefund).setOnClickListener(v -> openOrders("refundable"));
+                view.findViewById(R.id.orderRefund).setOnClickListener(v -> openOrders("refund"));
                 view.findViewById(R.id.tvMyArticles).setOnClickListener(
                                 v -> startActivity(new Intent(getContext(), MyArticlesActivity.class)));
                 view.findViewById(R.id.tvMyFavorites).setOnClickListener(
                                 v -> startActivity(new Intent(getContext(), MyFavoritesActivity.class)));
+                view.findViewById(R.id.tvCircleFavorites).setOnClickListener(v -> {
+                        Intent intent = new Intent(getContext(), MyCirclePostsActivity.class);
+                        intent.putExtra("circle_favorites", true);
+                        startActivity(intent);
+                });
                 view.findViewById(R.id.tvSettings).setOnClickListener(
                                 v -> startActivity(new Intent(getContext(), SettingsActivity.class)));
         }
@@ -157,6 +163,20 @@ public class MineFragment extends BaseMvpFragment<MineContract.Presenter> implem
         }
 
         @Override
+        public void renderOrderBadges(int pendingCount, int paidCount, int shippedCount,
+                        int reviewingCount, int refundCount) {
+                View view = getView();
+                if (view == null)
+                        return;
+
+                bindBadge(view.findViewById(R.id.badgeOrderPending), pendingCount);
+                bindBadge(view.findViewById(R.id.badgeOrderShipping), paidCount);
+                bindBadge(view.findViewById(R.id.badgeOrderReceiving), shippedCount);
+                bindBadge(view.findViewById(R.id.badgeOrderReviewing), reviewingCount);
+                bindBadge(view.findViewById(R.id.badgeOrderRefund), refundCount);
+        }
+
+        @Override
         public void restartMain() {
                 Intent intent = new Intent(requireContext(), MainActivity.class);
                 intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK | Intent.FLAG_ACTIVITY_NEW_TASK);
@@ -167,6 +187,18 @@ public class MineFragment extends BaseMvpFragment<MineContract.Presenter> implem
                 Intent i = new Intent(getContext(), MyOrdersActivity.class);
                 i.putExtra("filter", filter);
                 startActivity(i);
+        }
+
+        private void bindBadge(TextView badge, int count) {
+                if (badge == null) {
+                        return;
+                }
+                if (count <= 0) {
+                        badge.setVisibility(View.GONE);
+                } else {
+                        badge.setText(count > 99 ? "99+" : String.valueOf(count));
+                        badge.setVisibility(View.VISIBLE);
+                }
         }
 
         private void loadAssetImage(ImageView iv, String filename) {

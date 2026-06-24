@@ -7,6 +7,8 @@ public interface MineContract {
     interface View extends BaseView<Presenter> {
         void renderUser(String username, String nickname, String signature, String avatarUri,
                 int followers, int following, int likes, boolean sellerActive, boolean canSwitchSeller);
+        void renderOrderBadges(int pendingCount, int paidCount, int shippedCount,
+                int reviewingCount, int refundCount);
         void restartMain();
     }
 

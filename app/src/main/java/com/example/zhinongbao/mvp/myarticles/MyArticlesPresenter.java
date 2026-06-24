@@ -8,11 +8,17 @@ public class MyArticlesPresenter implements MyArticlesContract.Presenter {
     private final MyArticlesContract.View view;
     private final ArticleRepository repository;
     private final String currentUser;
+    private final String targetAuthor;
 
     public MyArticlesPresenter(Context context, MyArticlesContract.View view) {
+        this(context, view, null);
+    }
+
+    public MyArticlesPresenter(Context context, MyArticlesContract.View view, String targetAuthor) {
         this.view = view;
         this.repository = new ArticleRepository(context.getApplicationContext());
         this.currentUser = repository.getLoggedUser();
+        this.targetAuthor = targetAuthor == null || targetAuthor.isEmpty() ? this.currentUser : targetAuthor;
         this.view.setPresenter(this);
     }
 
@@ -23,7 +29,7 @@ public class MyArticlesPresenter implements MyArticlesContract.Presenter {
 
     @Override
     public void refresh() {
-        view.showArticles(repository.getArticlesByAuthor(currentUser), currentUser);
+        view.showArticles(repository.getArticlesByAuthor(targetAuthor), currentUser);
     }
 
     @Override

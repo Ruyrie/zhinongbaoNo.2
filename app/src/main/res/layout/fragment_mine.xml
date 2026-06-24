@@ -5,7 +5,7 @@
     android:layout_height="match_parent"
     android:background="#F0F2F5"
     android:clipToPadding="false"
-    android:paddingBottom="90dp">
+    android:paddingBottom="128dp">
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -31,8 +31,8 @@
                     android:layout_height="wrap_content"
                     android:orientation="vertical"
                     android:paddingHorizontal="24dp"
-                    android:paddingTop="32dp"
-                    android:paddingBottom="16dp"
+                    android:paddingTop="24dp"
+                    android:paddingBottom="12dp"
                     android:foreground="?attr/selectableItemBackground">
 
                     <LinearLayout
@@ -42,9 +42,9 @@
                         android:gravity="center_vertical">
 
                         <com.google.android.material.card.MaterialCardView
-                            android:layout_width="80dp"
-                            android:layout_height="80dp"
-                            app:cardCornerRadius="40dp"
+                            android:layout_width="72dp"
+                            android:layout_height="72dp"
+                            app:cardCornerRadius="36dp"
                             app:cardElevation="0dp"
                             app:strokeWidth="0dp">
 
@@ -135,7 +135,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="horizontal"
-                android:paddingVertical="18dp">
+                android:paddingVertical="14dp">
 
                 <LinearLayout
                     android:id="@+id/quickCart"
@@ -233,8 +233,8 @@
                 android:layout_height="wrap_content"
                 android:orientation="vertical"
                 android:paddingHorizontal="16dp"
-                android:paddingTop="16dp"
-                android:paddingBottom="20dp">
+                android:paddingTop="14dp"
+                android:paddingBottom="16dp">
 
                 <!-- Header row -->
                 <LinearLayout
@@ -268,7 +268,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:orientation="horizontal"
-                    android:layout_marginTop="16dp">
+                    android:layout_marginTop="14dp">
 
                     <LinearLayout
                         android:id="@+id/orderPending"
@@ -278,11 +278,34 @@
                         android:orientation="vertical"
                         android:gravity="center"
                         android:foreground="?attr/selectableItemBackgroundBorderless">
-                        <ImageView
-                            android:id="@+id/ivOrderPending"
-                            android:layout_width="28dp"
-                            android:layout_height="28dp"
-                            android:scaleType="fitCenter" />
+                        <FrameLayout
+                            android:layout_width="34dp"
+                            android:layout_height="30dp">
+
+                            <ImageView
+                                android:id="@+id/ivOrderPending"
+                                android:layout_width="28dp"
+                                android:layout_height="28dp"
+                                android:layout_gravity="center"
+                                android:scaleType="fitCenter" />
+
+                            <TextView
+                                android:id="@+id/badgeOrderPending"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_gravity="top|end"
+                                android:minWidth="18dp"
+                                android:minHeight="18dp"
+                                android:gravity="center"
+                                android:paddingHorizontal="5dp"
+                                android:background="@drawable/bg_count_badge"
+                                android:text="0"
+                                android:textColor="#FFFFFF"
+                                android:textSize="10sp"
+                                android:textStyle="bold"
+                                android:includeFontPadding="false"
+                                android:visibility="gone" />
+                        </FrameLayout>
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
@@ -300,11 +323,34 @@
                         android:orientation="vertical"
                         android:gravity="center"
                         android:foreground="?attr/selectableItemBackgroundBorderless">
-                        <ImageView
-                            android:id="@+id/ivOrderShipping"
-                            android:layout_width="28dp"
-                            android:layout_height="28dp"
-                            android:scaleType="fitCenter" />
+                        <FrameLayout
+                            android:layout_width="34dp"
+                            android:layout_height="30dp">
+
+                            <ImageView
+                                android:id="@+id/ivOrderShipping"
+                                android:layout_width="28dp"
+                                android:layout_height="28dp"
+                                android:layout_gravity="center"
+                                android:scaleType="fitCenter" />
+
+                            <TextView
+                                android:id="@+id/badgeOrderShipping"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_gravity="top|end"
+                                android:minWidth="18dp"
+                                android:minHeight="18dp"
+                                android:gravity="center"
+                                android:paddingHorizontal="5dp"
+                                android:background="@drawable/bg_count_badge"
+                                android:text="0"
+                                android:textColor="#FFFFFF"
+                                android:textSize="10sp"
+                                android:textStyle="bold"
+                                android:includeFontPadding="false"
+                                android:visibility="gone" />
+                        </FrameLayout>
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
@@ -322,11 +368,34 @@
                         android:orientation="vertical"
                         android:gravity="center"
                         android:foreground="?attr/selectableItemBackgroundBorderless">
-                        <ImageView
-                            android:id="@+id/ivOrderReceiving"
-                            android:layout_width="28dp"
-                            android:layout_height="28dp"
-                            android:scaleType="fitCenter" />
+                        <FrameLayout
+                            android:layout_width="34dp"
+                            android:layout_height="30dp">
+
+                            <ImageView
+                                android:id="@+id/ivOrderReceiving"
+                                android:layout_width="28dp"
+                                android:layout_height="28dp"
+                                android:layout_gravity="center"
+                                android:scaleType="fitCenter" />
+
+                            <TextView
+                                android:id="@+id/badgeOrderReceiving"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_gravity="top|end"
+                                android:minWidth="18dp"
+                                android:minHeight="18dp"
+                                android:gravity="center"
+                                android:paddingHorizontal="5dp"
+                                android:background="@drawable/bg_count_badge"
+                                android:text="0"
+                                android:textColor="#FFFFFF"
+                                android:textSize="10sp"
+                                android:textStyle="bold"
+                                android:includeFontPadding="false"
+                                android:visibility="gone" />
+                        </FrameLayout>
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
@@ -344,11 +413,34 @@
                         android:orientation="vertical"
                         android:gravity="center"
                         android:foreground="?attr/selectableItemBackgroundBorderless">
-                        <ImageView
-                            android:id="@+id/ivOrderReviewing"
-                            android:layout_width="28dp"
-                            android:layout_height="28dp"
-                            android:scaleType="fitCenter" />
+                        <FrameLayout
+                            android:layout_width="34dp"
+                            android:layout_height="30dp">
+
+                            <ImageView
+                                android:id="@+id/ivOrderReviewing"
+                                android:layout_width="28dp"
+                                android:layout_height="28dp"
+                                android:layout_gravity="center"
+                                android:scaleType="fitCenter" />
+
+                            <TextView
+                                android:id="@+id/badgeOrderReviewing"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_gravity="top|end"
+                                android:minWidth="18dp"
+                                android:minHeight="18dp"
+                                android:gravity="center"
+                                android:paddingHorizontal="5dp"
+                                android:background="@drawable/bg_count_badge"
+                                android:text="0"
+                                android:textColor="#FFFFFF"
+                                android:textSize="10sp"
+                                android:textStyle="bold"
+                                android:includeFontPadding="false"
+                                android:visibility="gone" />
+                        </FrameLayout>
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
@@ -366,11 +458,34 @@
                         android:orientation="vertical"
                         android:gravity="center"
                         android:foreground="?attr/selectableItemBackgroundBorderless">
-                        <ImageView
-                            android:id="@+id/ivOrderRefund"
-                            android:layout_width="28dp"
-                            android:layout_height="28dp"
-                            android:scaleType="fitCenter" />
+                        <FrameLayout
+                            android:layout_width="34dp"
+                            android:layout_height="30dp">
+
+                            <ImageView
+                                android:id="@+id/ivOrderRefund"
+                                android:layout_width="28dp"
+                                android:layout_height="28dp"
+                                android:layout_gravity="center"
+                                android:scaleType="fitCenter" />
+
+                            <TextView
+                                android:id="@+id/badgeOrderRefund"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_gravity="top|end"
+                                android:minWidth="18dp"
+                                android:minHeight="18dp"
+                                android:gravity="center"
+                                android:paddingHorizontal="5dp"
+                                android:background="@drawable/bg_count_badge"
+                                android:text="0"
+                                android:textColor="#FFFFFF"
+                                android:textSize="10sp"
+                                android:textStyle="bold"
+                                android:includeFontPadding="false"
+                                android:visibility="gone" />
+                        </FrameLayout>
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
@@ -398,7 +513,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="horizontal"
-                android:paddingVertical="18dp">
+                android:paddingVertical="14dp">
 
                 <LinearLayout
                     android:id="@+id/statFollowers"
@@ -494,7 +609,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginHorizontal="16dp"
-            android:layout_marginBottom="12dp"
+            android:layout_marginBottom="16dp"
             app:cardCornerRadius="16dp"
             app:cardElevation="2dp"
             app:cardBackgroundColor="@color/white"
@@ -539,24 +654,28 @@
                     <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
                         android:text="›" android:textSize="22sp" android:textColor="#C7C7CC" />
                 </LinearLayout>
-            </LinearLayout>
-        </com.google.android.material.card.MaterialCardView>
 
-        <!-- ── Settings Card ── -->
-        <com.google.android.material.card.MaterialCardView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginHorizontal="16dp"
-            android:layout_marginBottom="16dp"
-            app:cardCornerRadius="16dp"
-            app:cardElevation="2dp"
-            app:cardBackgroundColor="@color/white"
-            app:strokeWidth="0dp">
+                <View android:layout_width="match_parent" android:layout_height="0.5dp"
+                    android:background="#F0F0F0" android:layout_marginStart="52dp" />
 
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="vertical">
+                <LinearLayout
+                    android:id="@+id/tvCircleFavorites"
+                    android:layout_width="match_parent"
+                    android:layout_height="54dp"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical"
+                    android:paddingHorizontal="20dp"
+                    android:background="?android:attr/selectableItemBackground">
+                    <ImageView android:layout_width="18dp" android:layout_height="18dp"
+                        android:src="@mipmap/shoucang" android:layout_marginEnd="14dp" />
+                    <TextView android:layout_width="0dp" android:layout_height="wrap_content"
+                        android:layout_weight="1" android:text="农友圈点赞" android:textSize="16sp" android:textColor="#1F1F1F" />
+                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                        android:text="›" android:textSize="22sp" android:textColor="#C7C7CC" />
+                </LinearLayout>
+
+                <View android:layout_width="match_parent" android:layout_height="0.5dp"
+                    android:background="#F0F0F0" android:layout_marginStart="52dp" />
 
                 <LinearLayout
                     android:id="@+id/tvSettings"
