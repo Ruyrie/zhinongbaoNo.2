@@ -1,7 +1,6 @@
 package com.example.zhinongbao.activity;
 
 import com.example.zhinongbao.R;
-import android.app.Activity;
 import android.content.Intent;
 import android.graphics.Typeface;
 import android.net.Uri;
@@ -16,23 +15,30 @@ import android.widget.Toast;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.core.content.FileProvider;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
+import com.example.zhinongbao.adapter.ImagePickerAdapter;
 import com.example.zhinongbao.base.BaseMvpActivity;
 import com.example.zhinongbao.mvp.addarticle.AddArticleContract;
 import com.example.zhinongbao.mvp.addarticle.AddArticlePresenter;
 import java.io.File;
+import java.util.ArrayList;
+import java.util.List;
 
 public class AddArticleActivity extends BaseMvpActivity<AddArticleContract.Presenter>
         implements AddArticleContract.View {
 
     private static final String[] CATEGORIES = { "热点新闻", "专家咨询", "支农宝新闻", "创业项目" };
+    private static final int MAX_CONTENT_IMAGES = 9;
 
-    private ImageView ivCover, ivContentImage;
+    private ImageView ivCover;
     private LinearLayout llCoverHint;
-    private TextView tvRemoveContentImg;
+    private TextView tvContentImageHint;
     private EditText etTitle, etContent;
 
     private Uri coverUri;
-    private Uri contentImageUri;
+    private final List<Uri> contentImageUris = new ArrayList<>();
+    private ImagePickerAdapter contentImageAdapter;
 
     private Uri currentCameraUri;
     private boolean isPickingCoverForCamera = true;
@@ -55,20 +61,21 @@ public class AddArticleActivity extends BaseMvpActivity<AddArticleContract.Prese
                 llCoverHint.setVisibility(View.GONE);
             });
 
-    private final ActivityResultLauncher<String> pickContentImage = registerForActivityResult(
-            new ActivityResultContracts.GetContent(), uri -> {
-                if (uri == null)
+    private final ActivityResultLauncher<String> pickContentImages = registerForActivityResult(
+            new ActivityResultContracts.GetMultipleContents(), uris -> {
+                if (uris == null || uris.isEmpty())
                     return;
-                contentImageUri = uri;
-                try {
-                    getContentResolver().takePersistableUriPermission(uri,
-                            Intent.FLAG_GRANT_READ_URI_PERMISSION);
-                } catch (SecurityException e) {
-                    e.printStackTrace();
+                for (Uri uri : uris) {
+                    if (contentImageUris.size() >= MAX_CONTENT_IMAGES) {
+                        break;
+                    }
+                    try {
+                        getContentResolver().takePersistableUriPermission(uri,
+                                Intent.FLAG_GRANT_READ_URI_PERMISSION);
+                    } catch (SecurityException ignored) {
+                    }
+                    addContentImage(uri);
                 }
-                ivContentImage.setImageURI(uri);
-                ivContentImage.setVisibility(View.VISIBLE);
-                tvRemoveContentImg.setVisibility(View.VISIBLE);
             });
 
     private final ActivityResultLauncher<Uri> takePicture = registerForActivityResult(
@@ -79,10 +86,7 @@ public class AddArticleActivity extends BaseMvpActivity<AddArticleContract.Prese
                         ivCover.setImageURI(currentCameraUri);
                         llCoverHint.setVisibility(View.GONE);
                     } else {
-                        contentImageUri = currentCameraUri;
-                        ivContentImage.setImageURI(currentCameraUri);
-                        ivContentImage.setVisibility(View.VISIBLE);
-                        tvRemoveContentImg.setVisibility(View.VISIBLE);
+                        addContentImage(currentCameraUri);
                     }
                 }
             });
@@ -100,21 +104,34 @@ public class AddArticleActivity extends BaseMvpActivity<AddArticleContract.Prese
         etContent = findViewById(R.id.etArticleContent);
         ivCover = findViewById(R.id.ivCover);
         llCoverHint = findViewById(R.id.llCoverHint);
-        ivContentImage = findViewById(R.id.ivContentImage);
-        tvRemoveContentImg = findViewById(R.id.tvRemoveContentImg);
+        tvContentImageHint = findViewById(R.id.tvContentImageHint);
         FrameLayout flCover = findViewById(R.id.flCoverPicker);
-        FrameLayout flContentImage = findViewById(R.id.flContentImagePicker);
         TextView tvBack = findViewById(R.id.tvBack);
 
-        flCover.setOnClickListener(v -> showImagePickerDialog(pickCover, true));
-        flContentImage.setOnClickListener(v -> showImagePickerDialog(pickContentImage, false));
-        tvBack.setOnClickListener(v -> finish());
+        RecyclerView rvImages = findViewById(R.id.rvArticleImages);
+        rvImages.setLayoutManager(new LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false));
+        contentImageAdapter = new ImagePickerAdapter(contentImageUris, MAX_CONTENT_IMAGES,
+                new ImagePickerAdapter.OnImagePickerClickListener() {
+                    @Override
+                    public void onAddClick() {
+                        if (contentImageUris.size() >= MAX_CONTENT_IMAGES) {
+                            Toast.makeText(AddArticleActivity.this, "最多上传 9 张配图", Toast.LENGTH_SHORT).show();
+                            return;
+                        }
+                        showContentImagePicker();
+                    }
 
-        tvRemoveContentImg.setOnClickListener(v -> {
-            contentImageUri = null;
-            ivContentImage.setVisibility(View.GONE);
-            tvRemoveContentImg.setVisibility(View.GONE);
-        });
+                    @Override
+                    public void onDeleteClick(int position) {
+                        contentImageUris.remove(position);
+                        contentImageAdapter.notifyDataSetChanged();
+                        updateContentImageHint();
+                    }
+                });
+        rvImages.setAdapter(contentImageAdapter);
+
+        flCover.setOnClickListener(v -> showImagePickerDialog(pickCover, true));
+        tvBack.setOnClickListener(v -> finish());
 
         setupCategoryPicker();
 
@@ -125,9 +142,47 @@ public class AddArticleActivity extends BaseMvpActivity<AddArticleContract.Prese
                 Toast.makeText(this, "标题和内容不能为空", Toast.LENGTH_SHORT).show();
                 return;
             }
-            String cover = coverUri != null ? coverUri.toString() : null;
-            presenter.submit(title, content, cover, selectedCategory);
+            presenter.submit(title, content, buildImageList(), selectedCategory);
         });
+    }
+
+    /** 封面图作为首图（列表缩略图），其后拼接内容配图，逗号分隔存入 cover_uri */
+    private String buildImageList() {
+        List<String> all = new ArrayList<>();
+        if (coverUri != null) {
+            all.add(coverUri.toString());
+        }
+        for (Uri uri : contentImageUris) {
+            all.add(uri.toString());
+        }
+        if (all.isEmpty()) {
+            return null;
+        }
+        StringBuilder sb = new StringBuilder();
+        for (String s : all) {
+            if (sb.length() > 0) {
+                sb.append(",");
+            }
+            sb.append(s);
+        }
+        return sb.toString();
+    }
+
+    private void addContentImage(Uri uri) {
+        if (contentImageUris.size() >= MAX_CONTENT_IMAGES) {
+            Toast.makeText(this, "最多上传 9 张配图", Toast.LENGTH_SHORT).show();
+            return;
+        }
+        contentImageUris.add(uri);
+        contentImageAdapter.notifyDataSetChanged();
+        updateContentImageHint();
+    }
+
+    private void updateContentImageHint() {
+        int count = contentImageUris.size();
+        tvContentImageHint.setText(count == 0
+                ? "内容配图（最多 9 张）"
+                : "内容配图（已选 " + count + "/9 张）");
     }
 
     @Override
@@ -201,6 +256,7 @@ public class AddArticleActivity extends BaseMvpActivity<AddArticleContract.Prese
         return FileProvider.getUriForFile(this, getPackageName() + ".fileprovider", newFile);
     }
 
+    /** 封面图选择（单图） */
     private void showImagePickerDialog(ActivityResultLauncher<String> galleryLauncher, boolean isCover) {
         com.example.zhinongbao.utils.ImageUtils.showImagePickerDialog(this, "添加图片",
                 new com.example.zhinongbao.utils.ImageUtils.OnImagePickerListener() {
@@ -214,6 +270,24 @@ public class AddArticleActivity extends BaseMvpActivity<AddArticleContract.Prese
                     @Override
                     public void onPickFromGallery() {
                         galleryLauncher.launch("image/*");
+                    }
+                });
+    }
+
+    /** 内容配图选择（多图，最多 9 张） */
+    private void showContentImagePicker() {
+        com.example.zhinongbao.utils.ImageUtils.showImagePickerDialog(this, "添加配图",
+                new com.example.zhinongbao.utils.ImageUtils.OnImagePickerListener() {
+                    @Override
+                    public void onTakePhoto() {
+                        isPickingCoverForCamera = false;
+                        currentCameraUri = createImageFile();
+                        takePicture.launch(currentCameraUri);
+                    }
+
+                    @Override
+                    public void onPickFromGallery() {
+                        pickContentImages.launch("image/*");
                     }
                 });
     }

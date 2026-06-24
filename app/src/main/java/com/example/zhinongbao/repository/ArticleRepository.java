@@ -529,6 +529,52 @@ public class ArticleRepository {
         return cleared;
     }
 
+    /** 获取用户点赞的农友圈动态；已被作者删除的动态保留为占位提示 */
+    public List<Article> getLikedCirclePosts(String username) {
+        List<Article> articles = new ArrayList<>();
+        if (username == null || username.isEmpty()) {
+            return articles;
+        }
+        try (Cursor likes = resolver.query(
+                ZhiNongBaoProvider.CONTENT_URI_CIRCLE_LIKES,
+                new String[] { "article_id" },
+                "username=?",
+                new String[] { username },
+                "id DESC")) {
+            while (likes != null && likes.moveToNext()) {
+                Article article = getArticleOrDeleted(likes.getInt(0));
+                if (article.isDeleted || "农友圈".equals(article.category)) {
+                    articles.add(article);
+                }
+            }
+        }
+        return articles;
+    }
+
+    /** 清理点赞列表中作者已删除的农友圈动态，返回清理条数 */
+    public int clearInvalidCircleLikes(String username) {
+        int cleared = 0;
+        if (username == null || username.isEmpty()) {
+            return cleared;
+        }
+        try (Cursor likes = resolver.query(
+                ZhiNongBaoProvider.CONTENT_URI_CIRCLE_LIKES,
+                new String[] { "article_id" },
+                "username=?",
+                new String[] { username },
+                null)) {
+            while (likes != null && likes.moveToNext()) {
+                int articleId = likes.getInt(0);
+                if (!articleExists(articleId)) {
+                    cleared += resolver.delete(ZhiNongBaoProvider.CONTENT_URI_CIRCLE_LIKES,
+                            "username=? AND article_id=?",
+                            new String[] { username, String.valueOf(articleId) });
+                }
+            }
+        }
+        return cleared;
+    }
+
     private Article getArticleOrDeleted(int articleId) {
         try (Cursor cursor = resolver.query(
                 ZhiNongBaoProvider.CONTENT_URI_ARTICLES,

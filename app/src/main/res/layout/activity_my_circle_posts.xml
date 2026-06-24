@@ -39,9 +39,18 @@
             android:textColor="#333333"
             android:gravity="center" />
 
-        <View
-            android:layout_width="36dp"
-            android:layout_height="1dp" />
+        <TextView
+            android:id="@+id/tvClearInvalid"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="清理失效"
+            android:textSize="14sp"
+            android:textColor="#00B377"
+            android:paddingHorizontal="8dp"
+            android:paddingVertical="6dp"
+            android:clickable="true"
+            android:focusable="true"
+            android:visibility="gone" />
     </LinearLayout>
 
     <View

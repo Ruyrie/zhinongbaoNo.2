@@ -9,10 +9,12 @@ import java.util.List;
 public interface MyCirclePostsContract {
     interface View extends BaseView<Presenter> {
         void showPosts(List<Article> posts, String currentUser);
+        void showToast(String message);
     }
 
     interface Presenter extends BasePresenter {
         void refresh();
+        void clearInvalidPosts();
         int getCircleLikeCount(int articleId);
         int getCommentCount(int articleId);
         boolean isCircleLiked(int articleId);

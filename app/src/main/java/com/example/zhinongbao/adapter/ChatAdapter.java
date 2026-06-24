@@ -159,22 +159,22 @@ public class ChatAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
         lp.gravity = Gravity.CENTER;
         root.addView(preview, lp);
 
-        ImageView download = new ImageView(source.getContext());
-        download.setScaleType(ImageView.ScaleType.CENTER_INSIDE);
-        download.setPadding(dp(source, 11), dp(source, 11), dp(source, 11), dp(source, 11));
+        // 保存按钮放到底部居中，避免被状态栏/刘海遮挡，且文字清晰可识别
+        TextView download = new TextView(source.getContext());
+        download.setText("保存到相册");
+        download.setTextColor(Color.WHITE);
+        download.setTextSize(14);
+        download.setGravity(Gravity.CENTER);
+        download.setPadding(dp(source, 24), dp(source, 11), dp(source, 24), dp(source, 11));
         GradientDrawable downloadBg = new GradientDrawable();
-        downloadBg.setColor(0x66000000);
-        downloadBg.setShape(GradientDrawable.OVAL);
+        downloadBg.setColor(0x99000000);
+        downloadBg.setCornerRadius(dp(source, 24));
+        downloadBg.setStroke(dp(source, 1), 0x66FFFFFF);
         download.setBackground(downloadBg);
-        try (InputStream is = source.getContext().getAssets().open("pic/fangda.png")) {
-            download.setImageBitmap(BitmapFactory.decodeStream(is));
-        } catch (Exception ignored) {
-            download.setImageResource(android.R.drawable.stat_sys_download_done);
-        }
-        FrameLayout.LayoutParams downloadLp = new FrameLayout.LayoutParams(dp(source, 46), dp(source, 46));
-        downloadLp.gravity = Gravity.TOP | Gravity.END;
-        downloadLp.topMargin = dp(source, 28);
-        downloadLp.rightMargin = dp(source, 18);
+        FrameLayout.LayoutParams downloadLp = new FrameLayout.LayoutParams(
+                FrameLayout.LayoutParams.WRAP_CONTENT, FrameLayout.LayoutParams.WRAP_CONTENT);
+        downloadLp.gravity = Gravity.BOTTOM | Gravity.CENTER_HORIZONTAL;
+        downloadLp.bottomMargin = dp(source, 56);
         root.addView(download, downloadLp);
 
         root.setOnClickListener(v -> dialog.dismiss());

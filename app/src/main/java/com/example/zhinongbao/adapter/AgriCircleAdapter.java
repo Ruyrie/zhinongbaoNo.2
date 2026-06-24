@@ -56,6 +56,26 @@ public class AgriCircleAdapter extends RecyclerView.Adapter<AgriCircleAdapter.Vi
     public void onBindViewHolder(@NonNull ViewHolder h, int position) {
         Article a = items.get(position);
 
+        // 已被作者删除的动态：显示占位提示，仅保留取消点赞
+        if (a.isDeleted) {
+            showInitial(h, "?");
+            h.tvNickname.setText("该动态已被删除");
+            h.tvTime.setText("");
+            h.tvContent.setText("抱歉，该动态已被作者删除。");
+            h.layoutImages.setVisibility(View.GONE);
+            h.btnEnterStore.setVisibility(View.GONE);
+            h.btnFollow.setVisibility(View.GONE);
+            h.tvReadCount.setText("");
+            boolean liked = interactionDelegate.isCircleLiked(a.id);
+            h.tvLikeCount.setText(String.valueOf(interactionDelegate.getCircleLikeCount(a.id)));
+            h.ivLikeIcon.setImageResource(liked ? R.drawable.ic_like_filled : R.drawable.ic_like_outline);
+            h.tvCommentCount.setText(String.valueOf(interactionDelegate.getCommentCount(a.id)));
+            h.itemView.setOnClickListener(null);
+            h.btnComment.setOnClickListener(null);
+            h.btnLike.setOnClickListener(v -> listener.onLikeClick(a, h.getAdapterPosition()));
+            return;
+        }
+
         // 昵称 & 时间
         String nick = (a.authorNickname != null && !a.authorNickname.isEmpty())
                 ? a.authorNickname : a.author;

@@ -38,6 +38,10 @@ public class MyCirclePostsActivity extends BaseMvpActivity<MyCirclePostsContract
         fabPost.setVisibility(favoritesMode ? View.GONE : View.VISIBLE);
         fabPost.setOnClickListener(v -> startActivity(new Intent(this, AddCirclePostActivity.class)));
 
+        TextView tvClearInvalid = findViewById(R.id.tvClearInvalid);
+        tvClearInvalid.setVisibility(favoritesMode ? View.VISIBLE : View.GONE);
+        tvClearInvalid.setOnClickListener(v -> showClearInvalidDialog());
+
         rv = findViewById(R.id.rvMyPosts);
         tvEmpty = findViewById(R.id.tvEmpty);
         rv.setLayoutManager(new LinearLayoutManager(this));
@@ -116,6 +120,31 @@ public class MyCirclePostsActivity extends BaseMvpActivity<MyCirclePostsContract
                     ? "还没有点赞收藏农友圈动态"
                     : "您还没有发布过动态\n点右下角 + 发布第一条吧");
         }
+    }
+
+    @Override
+    public void showToast(String message) {
+        android.widget.Toast.makeText(this, message, android.widget.Toast.LENGTH_SHORT).show();
+    }
+
+    private void showClearInvalidDialog() {
+        View view = getLayoutInflater().inflate(R.layout.dialog_confirm, null);
+        ((TextView) view.findViewById(R.id.tvDialogTitle)).setText("清理失效动态");
+        ((TextView) view.findViewById(R.id.tvDialogMessage))
+                .setText("确定要将已删除的动态移出点赞列表吗？");
+
+        androidx.appcompat.app.AlertDialog dialog = new androidx.appcompat.app.AlertDialog.Builder(this)
+                .setView(view)
+                .create();
+        if (dialog.getWindow() != null) {
+            dialog.getWindow().setBackgroundDrawableResource(android.R.color.transparent);
+        }
+        view.findViewById(R.id.btnDialogCancel).setOnClickListener(btn -> dialog.dismiss());
+        view.findViewById(R.id.btnDialogConfirm).setOnClickListener(btn -> {
+            dialog.dismiss();
+            presenter.clearInvalidPosts();
+        });
+        dialog.show();
     }
 
     private AgriCircleAdapter.CircleInteractionDelegate circleDelegate() {

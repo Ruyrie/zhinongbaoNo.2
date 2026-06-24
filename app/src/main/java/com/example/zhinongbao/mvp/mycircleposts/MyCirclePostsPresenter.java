@@ -34,9 +34,20 @@ public class MyCirclePostsPresenter implements MyCirclePostsContract.Presenter {
     @Override
     public void refresh() {
         if (favoritesMode) {
-            view.showPosts(getLikedCirclePosts(), currentUser);
+            view.showPosts(repository.getLikedCirclePosts(currentUser), currentUser);
         } else {
             view.showPosts(repository.getCirclePostsByAuthor(currentUser), currentUser);
+        }
+    }
+
+    @Override
+    public void clearInvalidPosts() {
+        int cleared = repository.clearInvalidCircleLikes(currentUser);
+        if (cleared > 0) {
+            view.showToast("成功清理 " + cleared + " 条失效动态");
+            refresh();
+        } else {
+            view.showToast("没有需要清理的失效动态");
         }
     }
 
@@ -77,15 +88,5 @@ public class MyCirclePostsPresenter implements MyCirclePostsContract.Presenter {
     @Override
     public void followUser(String author) {
         repository.followUser(currentUser, author);
-    }
-
-    private List<Article> getLikedCirclePosts() {
-        List<Article> likedPosts = new ArrayList<>();
-        for (Article article : repository.getCirclePosts()) {
-            if (repository.isCirclePostLiked(currentUser, article.id)) {
-                likedPosts.add(article);
-            }
-        }
-        return likedPosts;
     }
 }
