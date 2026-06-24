@@ -19,7 +19,7 @@ public class PostPurchaseActivity extends BaseMvpActivity<PostPurchaseContract.P
         implements PostPurchaseContract.View {
 
     private EditText etProductName, etCategory, etQuantity, etUnit, etTargetPrice, etDesc;
-    private TextView tvTotal;
+    private TextView tvTotal, tvBudgetUnitLabel;
     private boolean formattingPrice;
     private long editRequestId = -1;
 
@@ -38,7 +38,9 @@ public class PostPurchaseActivity extends BaseMvpActivity<PostPurchaseContract.P
         etTargetPrice = findViewById(R.id.etPurchaseTargetPrice);
         etDesc = findViewById(R.id.etPurchaseDesc);
         tvTotal = findViewById(R.id.tvPurchaseTotal);
+        tvBudgetUnitLabel = findViewById(R.id.tvBudgetUnitLabel);
         bindAmountInputs();
+        bindUnitLabel();
 
         findViewById(R.id.ivPostPurchaseBack).setOnClickListener(v -> finish());
         findViewById(R.id.btnSubmitPurchase).setOnClickListener(v -> submit());
@@ -72,6 +74,22 @@ public class PostPurchaseActivity extends BaseMvpActivity<PostPurchaseContract.P
         etTargetPrice.setText(formatEditableNumber(formatPlain(request.targetPrice)));
         etDesc.setText(request.description == null ? "" : request.description);
         updateTotal();
+    }
+
+    private void bindUnitLabel() {
+        etUnit.addTextChangedListener(new TextWatcher() {
+            @Override public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+            @Override public void onTextChanged(CharSequence s, int start, int before, int count) {}
+            @Override public void afterTextChanged(Editable s) {
+                updateUnitLabel();
+            }
+        });
+        updateUnitLabel();
+    }
+
+    private void updateUnitLabel() {
+        String unit = etUnit.getText().toString().trim();
+        tvBudgetUnitLabel.setText("元/" + (unit.isEmpty() ? "单位" : unit));
     }
 
     private void bindAmountInputs() {

@@ -45,7 +45,7 @@
             android:layout_height="wrap_content"
             android:text="清理失效"
             android:textSize="14sp"
-            android:textColor="#00B377"
+            android:textColor="#E53935"
             android:paddingHorizontal="8dp"
             android:paddingVertical="6dp"
             android:clickable="true"

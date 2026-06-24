@@ -48,7 +48,22 @@
             android:textSize="14sp" />
     </LinearLayout>
 
+    <!-- 未确认收货 / 未购买时的提示 -->
+    <TextView
+        android:id="@+id/tvReviewNotice"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:gravity="center"
+        android:paddingHorizontal="40dp"
+        android:text="请确认收货后再评价~"
+        android:textColor="#999999"
+        android:textSize="15sp"
+        android:lineSpacingMultiplier="1.4"
+        android:visibility="gone" />
+
     <ScrollView
+        android:id="@+id/scrollReview"
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_weight="1"

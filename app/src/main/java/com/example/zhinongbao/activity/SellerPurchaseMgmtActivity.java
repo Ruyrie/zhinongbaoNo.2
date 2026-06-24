@@ -210,7 +210,10 @@ public class SellerPurchaseMgmtActivity extends BaseMvpActivity<SellerPurchaseCo
         EditText etDesc = v.findViewById(R.id.etQuoteDesc);
         TextView tvTotal = v.findViewById(R.id.tvQuoteTotal);
         TextView tvReqInfo = v.findViewById(R.id.tvQuoteReqInfo);
+        TextView tvAmountLabel = v.findViewById(R.id.tvQuoteAmountLabel);
         RecyclerView rvImages = v.findViewById(R.id.rvQuoteImages);
+        String unitLabel = TextUtils.isEmpty(r.unit) ? "单位" : r.unit;
+        tvAmountLabel.setText("报价金额（元/" + unitLabel + "）*");
         tvReqInfo.setText(r.category + " · " + formatQuantity(r.quantity) + r.unit
                 + " · 买家预算 ¥" + formatPrice(r.targetPrice));
         bindQuoteImages(rvImages, null);
@@ -475,6 +478,13 @@ public class SellerPurchaseMgmtActivity extends BaseMvpActivity<SellerPurchaseCo
                     startActivity(new Intent(this, AddressManagerActivity.class));
                     return true;
                 });
+    }
+
+    @Override
+    public void openPayment(String orderId) {
+        Intent intent = new Intent(this, OrderDetailActivity.class);
+        intent.putExtra("order_id", orderId);
+        startActivity(intent);
     }
 
     @Override

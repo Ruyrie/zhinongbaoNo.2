@@ -15,17 +15,19 @@
         android:paddingHorizontal="8dp"
         android:background="#FFFFFF">
 
-        <TextView
+        <ImageView
             android:id="@+id/ivPostPurchaseBack"
             android:layout_width="64dp"
             android:layout_height="match_parent"
-            android:text="取消"
-            android:textSize="16sp"
-            android:textColor="#007AFF"
-            android:gravity="center_vertical"
+            android:src="@mipmap/fanhui"
+            android:scaleType="centerInside"
             android:paddingStart="8dp"
+            android:paddingEnd="32dp"
+            android:paddingVertical="16dp"
+            android:contentDescription="返回"
             android:clickable="true"
-            android:focusable="true" />
+            android:focusable="true"
+            android:background="?attr/selectableItemBackgroundBorderless" />
 
         <TextView
             android:layout_width="0dp"
@@ -70,15 +72,28 @@
             android:padding="16dp">
 
             <!-- ── 货品信息 ── -->
-            <TextView
+            <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="货品信息"
-                android:textSize="13sp"
-                android:textColor="#6D6D72"
-                android:textAllCaps="false"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
                 android:paddingHorizontal="4dp"
-                android:paddingBottom="6dp" />
+                android:paddingBottom="8dp">
+
+                <View
+                    android:layout_width="3dp"
+                    android:layout_height="15dp"
+                    android:background="@drawable/bg_section_accent"
+                    android:layout_marginEnd="7dp" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="货品信息"
+                    android:textSize="14sp"
+                    android:textStyle="bold"
+                    android:textColor="#1C1C1E" />
+            </LinearLayout>
 
             <LinearLayout
                 android:layout_width="match_parent"
@@ -153,14 +168,28 @@
             </LinearLayout>
 
             <!-- ── 需求详情 ── -->
-            <TextView
+            <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="需求详情"
-                android:textSize="13sp"
-                android:textColor="#6D6D72"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
                 android:paddingHorizontal="4dp"
-                android:paddingBottom="6dp" />
+                android:paddingBottom="8dp">
+
+                <View
+                    android:layout_width="3dp"
+                    android:layout_height="15dp"
+                    android:background="@drawable/bg_section_accent"
+                    android:layout_marginEnd="7dp" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="需求详情"
+                    android:textSize="14sp"
+                    android:textStyle="bold"
+                    android:textColor="#1C1C1E" />
+            </LinearLayout>
 
             <LinearLayout
                 android:layout_width="match_parent"
@@ -272,6 +301,7 @@
                     </LinearLayout>
 
                     <TextView
+                        android:id="@+id/tvBudgetUnitLabel"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="元/单位"
@@ -315,14 +345,28 @@
             </LinearLayout>
 
             <!-- ── 备注说明 ── -->
-            <TextView
+            <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="备注说明（选填）"
-                android:textSize="13sp"
-                android:textColor="#6D6D72"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
                 android:paddingHorizontal="4dp"
-                android:paddingBottom="6dp" />
+                android:paddingBottom="8dp">
+
+                <View
+                    android:layout_width="3dp"
+                    android:layout_height="15dp"
+                    android:background="@drawable/bg_section_accent"
+                    android:layout_marginEnd="7dp" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="备注说明（选填）"
+                    android:textSize="14sp"
+                    android:textStyle="bold"
+                    android:textColor="#1C1C1E" />
+            </LinearLayout>
 
             <LinearLayout
                 android:layout_width="match_parent"

@@ -20,6 +20,7 @@
 
     <!-- 报价金额 -->
     <TextView
+        android:id="@+id/tvQuoteAmountLabel"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="报价金额（元/单位）*"

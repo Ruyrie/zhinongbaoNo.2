@@ -5,6 +5,8 @@ import android.content.Intent;
 import android.graphics.Typeface;
 import android.net.Uri;
 import android.os.Bundle;
+import android.text.Editable;
+import android.text.TextWatcher;
 import android.view.View;
 import android.widget.EditText;
 import android.widget.LinearLayout;
@@ -22,6 +24,7 @@ import com.example.zhinongbao.mvp.addproduct.AddProductContract;
 import com.example.zhinongbao.mvp.addproduct.AddProductPresenter;
 import com.example.zhinongbao.utils.ImageUtils;
 import java.io.File;
+import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -34,6 +37,7 @@ public class AddProductActivity extends BaseMvpActivity<AddProductContract.Prese
     private TextView[] categoryChips;
 
     private EditText etName, etDesc, etPrice, etStorePhone, etBrand, etOrigin, etSpec, etPackage;
+    private boolean formattingPrice;
     private RecyclerView rvImages;
     private ImagePickerAdapter imageAdapter;
     private List<Uri> imageUris = new ArrayList<>();
@@ -85,6 +89,7 @@ public class AddProductActivity extends BaseMvpActivity<AddProductContract.Prese
         etOrigin = findViewById(R.id.etProductOrigin);
         etSpec = findViewById(R.id.etProductSpec);
         etPackage = findViewById(R.id.etProductPackage);
+        bindPriceInput();
         rvImages = findViewById(R.id.rvProductImages);
         new AddProductPresenter(this, this).start();
 
@@ -156,7 +161,7 @@ public class AddProductActivity extends BaseMvpActivity<AddProductContract.Prese
             return;
         etName.setText(p.name);
         etDesc.setText(p.desc);
-        etPrice.setText(String.valueOf(p.price));
+        etPrice.setText(formatEditableNumber(formatPlain(p.price)));
         etBrand.setText(p.brand == null ? "" : p.brand);
         etOrigin.setText(p.origin == null ? "" : p.origin);
         etSpec.setText(p.spec == null ? "" : p.spec);
@@ -276,10 +281,68 @@ public class AddProductActivity extends BaseMvpActivity<AddProductContract.Prese
         return FileProvider.getUriForFile(this, getPackageName() + ".fileprovider", newFile);
     }
 
+    private void bindPriceInput() {
+        etPrice.addTextChangedListener(new TextWatcher() {
+            @Override public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+            @Override public void onTextChanged(CharSequence s, int start, int before, int count) {}
+            @Override public void afterTextChanged(Editable s) {
+                if (!formattingPrice) {
+                    formatPriceInput(s);
+                }
+            }
+        });
+    }
+
+    private void formatPriceInput(Editable s) {
+        String raw = cleanNumber(s.toString());
+        if (raw.isEmpty() || ".".equals(raw)) {
+            return;
+        }
+        try {
+            formattingPrice = true;
+            String formatted = formatEditableNumber(raw);
+            etPrice.setText(formatted);
+            etPrice.setSelection(formatted.length());
+        } finally {
+            formattingPrice = false;
+        }
+    }
+
+    private String formatEditableNumber(String raw) {
+        int dotIndex = raw.indexOf('.');
+        String integerPart = dotIndex >= 0 ? raw.substring(0, dotIndex) : raw;
+        String decimalPart = dotIndex >= 0 ? raw.substring(dotIndex) : "";
+        if (integerPart.isEmpty()) {
+            return decimalPart.isEmpty() ? "" : "0" + decimalPart;
+        }
+        return groupInteger(integerPart) + decimalPart;
+    }
+
+    private String groupInteger(String value) {
+        BigInteger integer = new BigInteger(value);
+        String digits = integer.toString();
+        StringBuilder builder = new StringBuilder();
+        for (int i = 0; i < digits.length(); i++) {
+            if (i > 0 && (digits.length() - i) % 3 == 0) {
+                builder.append(',');
+            }
+            builder.append(digits.charAt(i));
+        }
+        return builder.toString();
+    }
+
+    private String cleanNumber(String value) {
+        return value == null ? "" : value.replace(",", "").replace("¥", "").trim();
+    }
+
+    private String formatPlain(double value) {
+        return value % 1 == 0 ? String.valueOf((long) value) : String.valueOf(value);
+    }
+
     private void submitProduct() {
         String name = etName.getText().toString().trim();
         String desc = etDesc.getText().toString().trim();
-        String priceStr = etPrice.getText().toString().trim();
+        String priceStr = cleanNumber(etPrice.getText().toString().trim());
         String storePhone = etStorePhone.getText().toString().trim();
         String brand = etBrand.getText().toString().trim();
         String origin = etOrigin.getText().toString().trim();

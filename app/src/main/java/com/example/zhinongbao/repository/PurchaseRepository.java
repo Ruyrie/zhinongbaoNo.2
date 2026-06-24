@@ -223,26 +223,82 @@ public class PurchaseRepository {
     }
 
     public List<PurchaseQuote> getQuotesForRequestWithStatus(long requestId) {
+        reopenQuotesForInactiveOrders(requestId);
         return getQuotesForRequest(requestId);
     }
 
-    public boolean acceptQuote(long quoteId, String replyDesc) {
+    /**
+     * 采购订单被取消、或超过 24 小时仍未付款时，将对应的已接受报价恢复为「待处理」，
+     * 使买家可以重新同意该报价或其它报价。
+     */
+    private void reopenQuotesForInactiveOrders(long requestId) {
+        try (Cursor cursor = resolver.query(
+                ZhiNongBaoProvider.CONTENT_URI_ORDERS,
+                new String[] { "order_id", "seller", "status", "time" },
+                "purchase_request_id=? AND order_type=?",
+                new String[] { String.valueOf(requestId), Order.ORDER_TYPE_PROCUREMENT },
+                null)) {
+            while (cursor != null && cursor.moveToNext()) {
+                String orderId = cursor.getString(0);
+                String seller = cursor.getString(1);
+                String status = cursor.getString(2);
+                String time = cursor.getString(3);
+
+                if (Order.STATUS_PENDING.equals(status) && isPaymentExpired(time)) {
+                    ContentValues ov = new ContentValues();
+                    ov.put("status", Order.STATUS_CANCELLED);
+                    resolver.update(ZhiNongBaoProvider.CONTENT_URI_ORDERS, ov,
+                            "order_id=?", new String[] { orderId });
+                    status = Order.STATUS_CANCELLED;
+                }
+
+                if (Order.STATUS_CANCELLED.equals(status) && seller != null) {
+                    ContentValues qv = new ContentValues();
+                    qv.put("status", "pending");
+                    qv.putNull("reply_desc");
+                    resolver.update(ZhiNongBaoProvider.CONTENT_URI_PURCHASE_QUOTES, qv,
+                            "request_id=? AND seller_user=? AND status=?",
+                            new String[] { String.valueOf(requestId), seller, "accepted" });
+                }
+            }
+        }
+    }
+
+    private boolean isPaymentExpired(String time) {
+        if (time == null || time.trim().isEmpty()) {
+            return false;
+        }
+        try {
+            java.util.Date date = new java.text.SimpleDateFormat("yyyy-MM-dd HH:mm",
+                    java.util.Locale.getDefault()).parse(time);
+            if (date == null) {
+                return false;
+            }
+            return System.currentTimeMillis() - date.getTime() >= 24L * 60 * 60 * 1000;
+        } catch (java.text.ParseException e) {
+            return false;
+        }
+    }
+
+    /** 同意报价并生成待付款采购订单，返回新订单号；失败返回 null。 */
+    public String acceptQuote(long quoteId, String replyDesc) {
         ContentValues values = new ContentValues();
         values.put("status", "accepted");
         values.put("reply_desc", replyDesc);
         boolean ok = resolver.update(ZhiNongBaoProvider.CONTENT_URI_PURCHASE_QUOTES, values,
                 "id=?", new String[] { String.valueOf(quoteId) }) > 0;
         if (!ok) {
-            return false;
+            return null;
         }
         PurchaseQuote quote = getQuoteById(quoteId);
         PurchaseRequest request = quote == null ? null : getRequestById(quote.requestId);
         if (quote == null || request == null) {
-            return true;
+            return null;
         }
         Address address = getDefaultAddress(request.buyerUser);
+        String orderId = "JN" + System.currentTimeMillis();
         ContentValues order = new ContentValues();
-        order.put("order_id", "JN" + System.currentTimeMillis());
+        order.put("order_id", orderId);
         order.put("username", request.buyerUser);
         order.put("product_id", 0);
         order.put("name", request.productName);
@@ -263,7 +319,7 @@ public class PurchaseRepository {
             order.put("receiver_address", address.address);
         }
         resolver.insert(ZhiNongBaoProvider.CONTENT_URI_ORDERS, order);
-        return true;
+        return orderId;
     }
 
     public boolean rejectQuote(long quoteId, String replyDesc) {

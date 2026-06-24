@@ -17,14 +17,14 @@
         android:background="#FFFFFF"
         android:elevation="4dp">
 
-        <TextView
+        <ImageView
             android:id="@+id/tvBack"
             android:layout_width="40dp"
             android:layout_height="40dp"
-            android:text="×"
-            android:textSize="24sp"
-            android:textColor="#222222"
-            android:gravity="center"
+            android:src="@mipmap/fanhui"
+            android:scaleType="centerInside"
+            android:padding="8dp"
+            android:contentDescription="返回"
             android:background="?attr/selectableItemBackgroundBorderless" />
 
         <TextView
@@ -183,22 +183,22 @@
 
                     <LinearLayout
                         android:layout_width="match_parent"
-                        android:layout_height="52dp"
+                        android:layout_height="56dp"
                         android:layout_marginTop="14dp"
                         android:orientation="horizontal"
                         android:gravity="center_vertical"
-                        android:background="@drawable/bg_add_product_input"
-                        android:paddingStart="14dp"
-                        android:paddingEnd="6dp">
+                        android:background="@drawable/bg_add_product_price"
+                        android:paddingStart="16dp"
+                        android:paddingEnd="16dp">
 
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:text="¥"
-                            android:textSize="20sp"
+                            android:textSize="22sp"
                             android:textStyle="bold"
                             android:textColor="#E53935"
-                            android:layout_marginEnd="4dp" />
+                            android:layout_marginEnd="6dp" />
 
                         <EditText
                             android:id="@+id/etProductPrice"
@@ -206,12 +206,22 @@
                             android:layout_height="match_parent"
                             android:layout_weight="1"
                             android:hint="0.00"
-                            android:textSize="20sp"
+                            android:textSize="24sp"
                             android:textStyle="bold"
                             android:textColor="#E53935"
-                            android:textColorHint="#DDBBBB"
+                            android:textColorHint="#E3B7B4"
                             android:background="@null"
+                            android:gravity="center_vertical"
+                            android:singleLine="true"
                             android:inputType="numberDecimal" />
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="元"
+                            android:textSize="15sp"
+                            android:textColor="#B07A77"
+                            android:layout_marginStart="6dp" />
                     </LinearLayout>
 
                     <EditText

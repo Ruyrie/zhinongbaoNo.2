@@ -56,9 +56,13 @@ public class SellerPurchasePresenter implements SellerPurchaseContract.Presenter
             view.promptAddAddress();
             return;
         }
-        repository.acceptQuote(quoteId, reply);
-        view.showToast("已接受报价，请到我的订单完成支付");
+        String orderId = repository.acceptQuote(quoteId, reply);
         switchTab(currentTab);
+        if (orderId != null) {
+            view.openPayment(orderId);
+        } else {
+            view.showToast("操作失败，请重试");
+        }
     }
 
     @Override

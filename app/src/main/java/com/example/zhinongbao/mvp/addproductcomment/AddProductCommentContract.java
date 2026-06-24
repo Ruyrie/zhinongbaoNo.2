@@ -11,6 +11,7 @@ public interface AddProductCommentContract {
 
     interface Presenter extends BasePresenter {
         boolean canComment();
+        String getReviewBlockMessage();
         void submit(String content, String images);
     }
 }

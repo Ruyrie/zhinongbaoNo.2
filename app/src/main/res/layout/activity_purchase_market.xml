@@ -18,16 +18,17 @@
         android:background="#FFFFFF"
         android:elevation="4dp">
 
-        <TextView
+        <ImageView
             android:id="@+id/ivPurchaseBack"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="✕"
-            android:textSize="20sp"
-            android:textColor="#333333"
+            android:layout_width="36dp"
+            android:layout_height="36dp"
+            android:src="@mipmap/fanhui"
+            android:scaleType="centerInside"
             android:padding="8dp"
+            android:contentDescription="返回"
             android:clickable="true"
-            android:focusable="true" />
+            android:focusable="true"
+            android:background="?attr/selectableItemBackgroundBorderless" />
 
         <TextView
             android:layout_width="0dp"

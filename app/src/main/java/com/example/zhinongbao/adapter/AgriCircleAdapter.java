@@ -112,15 +112,13 @@ public class AgriCircleAdapter extends RecyclerView.Adapter<AgriCircleAdapter.Vi
                 if (!uri.trim().isEmpty())
                     images.add(uri.trim());
             }
-            h.vpImages.setAdapter(new com.example.zhinongbao.adapter.ProductImageAdapter(images));
+            h.imageCount = images.size();
+            // CENTER_CROP：图片铺满整个封面轮播，超出部分裁剪，无空白边
+            h.vpImages.setAdapter(new com.example.zhinongbao.adapter.ProductImageAdapter(
+                    images, ImageView.ScaleType.CENTER_CROP));
+            h.vpImages.setCurrentItem(0, false);
             h.tvImageIndicator.setVisibility(images.size() > 1 ? View.VISIBLE : View.GONE);
             h.tvImageIndicator.setText("1/" + images.size());
-            h.vpImages.registerOnPageChangeCallback(new androidx.viewpager2.widget.ViewPager2.OnPageChangeCallback() {
-                @Override
-                public void onPageSelected(int page) {
-                    h.tvImageIndicator.setText((page + 1) + "/" + images.size());
-                }
-            });
         } else {
             h.layoutImages.setVisibility(View.GONE);
         }
@@ -173,6 +171,7 @@ public class AgriCircleAdapter extends RecyclerView.Adapter<AgriCircleAdapter.Vi
         TextView tvLikeCount, tvCommentCount, tvReadCount, tvImageIndicator;
         View btnLike, btnComment;
         TextView btnEnterStore, btnFollow;
+        int imageCount;
 
         ViewHolder(View v) {
             super(v);
@@ -192,6 +191,17 @@ public class AgriCircleAdapter extends RecyclerView.Adapter<AgriCircleAdapter.Vi
             btnComment     = v.findViewById(R.id.btnPostComment);
             btnEnterStore  = v.findViewById(R.id.btnEnterStore);
             btnFollow      = v.findViewById(R.id.btnFollow);
+
+            // 仅注册一次翻页回调，避免复用 ViewHolder 时重复注册导致指示器错乱
+            vpImages.registerOnPageChangeCallback(
+                    new androidx.viewpager2.widget.ViewPager2.OnPageChangeCallback() {
+                        @Override
+                        public void onPageSelected(int page) {
+                            if (imageCount > 0) {
+                                tvImageIndicator.setText((page + 1) + "/" + imageCount);
+                            }
+                        }
+                    });
         }
     }
 }

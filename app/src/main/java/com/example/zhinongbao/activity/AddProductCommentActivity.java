@@ -4,6 +4,7 @@ import com.example.zhinongbao.R;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
+import android.view.View;
 import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -89,8 +90,7 @@ public class AddProductCommentActivity extends BaseMvpActivity<AddProductComment
 
         new AddProductCommentPresenter(this, this, productId).start();
         if (!presenter.canComment()) {
-            Toast.makeText(this, "确认收货后才能评价该商品", Toast.LENGTH_SHORT).show();
-            finish();
+            showReviewBlocked(presenter.getReviewBlockMessage());
             return;
         }
 
@@ -106,6 +106,14 @@ public class AddProductCommentActivity extends BaseMvpActivity<AddProductComment
             }
             presenter.submit(content, images);
         });
+    }
+
+    private void showReviewBlocked(String message) {
+        findViewById(R.id.scrollReview).setVisibility(View.GONE);
+        findViewById(R.id.btnSubmitComment).setVisibility(View.GONE);
+        TextView notice = findViewById(R.id.tvReviewNotice);
+        notice.setText(message);
+        notice.setVisibility(View.VISIBLE);
     }
 
     @Override

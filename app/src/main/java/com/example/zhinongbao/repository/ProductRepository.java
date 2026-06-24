@@ -397,6 +397,22 @@ public class ProductRepository {
         }
     }
 
+    /** 该用户对此商品是否存在已付款但尚未确认收货的订单（待发货 / 已发货）。 */
+    public boolean hasUnconfirmedOrder(String username, int productId) {
+        if (username == null || username.isEmpty()) {
+            return false;
+        }
+        try (Cursor cursor = resolver.query(
+                ZhiNongBaoProvider.CONTENT_URI_ORDERS,
+                new String[] { "id" },
+                "username=? AND product_id=? AND (status=? OR status=?)",
+                new String[] { username, String.valueOf(productId),
+                        Order.STATUS_PAID, Order.STATUS_SHIPPED },
+                null)) {
+            return cursor != null && cursor.moveToFirst();
+        }
+    }
+
     public void addProductComment(int productId, String username, String content, String images) {
         ContentValues values = new ContentValues();
         values.put("product_id", productId);

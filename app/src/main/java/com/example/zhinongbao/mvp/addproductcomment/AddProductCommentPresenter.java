@@ -28,6 +28,14 @@ public class AddProductCommentPresenter implements AddProductCommentContract.Pre
     }
 
     @Override
+    public String getReviewBlockMessage() {
+        if (repository.hasUnconfirmedOrder(username, productId)) {
+            return "请确认收货后再评价~";
+        }
+        return "购买并确认收货后才能评价哦~";
+    }
+
+    @Override
     public void submit(String content, String images) {
         if ((content == null || content.isEmpty()) && (images == null || images.isEmpty())) {
             view.showToast("评价内容和图片不能同时为空");

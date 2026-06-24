@@ -14,6 +14,7 @@ public interface SellerPurchaseContract {
         void showMyRequests(List<PurchaseRequest> requests);
         void showToast(String message);
         void promptAddAddress();
+        void openPayment(String orderId);
     }
 
     interface Presenter extends BasePresenter {

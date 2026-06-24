@@ -106,7 +106,7 @@ public class AddArticleActivity extends BaseMvpActivity<AddArticleContract.Prese
         llCoverHint = findViewById(R.id.llCoverHint);
         tvContentImageHint = findViewById(R.id.tvContentImageHint);
         FrameLayout flCover = findViewById(R.id.flCoverPicker);
-        TextView tvBack = findViewById(R.id.tvBack);
+        View tvBack = findViewById(R.id.tvBack);
 
         RecyclerView rvImages = findViewById(R.id.rvArticleImages);
         rvImages.setLayoutManager(new LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false));
