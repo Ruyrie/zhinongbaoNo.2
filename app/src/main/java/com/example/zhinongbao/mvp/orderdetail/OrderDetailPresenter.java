@@ -6,6 +6,7 @@ import com.example.zhinongbao.model.Order;
 import com.example.zhinongbao.model.Product;
 import com.example.zhinongbao.repository.OrderRepository;
 import com.example.zhinongbao.repository.ProductRepository;
+import com.example.zhinongbao.repository.PurchaseRepository;
 import com.example.zhinongbao.repository.UserRepository;
 
 public class OrderDetailPresenter implements OrderDetailContract.Presenter {
@@ -13,6 +14,7 @@ public class OrderDetailPresenter implements OrderDetailContract.Presenter {
     private final OrderRepository repository;
     private final ProductRepository productRepository;
     private final UserRepository userRepository;
+    private final PurchaseRepository purchaseRepository;
     private final String orderId;
     private final String username;
     private Order order;
@@ -23,6 +25,7 @@ public class OrderDetailPresenter implements OrderDetailContract.Presenter {
         this.repository = new OrderRepository(context.getApplicationContext());
         this.productRepository = new ProductRepository(context.getApplicationContext());
         this.userRepository = new UserRepository(context.getApplicationContext());
+        this.purchaseRepository = new PurchaseRepository(context.getApplicationContext());
         this.username = repository.getLoggedUser();
         this.view.setPresenter(this);
     }
@@ -38,6 +41,15 @@ public class OrderDetailPresenter implements OrderDetailContract.Presenter {
         if (Order.STATUS_PENDING.equals(order.status) && order.getRemainingMs() <= 0) {
             repository.updateOrderStatus(username, order.orderId, Order.STATUS_CANCELLED);
             order.status = Order.STATUS_CANCELLED;
+        }
+
+        // 采购订单：订单自带的商家配图为空时，回源到对应报价取图，避免（取消后等情况下）详情页只剩占位图
+        if ((order.proofImages == null || order.proofImages.trim().isEmpty())
+                && Order.ORDER_TYPE_PROCUREMENT.equals(order.orderType)) {
+            String quoteImages = purchaseRepository.getQuoteImages(order.purchaseRequestId, order.seller);
+            if (quoteImages != null && !quoteImages.trim().isEmpty()) {
+                order.proofImages = quoteImages;
+            }
         }
 
         boolean canComment = order.productId > 0 && !Order.ORDER_TYPE_PROCUREMENT.equals(order.orderType);

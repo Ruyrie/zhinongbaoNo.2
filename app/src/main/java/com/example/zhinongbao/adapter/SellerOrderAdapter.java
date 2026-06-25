@@ -28,6 +28,9 @@ public class SellerOrderAdapter extends RecyclerView.Adapter<SellerOrderAdapter.
         void onRefund(Order o);
 
         void onContactBuyer(Order o);
+
+        // 点击订单卡片（商品信息区）→ 进入该商品详情页
+        void onOrderClick(Order o);
     }
 
     public interface ProductResolver {
@@ -50,6 +53,8 @@ public class SellerOrderAdapter extends RecyclerView.Adapter<SellerOrderAdapter.
     @Override
     public void onBindViewHolder(@NonNull VH holder, int position) {
         Order o = list.get(position);
+        // 点击整张卡片进入商品详情（操作按钮各自消费点击，不会触发此处）
+        holder.itemView.setOnClickListener(v -> listener.onOrderClick(o));
         holder.tvOrderId.setText("订单号: " + o.orderId);
 
         if (Order.ORDER_TYPE_PROCUREMENT.equals(o.orderType)) {

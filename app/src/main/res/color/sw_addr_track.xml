@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 默认地址开关 - 轨道颜色：开=橙色，关=灰色（让开/关状态明显区分） -->
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:state_checked="true" android:color="#FF7A1A" />
+    <item android:color="#C9CDD3" />
+</selector>

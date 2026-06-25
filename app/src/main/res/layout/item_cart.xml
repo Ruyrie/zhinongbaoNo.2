@@ -1,4 +1,21 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- ============================================================
+     【购物车 / Cart】购物车列表「单行」布局（item = 一行的样子）
+     ============================================================
+     这个文件是干什么的：
+       它定义购物车列表里「一件商品那一行」长什么样：左边勾选框、
+       商品图、右边名称+价格+数量加减按钮。整列由很多行重复而成。
+
+     概念说明：
+       - 文件名以 item_ 开头 = 列表里「单元格/一行」的布局。
+       - LinearLayout：线性布局，android:orientation 决定子控件横排(horizontal)还是竖排(vertical)。
+       - 每个控件的 android:id（如 @+id/cbCartItem）= 给控件取名字，
+         Java 代码（CartAdapter）用 findViewById(R.id.cbCartItem) 找到它并填数据。
+       - layout_weight="1" = 占满剩余空间（让中间区域自动撑开）。
+
+     配套：被 CartAdapter 充气(inflate)使用；整页外框是 activity_cart.xml。
+     提示：在 IDE 里搜索「购物车」可看本组全部文件。
+     ============================================================ -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"

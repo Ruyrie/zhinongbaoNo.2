@@ -23,6 +23,18 @@
             android:textStyle="bold" />
 
         <TextView
+            android:id="@+id/tvAddrTagChip"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginEnd="6dp"
+            android:background="@drawable/bg_addr_tag_selected"
+            android:paddingHorizontal="8dp"
+            android:paddingVertical="3dp"
+            android:textColor="#FF7A1A"
+            android:textSize="12sp"
+            android:visibility="gone" />
+
+        <TextView
             android:id="@+id/tvDefaultTag"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"

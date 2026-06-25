@@ -17,6 +17,7 @@ import androidx.core.graphics.ColorUtils;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentTransaction;
 import com.example.zhinongbao.base.BaseMvpActivity;
+import com.example.zhinongbao.repository.MessageRepository;
 import com.example.zhinongbao.fragment.HeadlineFragment;
 import com.example.zhinongbao.fragment.MallFragment;
 import com.example.zhinongbao.fragment.MineFragment;
@@ -41,6 +42,8 @@ public class MainActivity extends BaseMvpActivity<MainContract.Presenter> implem
     private ValueAnimator pillAnimator;
     private int lastRole = Integer.MIN_VALUE;
     private long lastBackPressedTime = 0L;
+    private TextView messageBadge;
+    private MessageRepository messageRepository;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -78,6 +81,7 @@ public class MainActivity extends BaseMvpActivity<MainContract.Presenter> implem
                 findViewById(R.id.labelMessage),
                 findViewById(R.id.labelMine)
         };
+        messageBadge = findViewById(R.id.tvMsgBadge);
 
         // 根据角色设置 tab 文字
         refreshRoleTabs();
@@ -122,6 +126,7 @@ public class MainActivity extends BaseMvpActivity<MainContract.Presenter> implem
     @Override
     protected void onResume() {
         super.onResume();
+        updateMessageBadge();
         int role = presenter.getActiveRole();
         if (role != lastRole) {
             currentIndex = 0;
@@ -134,6 +139,23 @@ public class MainActivity extends BaseMvpActivity<MainContract.Presenter> implem
 
     private boolean isSellerMode() {
         return presenter.isSellerMode();
+    }
+
+    // 刷新底部导航「消息」红点：未读总数 >0 显示，>99 显示「99+」，否则隐藏
+    private void updateMessageBadge() {
+        if (messageBadge == null) {
+            return;
+        }
+        if (messageRepository == null) {
+            messageRepository = new MessageRepository(this);
+        }
+        int unread = messageRepository.getTotalUnreadCount(messageRepository.getLoggedUser());
+        if (unread <= 0) {
+            messageBadge.setVisibility(View.GONE);
+        } else {
+            messageBadge.setText(unread > 99 ? "99+" : String.valueOf(unread));
+            messageBadge.setVisibility(View.VISIBLE);
+        }
     }
 
     private void refreshRoleTabs() {

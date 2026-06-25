@@ -23,12 +23,12 @@ public class AddressPresenter implements AddressContract.Presenter {
     }
 
     @Override
-    public void saveAddress(Address oldAddress, String name, String phone, String address, boolean isDefault) {
+    public void saveAddress(Address oldAddress, String name, String phone, String address, boolean isDefault, String tag) {
         if (name.isEmpty() || phone.isEmpty() || address.isEmpty()) {
             view.showToast("请完整填写地址信息");
             return;
         }
-        repository.saveAddress(username, oldAddress == null ? 0 : oldAddress.id, name, phone, address, isDefault);
+        repository.saveAddress(username, oldAddress == null ? 0 : oldAddress.id, name, phone, address, isDefault, tag);
         start();
     }
 

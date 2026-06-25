@@ -1,5 +1,25 @@
 package com.example.zhinongbao.utils;
 
+/* ============================================================
+ * 【弹窗 / 对话框 / DialogUtils】统一风格的弹窗工具（utils 工具类）
+ * ============================================================
+ * 这个文件是干什么的：
+ *   全 App 的各种弹窗都从这里出，保证「圆角白卡片 + 绿色按钮」的统一风格。
+ *   对外提供几种常用弹窗（都是 static 方法，直接 DialogUtils.xxx(...) 调用）：
+ *     - showConfirm   ：确认框（标题+内容+取消/确认两个按钮），购物车清空就用它。
+ *     - showTextInput ：带一个输入框的弹窗（让用户填一段文字）。
+ *     - showRefundReason：退款原因选择弹窗（预置原因胶囊单选 + 选填说明）。
+ *     - showRoleSelection：选择「买家/卖家」身份的弹窗。
+ *
+ * 关键点：本类不靠 XML 布局，而是「用 Java 代码动态创建控件」拼出弹窗。
+ *   - createRoot/createTitle/createMessage/createButton：分别造出卡片、标题、正文、按钮。
+ *   - rounded(...)：用 GradientDrawable 画「圆角背景」。
+ *   - dp(...)：把「dp 单位」换算成实际像素（不同屏幕清晰度下保证大小一致）。
+ *   - 回调接口 ConfirmAction 等：让调用方决定「点了确认之后做什么」。
+ *
+ * 提示：在 IDE 里搜索「弹窗」或「对话框」可看用到它的地方。
+ * ============================================================ */
+
 import android.app.Activity;
 import android.content.Context;
 import android.graphics.Color;
@@ -18,34 +38,40 @@ import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
 
 public final class DialogUtils {
-    private static final int GREEN = Color.rgb(76, 175, 80);
-    private static final int GREEN_DARK = Color.rgb(46, 125, 50);
-    private static final int GREEN_LIGHT = Color.rgb(235, 248, 237);
-    private static final int RED = Color.rgb(229, 57, 53);
-    private static final int TEXT = Color.rgb(33, 37, 41);
-    private static final int MUTED = Color.rgb(109, 117, 125);
-    private static final int BORDER = Color.rgb(229, 234, 229);
+    // ↓ 统一配色常量（rgb 三个数=红绿蓝），保证全 App 弹窗风格一致
+    private static final int GREEN = Color.rgb(76, 175, 80);        // 主色绿（确认按钮）
+    private static final int GREEN_DARK = Color.rgb(46, 125, 50);   // 深绿（取消按钮文字）
+    private static final int GREEN_LIGHT = Color.rgb(235, 248, 237);// 浅绿（取消按钮底色）
+    private static final int RED = Color.rgb(229, 57, 53);          // 红（危险操作按钮）
+    private static final int TEXT = Color.rgb(33, 37, 41);          // 主文字色
+    private static final int MUTED = Color.rgb(109, 117, 125);      // 次要文字色（灰）
+    private static final int BORDER = Color.rgb(229, 234, 229);     // 边框色
 
+    // 确认回调：onConfirm 返回 true 表示「处理完了，关闭弹窗」
     public interface ConfirmAction {
         boolean onConfirm();
     }
 
+    // 多选项回调：返回被点中的选项序号
     public interface OptionAction {
         void onSelect(int index);
     }
 
+    // 私有构造方法：工具类不允许 new（只用静态方法）
     private DialogUtils() {
     }
 
+    // 【确认框】最常用：标题 + 内容 + 「取消/确认」两个按钮。dangerous=true 时确认按钮变红。
     public static AlertDialog showConfirm(Context context, String title, String message,
             String cancelText, String confirmText, boolean dangerous, ConfirmAction action) {
         return showContent(context, title, message, null, cancelText, confirmText, dangerous, action);
     }
 
+    // 【内容框】比确认框更灵活：可在标题/正文之间塞入任意自定义控件 content（如输入框）
     public static AlertDialog showContent(Context context, String title, @Nullable String message,
             @Nullable View content, String cancelText, String confirmText, boolean dangerous,
             ConfirmAction action) {
-        LinearLayout root = createRoot(context);
+        LinearLayout root = createRoot(context);   // 造一张圆角白卡片当容器
         root.addView(createTitle(context, title));
         if (message != null && !message.isEmpty()) {
             root.addView(createMessage(context, message));
@@ -59,6 +85,7 @@ public final class DialogUtils {
         return dialog;
     }
 
+    // 【输入框弹窗】在内容框里塞一个 EditText，确认时把用户输入的文字回调出去
     public static AlertDialog showTextInput(Context context, String title, String message, String hint,
             String cancelText, String confirmText, boolean dangerous, ConfirmActionWithText action) {
         EditText input = createInput(context, hint, false);
@@ -68,6 +95,7 @@ public final class DialogUtils {
         return dialog;
     }
 
+    // 带文字的确认回调：把用户输入的内容传回去
     public interface ConfirmActionWithText {
         boolean onConfirm(String text);
     }
@@ -81,6 +109,7 @@ public final class DialogUtils {
      * 买家申请退款弹窗：预置原因「胶囊」单选 + 选填补充说明。
      * 仅选择类别即可提交；补充说明可选。
      */
+    // 【退款原因弹窗】6 个原因「胶囊」点一个高亮（单选）+ 可选补充说明；未选会提示
     public static AlertDialog showRefundReason(Context context, RefundReasonAction action) {
         android.view.View view = android.view.LayoutInflater.from(context)
                 .inflate(com.example.zhinongbao.R.layout.dialog_refund_reason, null);
@@ -126,6 +155,7 @@ public final class DialogUtils {
         return dialog;
     }
 
+    // 【身份选择弹窗】用于「既是买家又是卖家」的账号登录后选择以什么身份进入
     public static AlertDialog showRoleSelection(Context context, String title, String[] options,
             OptionAction action) {
         LinearLayout root = createRoot(context);
@@ -161,6 +191,7 @@ public final class DialogUtils {
         return dialog;
     }
 
+    // 造一个统一风格的输入框：hint=灰色提示文字，multiline=是否允许多行
     public static EditText createInput(Context context, String hint, boolean multiline) {
         EditText input = new EditText(context);
         input.setHint(hint);
@@ -181,6 +212,7 @@ public final class DialogUtils {
         return input;
     }
 
+    // 造弹窗的「圆角白卡片」根容器（竖向排列标题/正文/按钮）
     private static LinearLayout createRoot(Context context) {
         LinearLayout root = new LinearLayout(context);
         root.setOrientation(LinearLayout.VERTICAL);
@@ -189,6 +221,7 @@ public final class DialogUtils {
         return root;
     }
 
+    // 造标题文字（加粗大字）
     private static TextView createTitle(Context context, String title) {
         TextView tv = new TextView(context);
         tv.setText(title);
@@ -203,6 +236,7 @@ public final class DialogUtils {
         return tv;
     }
 
+    // 造正文文字（灰色小字）
     private static TextView createMessage(Context context, String message) {
         TextView tv = new TextView(context);
         tv.setText(message);
@@ -216,6 +250,7 @@ public final class DialogUtils {
         return tv;
     }
 
+    // 造底部「取消 + 确认」一行两个按钮，并绑定点击：取消=关闭；确认=执行回调后关闭
     private static LinearLayout createButtonRow(Context context, AlertDialog dialog, String cancelText,
             String confirmText, boolean dangerous, ConfirmAction action) {
         LinearLayout row = new LinearLayout(context);
@@ -239,6 +274,7 @@ public final class DialogUtils {
         return row;
     }
 
+    // 造单个按钮：primary=true 是主按钮(实心)，dangerous=true 主按钮变红色
     private static TextView createButton(Context context, String text, boolean primary, boolean dangerous) {
         TextView button = new TextView(context);
         button.setText(text);
@@ -256,6 +292,7 @@ public final class DialogUtils {
         return button;
     }
 
+    // 真正显示弹窗：去掉系统默认白底（换成透明，露出我们的圆角卡片）、限制最大宽度，再 show
     private static void showRounded(AlertDialog dialog, Context context) {
         dialog.setOnShowListener(d -> {
             Window window = dialog.getWindow();
@@ -270,6 +307,7 @@ public final class DialogUtils {
         }
     }
 
+    // 工具：生成一个「圆角 + 可选描边」的背景，color=填充色，radius=圆角，stroke=边框
     private static GradientDrawable rounded(int color, int radius, int strokeColor, int strokeWidthDp) {
         GradientDrawable drawable = new GradientDrawable();
         drawable.setColor(color);
@@ -280,6 +318,7 @@ public final class DialogUtils {
         return drawable;
     }
 
+    // 工具：把 dp 换算成像素。density 是屏幕密度，+0.5f 是为了四舍五入。
     private static int dp(Context context, int value) {
         return (int) (value * context.getResources().getDisplayMetrics().density + 0.5f);
     }

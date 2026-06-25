@@ -1,11 +1,29 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- ============================================================
+     【购物车 / Cart】购物车整页布局（activity = 一整屏的样子）
+     ============================================================
+     这个文件是干什么的：
+       它描述购物车「这一整屏」的界面骨架，自上而下分三块：
+         1) 顶部标题栏：返回箭头 + “购物车” + 件数 + “清空”。
+         2) 中间 RecyclerView（rvCart）：可滚动的商品列表，每行用 item_cart.xml。
+         3) 底部结算栏：全选框 + 合计金额 + “去结算”按钮。
+
+     概念说明：
+       - 文件名以 activity_ 开头 = 一整个页面的布局，对应一个 Activity（这里是 CartActivity）。
+       - 最外层竖排 LinearLayout 把三块从上到下叠起来。
+       - 中间列表 height=0dp + layout_weight=1 = 「占满标题栏和底部栏之间的剩余空间」。
+       - 控件的 id（如 @+id/btnCheckout）供 CartActivity 用 findViewById 找到并绑定点击。
+
+     配套：由 CartActivity.setContentView 加载；列表单行是 item_cart.xml。
+     提示：在 IDE 里搜索「购物车」可看本组全部文件。
+     ============================================================ -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
     android:background="#F5F5F5">
 
-    <!-- 顶部标题栏 -->
+    <!-- 顶部标题栏：返回箭头 + 标题“购物车” + 件数(tvCartCount) + 清空(tvClearCart) -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -54,6 +72,7 @@
             android:padding="4dp" />
     </LinearLayout>
 
+    <!-- 商品列表：内容由 CartAdapter 提供，每行长相由 item_cart.xml 决定 -->
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/rvCart"
         android:layout_width="match_parent"
@@ -62,7 +81,7 @@
         android:paddingTop="8dp"
         android:clipToPadding="false" />
 
-    <!-- 底部结算栏 -->
+    <!-- 底部结算栏：全选(cbSelectAll) + 合计金额(tvCartTotal) + 去结算(btnCheckout) -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="64dp"

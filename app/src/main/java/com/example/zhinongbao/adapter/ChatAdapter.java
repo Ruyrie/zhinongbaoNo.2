@@ -15,14 +15,18 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.Window;
+import android.util.TypedValue;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
+import android.widget.PopupWindow;
 import android.widget.TextView;
 import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 import com.example.zhinongbao.R;
 import com.example.zhinongbao.model.ChatMessage;
+import com.example.zhinongbao.mvp.chat.ChatPresenter;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.text.SimpleDateFormat;
@@ -35,22 +39,36 @@ public class ChatAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
 
     private static final int TYPE_SENT = 0;
     private static final int TYPE_RECEIVED = 1;
+    private static final int TYPE_RECALLED = 2;   // 已撤回：居中灰色提示行
+
+    /** 长按消息时的操作回调（撤回 / 删除），由 ChatActivity 转交给 Presenter 处理。 */
+    public interface MessageActionListener {
+        void onRecall(ChatMessage message);
+        void onDelete(ChatMessage message);
+    }
 
     private final List<ChatMessage> messages;
     private final String currentUser;
     private final String currentNickname;
     private final String otherNickname;
+    private final MessageActionListener actionListener;
 
-    public ChatAdapter(List<ChatMessage> messages, String currentUser, String currentNickname, String otherNickname) {
+    public ChatAdapter(List<ChatMessage> messages, String currentUser, String currentNickname, String otherNickname,
+            MessageActionListener actionListener) {
         this.messages = messages;
         this.currentUser = currentUser;
         this.currentNickname = currentNickname != null && !currentNickname.isEmpty() ? currentNickname : currentUser;
         this.otherNickname = otherNickname != null && !otherNickname.isEmpty() ? otherNickname : "?";
+        this.actionListener = actionListener;
     }
 
     @Override
     public int getItemViewType(int position) {
-        return messages.get(position).fromUser.equals(currentUser) ? TYPE_SENT : TYPE_RECEIVED;
+        ChatMessage msg = messages.get(position);
+        if (msg.recalled) {
+            return TYPE_RECALLED;
+        }
+        return msg.fromUser.equals(currentUser) ? TYPE_SENT : TYPE_RECEIVED;
     }
 
     @NonNull
@@ -60,6 +78,9 @@ public class ChatAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
         if (viewType == TYPE_SENT) {
             View v = inf.inflate(R.layout.item_chat_sent, parent, false);
             return new SentHolder(v);
+        } else if (viewType == TYPE_RECALLED) {
+            View v = inf.inflate(R.layout.item_chat_recalled, parent, false);
+            return new RecalledHolder(v);
         } else {
             View v = inf.inflate(R.layout.item_chat_received, parent, false);
             return new ReceivedHolder(v);
@@ -69,6 +90,11 @@ public class ChatAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
     @Override
     public void onBindViewHolder(@NonNull RecyclerView.ViewHolder holder, int position) {
         ChatMessage msg = messages.get(position);
+        if (holder instanceof RecalledHolder) {
+            RecalledHolder h = (RecalledHolder) holder;
+            h.tvHint.setText(msg.fromUser.equals(currentUser) ? "你撤回了一条消息" : "对方撤回了一条消息");
+            return;
+        }
         String timeStr = formatTime(msg.timestamp);
         if (holder instanceof SentHolder) {
             SentHolder h = (SentHolder) holder;
@@ -116,6 +142,14 @@ public class ChatAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
         }
     }
 
+    static class RecalledHolder extends RecyclerView.ViewHolder {
+        TextView tvHint;
+        RecalledHolder(View v) {
+            super(v);
+            tvHint = v.findViewById(R.id.tvRecalledHint);
+        }
+    }
+
     private void bindMessageContent(TextView tvContent, ImageView ivImage, ChatMessage msg) {
         if (msg.isImage()) {
             tvContent.setVisibility(View.GONE);
@@ -127,12 +161,101 @@ public class ChatAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
                 ivImage.setImageResource(R.drawable.ic_product_placeholder);
             }
             ivImage.setOnClickListener(v -> showImagePreview(ivImage, imageUri));
+            setupLongPress(ivImage, msg);
         } else {
             ivImage.setVisibility(View.GONE);
             ivImage.setOnClickListener(null);
             tvContent.setVisibility(View.VISIBLE);
             tvContent.setText(msg.content);
+            setupLongPress(tvContent, msg);
         }
+    }
+
+    // 给气泡（文字或图片）挂上长按菜单：撤回（仅本人、2 分钟内可见）+ 删除
+    private void setupLongPress(View bubble, ChatMessage msg) {
+        bubble.setOnLongClickListener(v -> {
+            showActionMenu(v, msg);
+            return true;
+        });
+    }
+
+    // 仿微信的深色气泡菜单：长按消息后，在气泡正上方浮出一个圆角深色条，横向排列「撤回 / 删除」。
+    private void showActionMenu(View anchor, ChatMessage msg) {
+        boolean canRecall = msg.fromUser.equals(currentUser)
+                && !msg.recalled
+                && System.currentTimeMillis() - msg.timestamp <= ChatPresenter.RECALL_WINDOW_MS;
+
+        LinearLayout bar = new LinearLayout(anchor.getContext());
+        bar.setOrientation(LinearLayout.HORIZONTAL);
+        bar.setGravity(Gravity.CENTER_VERTICAL);
+        GradientDrawable barBg = new GradientDrawable();
+        barBg.setColor(0xF22B2B2B);                 // 半透明深灰
+        barBg.setCornerRadius(dp(anchor, 10));
+        bar.setBackground(barBg);
+
+        PopupWindow popup = new PopupWindow(
+                ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        popup.setOutsideTouchable(true);
+        popup.setFocusable(true);
+        popup.setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
+        popup.setElevation(dp(anchor, 6));
+
+        if (canRecall) {
+            bar.addView(buildMenuItem(anchor, "撤回", () -> {
+                popup.dismiss();
+                if (actionListener != null) actionListener.onRecall(msg);
+            }));
+            bar.addView(buildDivider(anchor));
+        }
+        bar.addView(buildMenuItem(anchor, "删除", () -> {
+            popup.dismiss();
+            if (actionListener != null) actionListener.onDelete(msg);
+        }));
+
+        popup.setContentView(bar);
+
+        // 测量后让菜单水平居中于气泡、并浮在其正上方；上方放不下就翻到下方，并把左右夹在屏幕内
+        bar.measure(View.MeasureSpec.UNSPECIFIED, View.MeasureSpec.UNSPECIFIED);
+        int popW = bar.getMeasuredWidth();
+        int popH = bar.getMeasuredHeight();
+        int screenW = anchor.getResources().getDisplayMetrics().widthPixels;
+        int margin = dp(anchor, 8);
+        int[] loc = new int[2];
+        anchor.getLocationOnScreen(loc);
+
+        int x = loc[0] + anchor.getWidth() / 2 - popW / 2;
+        x = Math.max(margin, Math.min(x, screenW - popW - margin));
+
+        int y = loc[1] - popH - dp(anchor, 6);
+        if (y < margin) {
+            y = loc[1] + anchor.getHeight() + dp(anchor, 6);   // 上方空间不够，改放气泡下方
+        }
+        popup.showAtLocation(anchor, Gravity.NO_GRAVITY, x, y);
+    }
+
+    // 菜单里的单个操作项：白色文字、点按高亮
+    private TextView buildMenuItem(View ref, String text, Runnable onClick) {
+        TextView tv = new TextView(ref.getContext());
+        tv.setText(text);
+        tv.setTextColor(Color.WHITE);
+        tv.setTextSize(TypedValue.COMPLEX_UNIT_SP, 14);
+        tv.setGravity(Gravity.CENTER);
+        tv.setPadding(dp(ref, 18), dp(ref, 11), dp(ref, 18), dp(ref, 11));
+        tv.setClickable(true);
+        tv.setFocusable(true);
+        tv.setOnClickListener(v -> onClick.run());
+        return tv;
+    }
+
+    // 菜单项之间的细分隔线
+    private View buildDivider(View ref) {
+        View divider = new View(ref.getContext());
+        LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(Math.max(1, dp(ref, 1)), dp(ref, 22));
+        lp.topMargin = dp(ref, 7);
+        lp.bottomMargin = dp(ref, 7);
+        divider.setLayoutParams(lp);
+        divider.setBackgroundColor(0x33FFFFFF);
+        return divider;
     }
 
     private void showImagePreview(ImageView source, String imageUri) {

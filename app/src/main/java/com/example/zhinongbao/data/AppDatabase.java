@@ -1,5 +1,30 @@
 package com.example.zhinongbao.data;
 
+/* ============================================================
+ * 【数据库 / Database】SQLite 数据库总管（整个 App 数据的「仓库地基」）
+ * ============================================================
+ * 这个文件是干什么的：
+ *   它负责「创建数据库、建所有的表、版本升级、塞入初始演示数据」。
+ *   App 里所有业务数据（用户、商品、订单、文章、聊天、采购…）都存在这一个
+ *   名为 zhinongbao.db 的 SQLite 数据库里。
+ *
+ * 关键概念：
+ *   - SQLite：手机自带的小型数据库，数据以「表(table)」形式保存，类似 Excel 表格。
+ *   - SQLiteOpenHelper：安卓官方帮手类，继承它就能管理数据库的创建和升级。
+ *   - 单例 getInstance：全 App 只创建一个数据库对象，避免重复打开浪费资源。
+ *   - 三个核心回调方法（系统自动调）：
+ *       onCreate ：数据库第一次创建时调用 → 在这里 CREATE TABLE 建好所有表。
+ *       onUpgrade：DB_VERSION 变大时调用 → 用 ALTER/CREATE 做「数据迁移」，
+ *                  保证老用户升级 App 后不丢数据。
+ *       onOpen   ：每次打开数据库都会调 → 这里补充「种子数据」（admin 账号、示例商品等）。
+ *   - DB_VERSION = 20：数据库结构改一次就把这个号 +1，系统据此触发 onUpgrade。
+ *
+ * 注意：业务代码一般不直接用本类，而是通过 ZhiNongBaoProvider（ContentProvider）
+ *       间接读写。本类只管「建库建表和初始化」。
+ *
+ * 提示：在 IDE 里搜索「数据库」可看数据层文件（本类 + ZhiNongBaoProvider）。
+ * ============================================================ */
+
 import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
@@ -12,21 +37,24 @@ import android.database.sqlite.SQLiteOpenHelper;
  */
 public class AppDatabase extends SQLiteOpenHelper {
 
-        private static final String DB_NAME = "zhinongbao.db";
-        private static final int DB_VERSION = 20;
+        private static final String DB_NAME = "zhinongbao.db";  // 数据库文件名
+        private static final int DB_VERSION = 22;               // 数据库版本号（改表结构就 +1）
 
-        private static AppDatabase instance;
+        private static AppDatabase instance;                    // 单例对象（全 App 共用一个）
 
+        // 获取数据库单例：第一次调用时创建，之后直接返回同一个对象
         public static AppDatabase getInstance(Context ctx) {
                 if (instance == null)
                         instance = new AppDatabase(ctx.getApplicationContext());
                 return instance;
         }
 
+        // 私有构造方法：禁止外部直接 new，必须通过 getInstance（保证单例）
         private AppDatabase(Context ctx) {
                 super(ctx, DB_NAME, null, DB_VERSION);
         }
 
+        // onOpen：每次打开数据库都会调用。这里在「可写」时补齐种子数据（admin、示例商品等）
         @Override
         public void onOpen(SQLiteDatabase db) {
                 super.onOpen(db);
@@ -35,6 +63,7 @@ public class AppDatabase extends SQLiteOpenHelper {
                 }
         }
 
+        // onCreate：数据库「第一次」创建时调用，在这里用 SQL 语句把所有表建好
         @Override
         public void onCreate(SQLiteDatabase db) {
                 // 用户表（含昵称和头像）
@@ -122,7 +151,8 @@ public class AppDatabase extends SQLiteOpenHelper {
                                 "receiver_name TEXT NOT NULL," +
                                 "phone TEXT NOT NULL," +
                                 "address TEXT NOT NULL," +
-                                "is_default INTEGER DEFAULT 0)");
+                                "is_default INTEGER DEFAULT 0," +
+                                "tag TEXT)");
 
                 // 文章点赞表（UNIQUE 防止重复）
                 db.execSQL("CREATE TABLE article_likes (" +
@@ -195,13 +225,19 @@ public class AppDatabase extends SQLiteOpenHelper {
                                 "time TEXT NOT NULL)");
 
                 // 私信聊天表
+                //   recalled        ：是否已撤回（1=已撤回，内容清空，双方都只看到「撤回了一条消息」）
+                //   deleted_by_from ：发送方是否在自己这一侧删除了本条（删除只影响自己，对方仍可见）
+                //   deleted_by_to   ：接收方是否在自己这一侧删除了本条
                 db.execSQL("CREATE TABLE chat_messages (" +
                                 "id INTEGER PRIMARY KEY AUTOINCREMENT," +
                                 "from_user TEXT NOT NULL," +
                                 "to_user TEXT NOT NULL," +
                                 "content TEXT NOT NULL," +
                                 "timestamp INTEGER NOT NULL," +
-                                "is_read INTEGER DEFAULT 0)");
+                                "is_read INTEGER DEFAULT 0," +
+                                "recalled INTEGER DEFAULT 0," +
+                                "deleted_by_from INTEGER DEFAULT 0," +
+                                "deleted_by_to INTEGER DEFAULT 0)");
                 db.execSQL("CREATE INDEX idx_chat_users ON chat_messages(from_user, to_user)");
 
                 // 采购需求表
@@ -241,6 +277,9 @@ public class AppDatabase extends SQLiteOpenHelper {
                 db.execSQL("CREATE INDEX idx_store_footprints_user ON store_footprints(username, viewed_at)");
         }
 
+        // onUpgrade：App 升级、数据库版本号变大时调用，逐版本「打补丁」升级表结构。
+        // 写法套路：if (oldVersion < N) { ...第 N 版新增的表/字段... }
+        // 这样无论用户从哪个旧版本升上来，都会依次执行需要的改动，老数据不丢失。
         @Override
         public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
                 if (oldVersion < 2) {
@@ -394,22 +433,37 @@ public class AppDatabase extends SQLiteOpenHelper {
                         db.execSQL("DELETE FROM article_likes " +
                                         "WHERE article_id IN (SELECT id FROM articles WHERE category='农友圈')");
                 }
+                if (oldVersion < 21) {
+                        // 聊天消息新增「撤回」「双方各自删除」标记，支持撤回与单侧删除
+                        db.execSQL("ALTER TABLE chat_messages ADD COLUMN recalled INTEGER DEFAULT 0");
+                        db.execSQL("ALTER TABLE chat_messages ADD COLUMN deleted_by_from INTEGER DEFAULT 0");
+                        db.execSQL("ALTER TABLE chat_messages ADD COLUMN deleted_by_to INTEGER DEFAULT 0");
+                }
+                if (oldVersion < 22) {
+                        // 收货地址新增「地址标签」字段（家/公司/学校…）
+                        db.execSQL("ALTER TABLE addresses ADD COLUMN tag TEXT");
+                }
         }
 
+        // 种子数据：保证 App 一打开就有可用的演示账号/商品/文章，方便登录体验。
+        // beginTransaction/endTransaction = 「事务」：把多步操作打包，要么全成功要么全回滚，
+        // 中途出错不会留下半截脏数据（类似「批处理，保证整体一致」）。
         private void ensureSeedData(SQLiteDatabase db) {
                 db.beginTransaction();
                 try {
-                        ensureAdminUser(db);
-                        ensureTestSellerUser(db);
-                        ensureDefaultProducts(db);
-                        ensureDefaultArticles(db);
-                        ensureExpiredReturnTestOrder(db);
-                        db.setTransactionSuccessful();
+                        ensureAdminUser(db);            // 内置管理员账号 admin/123456
+                        ensureTestSellerUser(db);       // 内置测试卖家账号
+                        ensureDefaultProducts(db);      // 内置 10 个示例商品
+                        ensureDefaultArticles(db);      // 内置 5 篇示例文章
+                        ensureExpiredReturnTestOrder(db); // 内置一条「已完成」测试订单
+                        db.setTransactionSuccessful(); // 标记事务成功（不调用则会整体回滚）
                 } finally {
                         db.endTransaction();
                 }
         }
 
+        // 保证存在管理员账号 admin（密码 123456，角色 2=买卖兼具）。
+        // insertWithOnConflict(...CONFLICT_IGNORE)：已存在就忽略不报错；随后再 update 保证信息最新。
         private void ensureAdminUser(SQLiteDatabase db) {
                 ContentValues values = new ContentValues();
                 values.put("username", "admin");
@@ -430,6 +484,7 @@ public class AppDatabase extends SQLiteOpenHelper {
                 db.update("users", update, "username=?", new String[] { "admin" });
         }
 
+        // 保证存在测试卖家账号 test_seller（角色 1=卖家），方便体验卖家相关功能
         private void ensureTestSellerUser(SQLiteDatabase db) {
                 ContentValues values = new ContentValues();
                 values.put("username", "test_seller");
@@ -451,6 +506,7 @@ public class AppDatabase extends SQLiteOpenHelper {
                 db.update("users", update, "username=?", new String[] { "test_seller" });
         }
 
+        // 插入 10 个示例商品（大米、木耳、蜂蜜……），让商城一打开就有货可看
         private void ensureDefaultProducts(SQLiteDatabase db) {
                 insertProduct(db, 1, "东北大米（5kg）", "东北黑土地稻米，米香浓郁，适合家庭日常主食。", 45,
                                 "米面粮油", "十月稻田", "东北", "5kg", "袋装");
@@ -478,6 +534,8 @@ public class AppDatabase extends SQLiteOpenHelper {
                 db.update("products", update, "(seller IS NULL OR seller='') AND id BETWEEN 1 AND 10", null);
         }
 
+        // 插入一条「8天前已完成」的测试订单：用来验证「超过7天只能联系客服退货」等逻辑，
+        // 同时让卖家销售流水有数据可看。8天前 = 当前时间 - 8×24小时（毫秒）。
         private void ensureExpiredReturnTestOrder(SQLiteDatabase db) {
                 long completedAt = System.currentTimeMillis() - 8L * 24 * 60 * 60 * 1000;
                 ContentValues values = new ContentValues();
@@ -510,6 +568,7 @@ public class AppDatabase extends SQLiteOpenHelper {
                 db.insertWithOnConflict("orders", null, values, SQLiteDatabase.CONFLICT_REPLACE);
         }
 
+        // 工具方法：把一件商品的各字段装进 ContentValues 后插入 products 表（已存在则忽略）
         private void insertProduct(SQLiteDatabase db, int id, String name, String desc, double price, String category,
                         String brand, String origin, String spec, String packageType) {
                 ContentValues values = new ContentValues();
@@ -528,6 +587,7 @@ public class AppDatabase extends SQLiteOpenHelper {
                 db.insertWithOnConflict("products", null, values, SQLiteDatabase.CONFLICT_IGNORE);
         }
 
+        // 插入 5 篇示例文章（春耕、果树管理等），让「头条/农技学堂」一打开就有内容
         private void ensureDefaultArticles(SQLiteDatabase db) {
                 insertArticle(db, 1, "春耕备耕正当时，科学管理促增收",
                                 "当前正值春耕关键期，建议农户根据土壤墒情安排播种，做好底肥管理和病虫害预防。通过测土配方、合理密植和水肥一体化，可以有效提升作物长势。",
@@ -546,6 +606,7 @@ public class AppDatabase extends SQLiteOpenHelper {
                                 "热点新闻");
         }
 
+        // 工具方法：把一篇文章插入 articles 表（作者统一为 admin，已存在则忽略）
         private void insertArticle(SQLiteDatabase db, int id, String title, String content, String category) {
                 ContentValues values = new ContentValues();
                 values.put("id", id);
@@ -559,6 +620,7 @@ public class AppDatabase extends SQLiteOpenHelper {
                 db.insertWithOnConflict("articles", null, values, SQLiteDatabase.CONFLICT_IGNORE);
         }
 
+        // 工具方法：判断某张表是不是空的（查一行看有没有数据）。当前暂未使用，故标注 unused。
         @SuppressWarnings("unused")
         private boolean isTableEmpty(SQLiteDatabase db, String table) {
                 try (Cursor cursor = db.rawQuery("SELECT 1 FROM " + table + " LIMIT 1", null)) {

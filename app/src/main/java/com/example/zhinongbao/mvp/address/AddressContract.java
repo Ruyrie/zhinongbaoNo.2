@@ -13,7 +13,7 @@ public interface AddressContract {
     }
 
     interface Presenter extends BasePresenter {
-        void saveAddress(Address oldAddress, String name, String phone, String address, boolean isDefault);
+        void saveAddress(Address oldAddress, String name, String phone, String address, boolean isDefault, String tag);
         void setDefault(Address address);
         void delete(Address address);
     }

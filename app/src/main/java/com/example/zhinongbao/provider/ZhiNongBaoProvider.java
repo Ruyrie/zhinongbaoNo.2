@@ -1,5 +1,25 @@
 package com.example.zhinongbao.provider;
 
+/* ============================================================
+ * 【数据库 / 数据总入口 / Provider】全 App 数据读写的统一大门（ContentProvider）
+ * ============================================================
+ * 这个文件是干什么的：
+ *   它是「数据库的统一对外接口」。所有 Repository 想读写数据，都不直接碰 SQLite，
+ *   而是通过 ContentResolver 调用这里的 query/insert/update/delete。
+ *   好处：读写入口统一、数据一变就能自动通知界面刷新。
+ *
+ * 核心概念：
+ *   - ContentProvider：安卓四大组件之一，专门「对外提供数据访问」。
+ *   - Uri（统一资源定位）：每张表对应一个地址，如
+ *       content://com.example.zhinongbao.provider/cart  → 购物车表
+ *     代码里用 CONTENT_URI_CART 这样的常量表示，方便调用。
+ *   - UriMatcher：一个「地址识别器」，把传进来的 Uri 匹配成编号，再翻译成表名。
+ *   - notifyChange：数据改动后「广播通知」，订阅了该 Uri 的界面会自动重新查询刷新。
+ *
+ * 配套：表结构由 AppDatabase 建立；各 Repository 通过本类间接读写各业务表。
+ * 提示：在 IDE 里搜索「数据库」或「Provider」可看数据层文件。
+ * ============================================================ */
+
 import android.content.ContentProvider;
 import android.content.ContentValues;
 import android.content.UriMatcher;
@@ -12,7 +32,10 @@ import com.example.zhinongbao.data.AppDatabase;
 
 public class ZhiNongBaoProvider extends ContentProvider {
 
+    // AUTHORITY = 本 Provider 的唯一标识（相当于「门牌号」），所有 Uri 都以它开头
     public static final String AUTHORITY = "com.example.zhinongbao.provider";
+    // ↓ 下面每个常量就是「一张表的访问地址」，Repository 直接引用它们来读写对应的表
+
     public static final Uri CONTENT_URI_USERS = Uri.parse("content://" + AUTHORITY + "/users");
     public static final Uri CONTENT_URI_ARTICLES = Uri.parse("content://" + AUTHORITY + "/articles");
     public static final Uri CONTENT_URI_PRODUCTS = Uri.parse("content://" + AUTHORITY + "/products");
@@ -33,6 +56,7 @@ public class ZhiNongBaoProvider extends ContentProvider {
     public static final Uri CONTENT_URI_PURCHASE_QUOTES = Uri.parse("content://" + AUTHORITY + "/purchase_quotes");
     public static final Uri CONTENT_URI_ADDRESSES = Uri.parse("content://" + AUTHORITY + "/addresses");
 
+    // ↓ 每张表对应一个「整数编号」，UriMatcher 用它来快速识别请求的是哪张表
     private static final int USERS = 1;
     private static final int ARTICLES = 2;
     private static final int PRODUCTS = 3;
@@ -53,8 +77,10 @@ public class ZhiNongBaoProvider extends ContentProvider {
     private static final int CIRCLE_LIKES = 18;
     private static final int CIRCLE_FAVORITES = 19;
 
+    // 地址识别器：把「Uri 路径」登记成对应的编号
     private static final UriMatcher uriMatcher = new UriMatcher(UriMatcher.NO_MATCH);
 
+    // static 代码块：类加载时执行一次，把所有「路径→编号」的对应关系登记进去
     static {
         uriMatcher.addURI(AUTHORITY, "users", USERS);
         uriMatcher.addURI(AUTHORITY, "articles", ARTICLES);
@@ -77,44 +103,50 @@ public class ZhiNongBaoProvider extends ContentProvider {
         uriMatcher.addURI(AUTHORITY, "addresses", ADDRESSES);
     }
 
-    private AppDatabase dbHelper;
+    private AppDatabase dbHelper;   // 数据库帮手，真正干活的还是它
 
+    // onCreate：Provider 创建时调用，拿到数据库单例备用
     @Override
     public boolean onCreate() {
         dbHelper = AppDatabase.getInstance(getContext());
         return true;
     }
 
+    // 查询：根据 Uri 找到表名，执行 SQL 查询并返回结果游标(Cursor)
     @Nullable
     @Override
     public Cursor query(@NonNull Uri uri, @Nullable String[] projection, @Nullable String selection,
             @Nullable String[] selectionArgs, @Nullable String sortOrder) {
-        SQLiteDatabase db = dbHelper.getReadableDatabase();
+        SQLiteDatabase db = dbHelper.getReadableDatabase();   // 读用「可读」库
         Cursor cursor = db.query(tableName(uri), projection, selection, selectionArgs, null, null, sortOrder);
         if (cursor != null && getContext() != null) {
+            // 给结果绑定通知地址：当这张表数据变化时，正在展示它的界面能自动收到刷新通知
             cursor.setNotificationUri(getContext().getContentResolver(), uri);
         }
         return cursor;
     }
 
+    // getType：返回数据的 MIME 类型，本项目用不到，直接返回 null
     @Nullable
     @Override
     public String getType(@NonNull Uri uri) {
         return null;
     }
 
+    // 插入：往对应表插一条数据，成功后通知界面刷新，并返回新数据的 Uri
     @Nullable
     @Override
     public Uri insert(@NonNull Uri uri, @Nullable ContentValues values) {
-        SQLiteDatabase db = dbHelper.getWritableDatabase();
+        SQLiteDatabase db = dbHelper.getWritableDatabase();   // 写用「可写」库
         long id = db.insert(tableName(uri), null, values);
         Uri returnUri = Uri.withAppendedPath(uri, String.valueOf(id));
         if (id > 0 && getContext() != null) {
-            getContext().getContentResolver().notifyChange(uri, null);
+            getContext().getContentResolver().notifyChange(uri, null); // 广播：数据变了，请刷新
         }
         return returnUri;
     }
 
+    // 删除：删掉符合条件的数据，返回删除条数，成功后通知刷新
     @Override
     public int delete(@NonNull Uri uri, @Nullable String selection, @Nullable String[] selectionArgs) {
         SQLiteDatabase db = dbHelper.getWritableDatabase();
@@ -125,6 +157,7 @@ public class ZhiNongBaoProvider extends ContentProvider {
         return count;
     }
 
+    // 更新：修改符合条件的数据，返回更新条数，成功后通知刷新
     @Override
     public int update(@NonNull Uri uri, @Nullable ContentValues values, @Nullable String selection,
             @Nullable String[] selectionArgs) {
@@ -136,6 +169,7 @@ public class ZhiNongBaoProvider extends ContentProvider {
         return count;
     }
 
+    // 把传进来的 Uri 翻译成「数据库表名」。匹配不到就抛异常（防止访问不存在的表）。
     private String tableName(Uri uri) {
         switch (uriMatcher.match(uri)) {
             case USERS:

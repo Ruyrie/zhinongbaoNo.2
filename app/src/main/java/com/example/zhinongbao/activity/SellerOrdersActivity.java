@@ -124,6 +124,11 @@ public class SellerOrdersActivity extends BaseMvpActivity<SellerOrdersContract.P
             public void onContactBuyer(Order o) {
                 presenter.onContactBuyer(o);
             }
+
+            @Override
+            public void onOrderClick(Order o) {
+                openProductDetail(o);
+            }
         }, productId -> presenter.getProductById(productId));
         rvOrders.setAdapter(adapter);
 
@@ -155,6 +160,17 @@ public class SellerOrdersActivity extends BaseMvpActivity<SellerOrdersContract.P
         orderList.clear();
         orderList.addAll(orders);
         adapter.notifyDataSetChanged();
+    }
+
+    // 点击订单卡片：打开该订单商品的详情页；商品已下架/不存在时给出提示
+    private void openProductDetail(Order o) {
+        if (o.productId <= 0 || presenter.getProductById(o.productId) == null) {
+            showToast("商品已下架或不存在");
+            return;
+        }
+        Intent intent = new Intent(this, ProductDetailActivity.class);
+        intent.putExtra("product_id", o.productId);
+        startActivity(intent);
     }
 
     @Override

@@ -6,6 +6,9 @@ import com.example.zhinongbao.model.ChatMessage;
 import com.example.zhinongbao.repository.MessageRepository;
 
 public class ChatPresenter implements ChatContract.Presenter {
+    /** 撤回时限：2 分钟（毫秒）。超过这个时间发送方就不能再撤回。 */
+    public static final long RECALL_WINDOW_MS = 2 * 60 * 1000L;
+
     private final ChatContract.View view;
     private final MessageRepository repository;
     private final String currentUser;
@@ -67,6 +70,32 @@ public class ChatPresenter implements ChatContract.Presenter {
         }
         repository.sendMessage(currentUser, otherUser, ChatMessage.imageContent(imageUri));
         view.clearInput();
+        refresh();
+    }
+
+    @Override
+    public void recallMessage(ChatMessage message) {
+        if (message == null || message.recalled) {
+            return;
+        }
+        if (!message.fromUser.equals(currentUser)) {
+            view.showToast("只能撤回自己发送的消息");
+            return;
+        }
+        if (System.currentTimeMillis() - message.timestamp > RECALL_WINDOW_MS) {
+            view.showToast("发送已超过2分钟，无法撤回");
+            return;
+        }
+        repository.recallMessage(message.id);
+        refresh();
+    }
+
+    @Override
+    public void deleteMessage(ChatMessage message) {
+        if (message == null) {
+            return;
+        }
+        repository.deleteMessageForUser(message.id, currentUser);
         refresh();
     }
 

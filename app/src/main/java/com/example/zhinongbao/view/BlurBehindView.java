@@ -1,5 +1,23 @@
 package com.example.zhinongbao.view;
 
+/* ============================================================
+ * 【自定义控件 / 毛玻璃 / BlurBehindView】实时背景模糊控件（iOS 液态玻璃效果）
+ * ============================================================
+ * 这个文件是干什么的：
+ *   做出「毛玻璃」效果——它会不停地把自己背后那块内容抓下来，做高斯模糊后画出来，
+ *   于是看起来就像一层磨砂玻璃盖在内容上。本项目底部导航栏的玻璃质感就靠它。
+ *
+ * 技术点：
+ *   - 自定义 View（继承 View 自己画内容）。需要 Android 12 (API 31)+ 才支持 RenderEffect。
+ *   - sourceView：要模糊的「背后内容」来源。
+ *   - onDraw：每次重画时把 sourceView 当前样子抓进一张快照位图(snapshot)，再画到自己身上。
+ *   - OnPreDrawListener：界面每帧绘制前触发，调用 invalidate() 让模糊持续刷新（实时）。
+ *   - 用「半分辨率」位图做模糊（w/2、h/2）：省性能，模糊本来就看不清细节。
+ *   - onAttached/onDetachedFromWindow：控件出现/移除时注册/注销监听并回收位图，防内存泄漏。
+ *
+ * 提示：在 IDE 里搜索「模糊」或「玻璃」可看用到它的地方（如 activity_main.xml 底部导航）。
+ * ============================================================ */
+
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
@@ -17,42 +35,49 @@ import androidx.annotation.Nullable;
  */
 public class BlurBehindView extends View {
 
-    private View sourceView;
-    private Bitmap snapshot;
-    private Canvas snapshotCanvas;
-    private float blurRadius = 25f;
-    private boolean drawingSnapshot = false;
+    private View sourceView;            // 要模糊的「背后内容」来源
+    private Bitmap snapshot;            // 抓取背后内容用的快照位图
+    private Canvas snapshotCanvas;      // 往快照位图上画内容的画布
+    private float blurRadius = 25f;     // 模糊半径（越大越糊）
+    private boolean drawingSnapshot = false;  // 防止「画快照」时又触发自己重画造成死循环
 
+    // 每帧绘制前回调：只要不是正在画快照，就让自己重画一次，从而实现「实时」模糊
     private final ViewTreeObserver.OnPreDrawListener preDrawListener = () -> {
         if (!drawingSnapshot) invalidate();
         return true;
     };
 
+    // 三个构造方法对应三种创建方式，统一交给 init()
     public BlurBehindView(Context c) { super(c); init(); }
     public BlurBehindView(Context c, @Nullable AttributeSet a) { super(c, a); init(); }
     public BlurBehindView(Context c, @Nullable AttributeSet a, int s) { super(c, a, s); init(); }
 
+    // 初始化：给自己设置高斯模糊渲染效果
     private void init() {
         setRenderEffect(RenderEffect.createBlurEffect(
                 blurRadius, blurRadius, Shader.TileMode.CLAMP));
     }
 
+    // 指定要模糊的背后内容来源
     public void setSourceView(View source) {
         this.sourceView = source;
     }
 
+    // 动态调整模糊程度
     public void setBlurRadius(float radius) {
         this.blurRadius = radius;
         setRenderEffect(RenderEffect.createBlurEffect(
                 radius, radius, Shader.TileMode.CLAMP));
     }
 
+    // 控件被加到界面上时：注册「每帧绘制前」监听，开始持续刷新模糊
     @Override
     protected void onAttachedToWindow() {
         super.onAttachedToWindow();
         getViewTreeObserver().addOnPreDrawListener(preDrawListener);
     }
 
+    // 控件从界面移除时：注销监听并回收位图，释放内存
     @Override
     protected void onDetachedFromWindow() {
         getViewTreeObserver().removeOnPreDrawListener(preDrawListener);
@@ -60,6 +85,7 @@ public class BlurBehindView extends View {
         super.onDetachedFromWindow();
     }
 
+    // 控件尺寸变化时：按「一半大小」重建快照位图（省性能）
     @Override
     protected void onSizeChanged(int w, int h, int ow, int oh) {
         super.onSizeChanged(w, h, ow, oh);
@@ -72,6 +98,7 @@ public class BlurBehindView extends View {
         snapshotCanvas = new Canvas(snapshot);
     }
 
+    // 真正画内容：把背后 sourceView 当前的样子抓进快照，再放大画到自己身上（系统会自动加模糊）
     @Override
     protected void onDraw(Canvas canvas) {
         if (sourceView == null || snapshot == null || drawingSnapshot) return;

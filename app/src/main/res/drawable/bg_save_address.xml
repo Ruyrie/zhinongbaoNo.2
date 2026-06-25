@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 保存地址按钮：橙色渐变圆角大按钮 -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shape="rectangle">
+    <gradient
+        android:startColor="#FF8A3D"
+        android:endColor="#FF6A00"
+        android:angle="0" />
+    <corners android:radius="26dp" />
+</shape>

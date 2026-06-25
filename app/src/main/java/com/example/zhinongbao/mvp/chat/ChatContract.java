@@ -20,5 +20,7 @@ public interface ChatContract {
         void markRead();
         void sendMessage(String content);
         void sendImage(String imageUri);
+        void recallMessage(ChatMessage message);
+        void deleteMessage(ChatMessage message);
     }
 }

@@ -139,7 +139,18 @@ public class ChatActivity extends BaseMvpActivity<ChatContract.Presenter>
             String currentNickname, String otherNickname) {
         if (adapter == null) {
             messages = newMessages;
-            adapter = new ChatAdapter(messages, currentUser, currentNickname, otherNickname);
+            adapter = new ChatAdapter(messages, currentUser, currentNickname, otherNickname,
+                    new ChatAdapter.MessageActionListener() {
+                        @Override
+                        public void onRecall(ChatMessage message) {
+                            presenter.recallMessage(message);
+                        }
+
+                        @Override
+                        public void onDelete(ChatMessage message) {
+                            presenter.deleteMessage(message);
+                        }
+                    });
             rvMessages.setAdapter(adapter);
         } else {
             messages.clear();

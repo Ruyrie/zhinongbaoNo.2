@@ -1,5 +1,23 @@
 package com.example.zhinongbao.view;
 
+/* ============================================================
+ * 【自定义控件 / 玻璃导航栏 / CurvedGlassNavView】带水滴凹槽的底部导航背景
+ * ============================================================
+ * 这个文件是干什么的：
+ *   它是主界面底部那条「液态玻璃导航栏」的背景容器。它能在顶边画出一个
+ *   随当前选中 Tab 左右滑动的「水滴凹槽」，并把内部子控件裁成这个带凹槽的形状，
+ *   再叠上半透明白填充 + 高光描边，做出 iOS 风格的玻璃质感。
+ *
+ * 技术点（图形绘制）：
+ *   - Path（路径）：用一连串「直线 + 圆弧 + 贝塞尔曲线」描出导航栏外形轮廓。
+ *   - 三次贝塞尔曲线 cubicTo：画出平滑的水滴凹槽（靠两个控制点弯出弧度）。
+ *   - canvas.clipPath：把绘制范围裁剪成这个形状，子控件只在形状内显示。
+ *   - setHolePosition(x)：外部（导航逻辑）调它来移动凹槽位置，触发 invalidate 重画。
+ *   - holeX/holeWidth/holeDepth/cornerRadius：凹槽中心、宽、深和整体圆角参数。
+ *
+ * 提示：在 IDE 里搜索「导航」或「玻璃」可看它在 activity_main.xml 中的使用。
+ * ============================================================ */
+
 import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Color;
@@ -17,15 +35,16 @@ import androidx.annotation.Nullable;
  */
 public class CurvedGlassNavView extends FrameLayout {
 
-    private Path clipPath;
-    private Paint borderPaint;
-    private Paint fillPaint;
+    private Path clipPath;        // 导航栏外形轮廓路径（含水滴凹槽）
+    private Paint borderPaint;    // 画高光描边的画笔
+    private Paint fillPaint;      // 画半透明白填充的画笔
 
-    private float holeX = -1000f; // 凹槽中心 X 坐标
+    private float holeX = -1000f; // 凹槽中心 X 坐标（初始放屏幕外=不显示凹槽）
     private float holeWidth = 180f; // 凹槽总宽度
     private float holeDepth = 75f; // 凹槽深度
     private float cornerRadius = 90f; // 整体圆角
 
+    // 两个构造方法对应「代码 new / XML 里写」两种创建方式，统一交给 init()
     public CurvedGlassNavView(@NonNull Context context) {
         super(context);
         init();
@@ -37,7 +56,7 @@ public class CurvedGlassNavView extends FrameLayout {
     }
 
     private void init() {
-        setWillNotDraw(false);
+        setWillNotDraw(false);   // 默认 ViewGroup 不自己画，这里打开，允许 draw() 画凹槽背景
         clipPath = new Path();
 
         borderPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
@@ -56,12 +75,14 @@ public class CurvedGlassNavView extends FrameLayout {
         invalidate();
     }
 
+    // 尺寸变化时重新计算路径
     @Override
     protected void onSizeChanged(int w, int h, int oldw, int oldh) {
         super.onSizeChanged(w, h, oldw, oldh);
         updatePath(w, h);
     }
 
+    // 重新描出导航栏轮廓：四个圆角 + 顶部直线 + 中间水滴凹槽
     private void updatePath(int w, int h) {
         clipPath.reset();
 
@@ -120,6 +141,7 @@ public class CurvedGlassNavView extends FrameLayout {
         clipPath.close();
     }
 
+    // 真正绘制：先裁成凹槽形状画子控件，再叠加玻璃填充和高光边框
     @Override
     public void draw(Canvas canvas) {
         updatePath(getWidth(), getHeight());
