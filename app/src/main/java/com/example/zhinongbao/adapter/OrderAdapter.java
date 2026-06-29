@@ -51,7 +51,7 @@ public class OrderAdapter extends RecyclerView.Adapter<OrderAdapter.VH> {
     public void onBindViewHolder(@NonNull VH holder, int position) {
         Order o = data.get(position);
         holder.tvName.setText(o.name);
-        holder.tvPrice.setText(String.format("¥%.2f", o.price));
+        holder.tvPrice.setText(String.format("¥%.2f", o.getPayableAmount()));
         holder.tvQty.setText("x" + o.quantity);
         holder.tvTime.setText("下单：" + o.time);
 

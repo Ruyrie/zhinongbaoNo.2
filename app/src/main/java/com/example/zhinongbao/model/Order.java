@@ -103,4 +103,28 @@ public class Order {
             return -1;   // 时间格式异常，当作已超时处理
         }
     }
+
+    /**
+     * 实际生效的商品单价：卖家改过价就用改后单价（unitPrice>0），否则用原始下单单价 price。
+     * 用于买家侧展示，保证卖家改价后买家看到的也是最新单价。
+     */
+    public double getEffectiveUnitPrice() {
+        return unitPrice > 0 ? unitPrice : price;
+    }
+
+    /**
+     * 商品总价（折扣前）= 生效单价 × 数量，不减折扣。
+     * 用于展示「商品总价」一行，与「实付款」对照，让买家看清减免了多少。
+     */
+    public double getSubtotal() {
+        return getEffectiveUnitPrice() * quantity;
+    }
+
+    /**
+     * 买家实付金额 = 生效单价 × 数量 - 整单折扣，最低 0。
+     * 与 OrderRepository.getOrderPaidAmount 同一口径，供 UI 直接展示，确保卖家改价/折扣后买家同步更新。
+     */
+    public double getPayableAmount() {
+        return Math.max(0, getSubtotal() - discount);
+    }
 }

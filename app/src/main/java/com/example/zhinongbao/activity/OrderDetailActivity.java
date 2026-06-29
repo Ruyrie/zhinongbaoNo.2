@@ -112,11 +112,11 @@ public class OrderDetailActivity extends BaseMvpActivity<OrderDetailContract.Pre
             default:
                 ivProduct.setImageResource(R.drawable.ic_product_placeholder);
         }
-        tvPrice.setText(String.format("¥%.2f", order.price));
+        tvPrice.setText(String.format("¥%.2f", order.getEffectiveUnitPrice()));
         tvQty.setText("x" + order.quantity);
         tvOrderId.setText(order.orderId);
         tvTime.setText(order.time);
-        tvTotal.setText(String.format("¥%.2f", paidAmount));
+        tvTotal.setText(String.format("¥%.2f", order.getSubtotal()));
         tvPaidAgain.setText(String.format("¥%.2f", paidAmount));
         layoutStoreTrace.setVisibility(View.VISIBLE);
         if (!TextUtils.isEmpty(order.seller)) {
