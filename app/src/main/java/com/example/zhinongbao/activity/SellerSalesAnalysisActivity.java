@@ -1,6 +1,8 @@
 package com.example.zhinongbao.activity;
 
 import com.example.zhinongbao.R;
+import android.graphics.Typeface;
+import android.graphics.drawable.GradientDrawable;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.LinearLayout;
@@ -73,9 +75,9 @@ public class SellerSalesAnalysisActivity extends BaseMvpActivity<SellerSalesCont
         ((TextView) findViewById(R.id.tvTitle)).setText(scopeName(scope) + "销售流水分析");
         ((TextView) findViewById(R.id.tvScope)).setText(scopeDesc(scope));
         ((TextView) findViewById(R.id.tvRevenue)).setText(String.format(Locale.getDefault(), "¥%.2f", total));
-        ((TextView) findViewById(R.id.tvOrderCount)).setText("到账订单 " + orders.size() + " 笔");
+        ((TextView) findViewById(R.id.tvOrderCount)).setText(orders.size() + " 笔");
         double avg = orders.isEmpty() ? 0 : total / orders.size();
-        ((TextView) findViewById(R.id.tvAvgAmount)).setText(String.format(Locale.getDefault(), "客单价 ¥%.2f", avg));
+        ((TextView) findViewById(R.id.tvAvgAmount)).setText(String.format(Locale.getDefault(), "¥%.2f", avg));
 
         bindProductSummary(productMap);
         // 订单流水：先拆成独立流水记录，再按发生时间倒序分页，避免最新记录被挤到第二页。
@@ -105,18 +107,64 @@ public class SellerSalesAnalysisActivity extends BaseMvpActivity<SellerSalesCont
             addEmptyText(container, "暂无销售数据");
             return;
         }
+        int rank = 1;
+        int index = 0;
+        int size = productMap.size();
         for (Map.Entry<String, ProductSummary> entry : productMap.entrySet()) {
             ProductSummary summary = entry.getValue();
             LinearLayout row = createRow();
-            TextView name = createText(entry.getKey(), 0xFF333333, 14, 1, false);
-            TextView amount = createText(
-                    String.format(Locale.getDefault(), "x%d  ¥%.2f", summary.quantity, summary.amount),
-                    0xFFE53935, 14, 0, true);
+
+            row.addView(makeRankBadge(rank));
+
+            TextView name = createText(entry.getKey(), 0xFF1F2329, 14, 1, false);
+            ((LinearLayout.LayoutParams) name.getLayoutParams()).setMarginStart(dp(12));
             row.addView(name);
+
+            row.addView(makeQtyPill("x" + summary.quantity));
+
+            TextView amount = createText(
+                    String.format(Locale.getDefault(), "¥%.2f", summary.amount),
+                    0xFFE53935, 15, 0, true);
+            ((LinearLayout.LayoutParams) amount.getLayoutParams()).setMarginStart(dp(10));
+            amount.setTypeface(null, Typeface.BOLD);
             row.addView(amount);
+
             container.addView(row);
-            addDivider(container);
+            if (index < size - 1) {
+                addDivider(container);
+            }
+            rank++;
+            index++;
         }
+    }
+
+    // 商品排名圆形徽标（1、2、3…）
+    private TextView makeRankBadge(int rank) {
+        TextView badge = new TextView(this);
+        int boxSize = dp(24);
+        badge.setLayoutParams(new LinearLayout.LayoutParams(boxSize, boxSize));
+        badge.setGravity(android.view.Gravity.CENTER);
+        badge.setText(String.valueOf(rank));
+        badge.setTextSize(12);
+        badge.setTextColor(0xFF2E7D32);
+        badge.setTypeface(null, Typeface.BOLD);
+        badge.setBackgroundResource(R.drawable.bg_sales_rank_badge);
+        return badge;
+    }
+
+    // 销量胶囊（浅灰底）
+    private TextView makeQtyPill(String text) {
+        TextView pill = new TextView(this);
+        LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT);
+        lp.setMarginStart(dp(8));
+        pill.setLayoutParams(lp);
+        pill.setText(text);
+        pill.setTextSize(11);
+        pill.setTextColor(0xFF6B7280);
+        pill.setPadding(dp(7), dp(2), dp(7), dp(2));
+        pill.setBackgroundResource(R.drawable.bg_sales_qty_pill);
+        return pill;
     }
 
     // 分页渲染当前页的订单流水（按流水记录分页）
@@ -143,7 +191,6 @@ public class SellerSalesAnalysisActivity extends BaseMvpActivity<SellerSalesCont
             } else {
                 addIncomeRecord(container, record.order);
             }
-            addDivider(container);
         }
         if (totalPages > 1) {
             addPaginationBar(container, totalPages);
@@ -157,7 +204,8 @@ public class SellerSalesAnalysisActivity extends BaseMvpActivity<SellerSalesCont
                 LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT));
         bar.setOrientation(LinearLayout.HORIZONTAL);
         bar.setGravity(android.view.Gravity.CENTER);
-        bar.setPadding(0, dp(14), 0, dp(6));
+        bar.setBackgroundResource(R.drawable.bg_ios_card);
+        bar.setPadding(0, dp(12), 0, dp(12));
 
         TextView prev = makePageButton("上一页", flowPage > 0);
         prev.setOnClickListener(v -> {
@@ -200,29 +248,30 @@ public class SellerSalesAnalysisActivity extends BaseMvpActivity<SellerSalesCont
         return btn;
     }
 
-    // 收入记录：金额用「+」前缀、绿色显示
+    // 收入记录：白底 + 左侧绿色条，金额用「+」前缀、绿色显示
     private void addIncomeRecord(LinearLayout container, Order order) {
-        LinearLayout row = new LinearLayout(this);
-        row.setOrientation(LinearLayout.VERTICAL);
-        row.setPadding(0, 8, 0, 8);
+        LinearLayout card = createFlowCard(true);
 
-        LinearLayout top = createRow();
-        top.addView(createText("【收入】" + order.name, 0xFF333333, 14, 1, false));
+        LinearLayout top = createHeaderRow();
+        top.addView(makeTypeTag("收入", 0xFF2E7D32));
+
+        TextView name = createText(order.name, 0xFF1F2329, 14, 1, false);
+        name.setTypeface(null, Typeface.BOLD);
+        top.addView(name);
+
         top.addView(createText(String.format(Locale.getDefault(), "+¥%.2f", presenter.getOrderPaidAmount(order)),
-                0xFF2E7D32, 15, 0, true));   // 绿色：收入（加项）
-        row.addView(top);
+                0xFF2E7D32, 16, 0, true));   // 绿色：收入（加项）
+        card.addView(top);
 
-        TextView status = createText(statusText(order), statusColor(order), 12, 0, false);
-        status.setPadding(10, 4, 10, 4);
-        row.addView(status);
+        addStatusChip(card, statusText(order), statusColor(order));
 
-        row.addView(createInfoText("订单编号：" + order.orderId, 0xFF8A8F98));
-        row.addView(createInfoText("到账时间：" + formatIncomeTime(order), 0xFF333333));
-        row.addView(createInfoText("下单时间：" + (order.time == null ? "未记录" : order.time), 0xFF8A8F98));
-        row.addView(createInfoText("买家：" + safeText(order.buyerNickname) + "  单价¥"
+        card.addView(createInfoText("订单编号：" + order.orderId, 0xFF8A8F98));
+        card.addView(createInfoText("到账时间：" + formatIncomeTime(order), 0xFF4B5563));
+        card.addView(createInfoText("下单时间：" + (order.time == null ? "未记录" : order.time), 0xFF8A8F98));
+        card.addView(createInfoText("买家：" + safeText(order.buyerNickname) + "  单价¥"
                 + String.format(Locale.getDefault(), "%.2f", order.unitPrice > 0 ? order.unitPrice : order.price)
                 + " x" + order.quantity, 0xFF8A8F98));
-        row.addView(createInfoText("发货信息：" + shipmentText(order), 0xFF8A8F98));
+        card.addView(createInfoText("发货信息：" + shipmentText(order), 0xFF8A8F98));
 
         // 售后处理中：退款尚未生效，营收暂不扣减，提示一句即可（不计为退款记录）
         if (Order.STATUS_REFUND.equals(order.status)) {
@@ -230,31 +279,95 @@ public class SellerSalesAnalysisActivity extends BaseMvpActivity<SellerSalesCont
             TextView pending = createText(String.format(Locale.getDefault(),
                     "售后处理中：买家申请退款 ¥%.2f（卖家同意或超 24 小时未处理后才扣减）  原因：%s",
                     order.refundAmount, reason), 0xFFFF9500, 12, 0, false);
-            pending.setPadding(0, 4, 0, 0);
-            row.addView(pending);
+            pending.setPadding(0, dp(6), 0, 0);
+            card.addView(pending);
         }
-        container.addView(row);
+        container.addView(card);
     }
 
-    // 退款记录：金额用「−」前缀、红色显示（与收入记录分开成两条）
+    // 退款记录：白底 + 左侧红色条，金额用「−」前缀、红色显示（与收入记录分开成两条）
     private void addRefundRecord(LinearLayout container, Order order) {
-        LinearLayout row = new LinearLayout(this);
-        row.setOrientation(LinearLayout.VERTICAL);
-        row.setPadding(0, 8, 0, 8);
+        LinearLayout card = createFlowCard(false);
 
-        LinearLayout top = createRow();
-        top.addView(createText("【退款】" + order.name, 0xFF333333, 14, 1, false));
+        LinearLayout top = createHeaderRow();
+        top.addView(makeTypeTag("退款", 0xFFE53935));
+
+        TextView name = createText(order.name, 0xFF1F2329, 14, 1, false);
+        name.setTypeface(null, Typeface.BOLD);
+        top.addView(name);
+
         top.addView(createText(String.format(Locale.getDefault(), "−¥%.2f", order.refundAmount),
-                0xFFE53935, 15, 0, true));   // 红色：退款（减项）
-        row.addView(top);
+                0xFFE53935, 16, 0, true));   // 红色：退款（减项）
+        card.addView(top);
 
         String reason = order.refundReason == null || order.refundReason.isEmpty() ? "无" : order.refundReason;
-        row.addView(createInfoText("订单编号：" + order.orderId, 0xFF8A8F98));
-        row.addView(createInfoText("退款原因：" + reason, 0xFF8A8F98));
-        row.addView(createInfoText("退款时间：" + formatIncomeTime(order), 0xFF8A8F98));
-        row.addView(createText(String.format(Locale.getDefault(),
-                "该单实收 ¥%.2f", presenter.getOrderNetRevenue(order)), 0xFF8A8F98, 12, 0, false));
-        container.addView(row);
+        card.addView(createInfoText("订单编号：" + order.orderId, 0xFF8A8F98));
+        card.addView(createInfoText("退款原因：" + reason, 0xFF8A8F98));
+        card.addView(createInfoText("退款时间：" + formatIncomeTime(order), 0xFF8A8F98));
+        card.addView(createInfoText(String.format(Locale.getDefault(),
+                "该单实收 ¥%.2f", presenter.getOrderNetRevenue(order)), 0xFF8A8F98));
+        container.addView(card);
+    }
+
+    // 流水卡容器：白底 + 左侧彩色强调条，卡片之间留间距
+    private LinearLayout createFlowCard(boolean income) {
+        LinearLayout card = new LinearLayout(this);
+        LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
+        lp.bottomMargin = dp(10);
+        card.setLayoutParams(lp);
+        card.setOrientation(LinearLayout.VERTICAL);
+        card.setBackgroundResource(income ? R.drawable.bg_flow_card_income : R.drawable.bg_flow_card_refund);
+        card.setElevation(dp(1));
+        // 左内边距加大，避开彩色强调条
+        card.setPadding(dp(16), dp(13), dp(14), dp(13));
+        return card;
+    }
+
+    // 流水卡顶部行（标签 + 名称 + 金额），垂直居中
+    private LinearLayout createHeaderRow() {
+        LinearLayout row = new LinearLayout(this);
+        row.setLayoutParams(new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT));
+        row.setGravity(android.view.Gravity.CENTER_VERTICAL);
+        row.setOrientation(LinearLayout.HORIZONTAL);
+        return row;
+    }
+
+    // 类型标签：收入（绿）/退款（红），白字实心圆角
+    private TextView makeTypeTag(String text, int color) {
+        TextView tag = new TextView(this);
+        LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT);
+        lp.setMarginEnd(dp(8));
+        tag.setLayoutParams(lp);
+        tag.setText(text);
+        tag.setTextSize(11);
+        tag.setTextColor(0xFFFFFFFF);
+        tag.setPadding(dp(7), dp(2), dp(7), dp(2));
+        GradientDrawable bg = new GradientDrawable();
+        bg.setCornerRadius(dp(7));
+        bg.setColor(color);
+        tag.setBackground(bg);
+        return tag;
+    }
+
+    // 状态胶囊：文字用状态色，背景为同色低透明度底
+    private void addStatusChip(LinearLayout card, String text, int color) {
+        TextView chip = new TextView(this);
+        LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT);
+        lp.topMargin = dp(8);
+        chip.setLayoutParams(lp);
+        chip.setText(text);
+        chip.setTextSize(11);
+        chip.setTextColor(color);
+        chip.setPadding(dp(8), dp(3), dp(8), dp(3));
+        GradientDrawable bg = new GradientDrawable();
+        bg.setCornerRadius(dp(8));
+        bg.setColor((color & 0x00FFFFFF) | 0x1A000000);   // 约 10% 透明度的同色底
+        chip.setBackground(bg);
+        card.addView(chip);
     }
 
     private TextView createInfoText(String text, int color) {

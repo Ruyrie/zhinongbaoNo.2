@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 销售流水分析 顶部营收卡：绿色渐变（与店铺 hero 一致的品牌色） -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android">
+    <gradient
+        android:angle="135"
+        android:startColor="#2F7D46"
+        android:centerColor="#43A047"
+        android:endColor="#7CB342" />
+    <corners android:radius="20dp" />
+</shape>

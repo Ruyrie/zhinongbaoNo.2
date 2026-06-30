@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 商品销售汇总的排名徽标（圆形浅绿底） -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shape="oval">
+    <solid android:color="#EEF8F0" />
+    <stroke android:width="1dp" android:color="#C7E9CB" />
+</shape>

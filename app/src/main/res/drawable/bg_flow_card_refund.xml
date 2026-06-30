@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 退款流水卡：白底 + 左侧红色强调条 -->
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <item>
+        <shape android:shape="rectangle">
+            <solid android:color="#E53935" />
+            <corners android:radius="14dp" />
+        </shape>
+    </item>
+    <item android:left="5dp">
+        <shape android:shape="rectangle">
+            <solid android:color="#FFFFFF" />
+            <corners
+                android:topRightRadius="14dp"
+                android:bottomRightRadius="14dp" />
+        </shape>
+    </item>
+</layer-list>

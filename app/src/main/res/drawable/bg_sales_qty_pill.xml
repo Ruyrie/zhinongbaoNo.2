@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 商品销量胶囊（浅灰底） -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android">
+    <solid android:color="#F2F4F5" />
+    <corners android:radius="9dp" />
+</shape>
