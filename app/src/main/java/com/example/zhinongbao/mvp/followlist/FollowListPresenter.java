@@ -33,6 +33,10 @@ public class FollowListPresenter implements FollowListContract.Presenter {
             users = articleRepository.getUsersWhoLikedArticlesBy(username);
         } else if ("followers".equals(type)) {
             users = articleRepository.getFollowers(username);
+        } else if ("following".equals(type)) {
+            view.showFollowing(articleRepository.getFollowing(username),
+                    articleRepository.getFollowingStores(username), currentUser);
+            return;
         } else {
             users = articleRepository.getFollowing(username);
         }
@@ -60,13 +64,21 @@ public class FollowListPresenter implements FollowListContract.Presenter {
     }
 
     @Override
-    public boolean isFollowing(String username) {
-        return articleRepository.isFollowing(currentUser, username);
+    public boolean isFollowing(String username, boolean store) {
+        return store
+                ? articleRepository.isFollowingStore(currentUser, username)
+                : articleRepository.isFollowing(currentUser, username);
     }
 
     @Override
-    public void toggleFollow(String username) {
-        if (articleRepository.isFollowing(currentUser, username)) {
+    public void toggleFollow(String username, boolean store) {
+        if (store) {
+            if (articleRepository.isFollowingStore(currentUser, username)) {
+                articleRepository.unfollowStore(currentUser, username);
+            } else {
+                articleRepository.followStore(currentUser, username);
+            }
+        } else if (articleRepository.isFollowing(currentUser, username)) {
             articleRepository.unfollowUser(currentUser, username);
         } else {
             articleRepository.followUser(currentUser, username);

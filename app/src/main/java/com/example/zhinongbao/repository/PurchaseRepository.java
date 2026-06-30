@@ -59,9 +59,9 @@ public class PurchaseRepository {
         return role == User.ROLE_SELLER || role == User.ROLE_BOTH;
     }
 
-    // 买家发布一条采购需求（买家=当前登录用户）
+    // 买家发布一条采购需求（买家=当前登录用户）；images 为逗号分隔的需求图片，可为空
     public boolean addPurchaseRequest(String productName, String category, double quantity,
-            String unit, double targetPrice, String description) {
+            String unit, double targetPrice, String description, String images) {
         String buyer = getLoggedUser();
         if (buyer == null) {
             return false;
@@ -74,13 +74,14 @@ public class PurchaseRepository {
         values.put("unit", unit);
         values.put("target_price", targetPrice);
         values.put("description", description);
+        values.put("images", images == null ? "" : images);
         values.put("timestamp", System.currentTimeMillis());
         return resolver.insert(ZhiNongBaoProvider.CONTENT_URI_PURCHASE_REQUESTS, values) != null;
     }
 
-    // 修改采购需求（需通过 canModifyPurchaseRequest 校验：是本人且未进入实质交易）
+    // 修改采购需求（需通过 canModifyPurchaseRequest 校验：是本人且未进入实质交易）；images 为逗号分隔的需求图片
     public boolean updatePurchaseRequest(long requestId, String productName, String category, double quantity,
-            String unit, double targetPrice, String description) {
+            String unit, double targetPrice, String description, String images) {
         String buyer = getLoggedUser();
         if (!canModifyPurchaseRequest(requestId, buyer)) {
             return false;
@@ -92,6 +93,7 @@ public class PurchaseRepository {
         values.put("unit", unit);
         values.put("target_price", targetPrice);
         values.put("description", description);
+        values.put("images", images == null ? "" : images);
         values.put("timestamp", System.currentTimeMillis());
         return resolver.update(ZhiNongBaoProvider.CONTENT_URI_PURCHASE_REQUESTS, values,
                 "id=? AND buyer_user=?", new String[] { String.valueOf(requestId), buyer }) > 0;
@@ -137,6 +139,15 @@ public class PurchaseRepository {
     // 按 id 取单条采购需求
     public PurchaseRequest getPurchaseRequestById(long requestId) {
         return getRequestById(requestId);
+    }
+
+    // 取某采购需求买家上传的需求图片（采购订单展示兜底用：订单自带 proof_images 为空时回源到需求）
+    public String getRequestImages(long requestId) {
+        if (requestId <= 0) {
+            return null;
+        }
+        PurchaseRequest request = getRequestById(requestId);
+        return request == null ? null : request.images;
     }
 
     // 取某需求下指定卖家报价的配图（采购订单详情兜底用：订单自带的 proof_images 为空时回源到报价）
@@ -214,6 +225,29 @@ public class PurchaseRepository {
         }
     }
 
+    // 该采购需求是否已被「有效已付款订单」锁定：买家已付款（待发货/已发货）或已完成且未退款时锁定，
+    // 此时卖家不能再（重新）报价；只有订单取消或退款成功后才解锁，可重新报价。
+    public boolean isRequestLockedByPaidOrder(long requestId) {
+        try (Cursor cursor = resolver.query(
+                ZhiNongBaoProvider.CONTENT_URI_ORDERS,
+                new String[] { "status", "refund_amount" },
+                "purchase_request_id=? AND order_type=?",
+                new String[] { String.valueOf(requestId), Order.ORDER_TYPE_PROCUREMENT },
+                null)) {
+            while (cursor != null && cursor.moveToNext()) {
+                String status = cursor.getString(0);
+                double refund = cursor.getDouble(1);
+                if (Order.STATUS_PAID.equals(status) || Order.STATUS_SHIPPED.equals(status)) {
+                    return true;   // 已付款、待发货/已发货 → 锁定
+                }
+                if (Order.STATUS_COMPLETED.equals(status) && refund <= 0) {
+                    return true;   // 已完成且未退款 → 锁定（退款后 refund>0 解锁）
+                }
+            }
+        }
+        return false;
+    }
+
     // 提交报价（不带图）——转调下面的完整版
     public boolean addQuote(long requestId, String sellerUser, double price, String description) {
         return addQuote(requestId, sellerUser, price, description, "");
@@ -229,11 +263,27 @@ public class PurchaseRepository {
         values.put("images", images == null ? "" : images);
         values.put("timestamp", System.currentTimeMillis());
         values.put("status", "pending");
+        boolean ok;
         if (hasQuoted(requestId, sellerUser)) {
-            return resolver.update(ZhiNongBaoProvider.CONTENT_URI_PURCHASE_QUOTES, values,
+            ok = resolver.update(ZhiNongBaoProvider.CONTENT_URI_PURCHASE_QUOTES, values,
                     "request_id=? AND seller_user=?", new String[] { String.valueOf(requestId), sellerUser }) > 0;
+        } else {
+            ok = resolver.insert(ZhiNongBaoProvider.CONTENT_URI_PURCHASE_QUOTES, values) != null;
         }
-        return resolver.insert(ZhiNongBaoProvider.CONTENT_URI_PURCHASE_QUOTES, values) != null;
+        if (ok) {
+            ensureSellerCapability(sellerUser);
+        }
+        return ok;
+    }
+
+    private void ensureSellerCapability(String sellerUser) {
+        if (sellerUser == null || sellerUser.isEmpty()) {
+            return;
+        }
+        UserRepository userRepository = new UserRepository(context);
+        if (userRepository.getUserRole(sellerUser) == User.ROLE_BUYER) {
+            userRepository.updateUserRole(sellerUser, User.ROLE_BOTH);
+        }
     }
 
     // 取某需求收到的全部报价（按时间正序），并补上报价卖家昵称
@@ -365,8 +415,9 @@ public class PurchaseRepository {
         order.put("purchase_request_id", request.id);
         order.put("seller", quote.sellerUser);
         order.put("unit_price", quote.price);
-        if (quote.images != null && !quote.images.trim().isEmpty()) {
-            order.put("proof_images", quote.images);
+        // 采购订单的展示图统一用「买家发布需求时上传的图片」
+        if (request.images != null && !request.images.trim().isEmpty()) {
+            order.put("proof_images", request.images);
         }
         if (address != null) {
             order.put("receiver_name", address.receiverName);
@@ -488,7 +539,7 @@ public class PurchaseRepository {
     // 查询采购需求要取的列名（配合 cursorToRequest 按列号取值）
     private String[] requestProjection() {
         return new String[] { "id", "buyer_user", "product_name", "category", "quantity", "unit",
-                "target_price", "description", "timestamp" };
+                "target_price", "description", "images", "timestamp" };
     }
 
     // 把查询结果当前一行翻译成 PurchaseRequest 对象
@@ -502,7 +553,8 @@ public class PurchaseRepository {
         request.unit = cursor.getString(5);
         request.targetPrice = cursor.getDouble(6);
         request.description = cursor.getString(7);
-        request.timestamp = cursor.getLong(8);
+        request.images = cursor.getString(8);
+        request.timestamp = cursor.getLong(9);
         return request;
     }
 

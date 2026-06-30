@@ -29,6 +29,7 @@ import android.database.Cursor;
 
 import com.example.zhinongbao.model.Article;
 import com.example.zhinongbao.model.Comment;
+import com.example.zhinongbao.model.User;
 import com.example.zhinongbao.provider.ZhiNongBaoProvider;
 
 import java.text.SimpleDateFormat;
@@ -40,6 +41,8 @@ import java.util.Locale;
 public class ArticleRepository {
     private static final String PREF_SESSION = "pref_session";
     private static final String KEY_LOGGED_USER = "logged_user";
+    private static final String STORE_FOLLOW_PREFIX = "shop:";
+    private static final String KEY_LEGACY_STORE_FOLLOWS_MIGRATED = "legacy_store_follows_migrated";
 
     private final Context context;
     private final ContentResolver resolver;
@@ -47,6 +50,7 @@ public class ArticleRepository {
     public ArticleRepository(Context context) {
         this.context = context.getApplicationContext();
         this.resolver = this.context.getContentResolver();
+        migrateLegacyStoreFollows();
         migrateCircleLikesFromArticleLikes();   // 创建时顺手做一次历史点赞数据迁移
     }
 
@@ -182,7 +186,8 @@ public class ArticleRepository {
             while (likes != null && likes.moveToNext()) {
                 Article article = getArticleOrDeleted(likes.getInt(0));
                 // 农友圈动态的点赞不计入「文章收藏」，仅展示资讯文章
-                if (!article.isDeleted && "农友圈".equals(article.category)) {
+                if (!article.isDeleted && ("农友圈".equals(article.category)
+                        || username.equals(article.author))) {
                     continue;
                 }
                 articles.add(article);
@@ -193,7 +198,7 @@ public class ArticleRepository {
 
     // 给资讯文章点赞（已赞过则不重复）
     public void likeArticle(String username, int articleId) {
-        if (username == null || username.isEmpty()) {
+        if (username == null || username.isEmpty() || isOwnArticle(username, articleId)) {
             return;
         }
         if (isArticleLiked(username, articleId)) {
@@ -217,7 +222,7 @@ public class ArticleRepository {
 
     // 判断我是否点赞过该资讯文章
     public boolean isArticleLiked(String username, int articleId) {
-        if (username == null || username.isEmpty()) {
+        if (username == null || username.isEmpty() || isOwnArticle(username, articleId)) {
             return false;
         }
         try (Cursor cursor = resolver.query(
@@ -232,6 +237,12 @@ public class ArticleRepository {
 
     // 统计某资讯文章的点赞数
     public int getArticleLikeCount(int articleId) {
+        Article article = getArticleById(articleId);
+        if (article != null && article.author != null && !article.author.isEmpty()) {
+            return count(ZhiNongBaoProvider.CONTENT_URI_ARTICLE_LIKES,
+                    "article_id=? AND username<>?",
+                    new String[] { String.valueOf(articleId), article.author });
+        }
         return count(ZhiNongBaoProvider.CONTENT_URI_ARTICLE_LIKES,
                 "article_id=?",
                 new String[] { String.valueOf(articleId) });
@@ -240,7 +251,7 @@ public class ArticleRepository {
     // 给农友圈动态点赞（存到 circle_likes 表；非动态或已赞则忽略）
     public void likeCirclePost(String username, int articleId) {
         if (username == null || username.isEmpty() || !isCirclePost(articleId)
-                || isCirclePostLiked(username, articleId)) {
+                || isOwnArticle(username, articleId) || isCirclePostLiked(username, articleId)) {
             return;
         }
         ContentValues values = new ContentValues();
@@ -261,7 +272,7 @@ public class ArticleRepository {
 
     // 判断我是否点赞过该农友圈动态
     public boolean isCirclePostLiked(String username, int articleId) {
-        if (username == null || username.isEmpty()) {
+        if (username == null || username.isEmpty() || isOwnArticle(username, articleId)) {
             return false;
         }
         try (Cursor cursor = resolver.query(
@@ -276,6 +287,12 @@ public class ArticleRepository {
 
     // 统计某农友圈动态的点赞数
     public int getCirclePostLikeCount(int articleId) {
+        Article article = getArticleById(articleId);
+        if (article != null && article.author != null && !article.author.isEmpty()) {
+            return count(ZhiNongBaoProvider.CONTENT_URI_CIRCLE_LIKES,
+                    "article_id=? AND username<>?",
+                    new String[] { String.valueOf(articleId), article.author });
+        }
         return count(ZhiNongBaoProvider.CONTENT_URI_CIRCLE_LIKES,
                 "article_id=?",
                 new String[] { String.valueOf(articleId) });
@@ -463,6 +480,42 @@ public class ArticleRepository {
         }
     }
 
+    // 店铺关注和用户关注共用 follows 表，但用前缀隔离，避免影响学堂/农友圈的用户关注状态
+    public void followStore(String follower, String seller) {
+        followUser(follower, storeFollowKey(seller));
+    }
+
+    public void unfollowStore(String follower, String seller) {
+        unfollowUser(follower, storeFollowKey(seller));
+    }
+
+    public boolean isFollowingStore(String follower, String seller) {
+        return isFollowing(follower, storeFollowKey(seller));
+    }
+
+    // 取「我关注的店铺」卖家用户名列表
+    public List<String> getFollowingStores(String username) {
+        List<String> stores = new ArrayList<>();
+        if (username == null || username.isEmpty()) {
+            return stores;
+        }
+        try (Cursor cursor = resolver.query(
+                ZhiNongBaoProvider.CONTENT_URI_FOLLOWS,
+                new String[] { "following" },
+                "follower=? AND `following` LIKE ?",
+                new String[] { username, STORE_FOLLOW_PREFIX + "%" },
+                "id DESC")) {
+            while (cursor != null && cursor.moveToNext()) {
+                String following = cursor.getString(0);
+                String seller = storeFollowSeller(following);
+                if (!seller.isEmpty() && !stores.contains(seller)) {
+                    stores.add(seller);
+                }
+            }
+        }
+        return stores;
+    }
+
     // 取「我关注的人」用户名列表
     public List<String> getFollowing(String username) {
         List<String> users = new ArrayList<>();
@@ -472,8 +525,8 @@ public class ArticleRepository {
         try (Cursor cursor = resolver.query(
                 ZhiNongBaoProvider.CONTENT_URI_FOLLOWS,
                 new String[] { "following" },
-                "follower=?",
-                new String[] { username },
+                "follower=? AND `following` NOT LIKE ?",
+                new String[] { username, STORE_FOLLOW_PREFIX + "%" },
                 "id DESC")) {
             while (cursor != null && cursor.moveToNext()) {
                 users.add(cursor.getString(0));
@@ -508,7 +561,7 @@ public class ArticleRepository {
                 new String[] { username });
     }
 
-    // 关注数
+    // 关注数：个人页展示总关注数，包含用户关注和店铺关注
     public int getFollowingCount(String username) {
         return count(ZhiNongBaoProvider.CONTENT_URI_FOLLOWS,
                 "follower=?",
@@ -607,7 +660,8 @@ public class ArticleRepository {
                 "id DESC")) {
             while (likes != null && likes.moveToNext()) {
                 Article article = getArticleOrDeleted(likes.getInt(0));
-                if (article.isDeleted || "农友圈".equals(article.category)) {
+                if (article.isDeleted || ("农友圈".equals(article.category)
+                        && !username.equals(article.author))) {
                     articles.add(article);
                 }
             }
@@ -678,6 +732,14 @@ public class ArticleRepository {
     private boolean isCirclePost(int articleId) {
         Article article = getArticleById(articleId);
         return article != null && "农友圈".equals(article.category);
+    }
+
+    private boolean isOwnArticle(String username, int articleId) {
+        if (username == null || username.isEmpty()) {
+            return false;
+        }
+        Article article = getArticleById(articleId);
+        return article != null && username.equals(article.author);
     }
 
     // 一次性数据迁移：把历史上误存在 article_likes 表里的「农友圈点赞」搬到 circle_likes 表再删掉。
@@ -811,5 +873,47 @@ public class ArticleRepository {
 
     private SharedPreferences prefs() {
         return context.getSharedPreferences(PREF_SESSION, Context.MODE_PRIVATE);
+    }
+
+    private String storeFollowKey(String seller) {
+        return seller == null ? "" : STORE_FOLLOW_PREFIX + seller;
+    }
+
+    private String storeFollowSeller(String following) {
+        if (following == null || !following.startsWith(STORE_FOLLOW_PREFIX)) {
+            return "";
+        }
+        return following.substring(STORE_FOLLOW_PREFIX.length());
+    }
+
+    private void migrateLegacyStoreFollows() {
+        if (prefs().getBoolean(KEY_LEGACY_STORE_FOLLOWS_MIGRATED, false)) {
+            return;
+        }
+        List<String[]> legacyRows = new ArrayList<>();
+        try (Cursor cursor = resolver.query(
+                ZhiNongBaoProvider.CONTENT_URI_FOLLOWS,
+                new String[] { "follower", "following" },
+                "`following` NOT LIKE ?",
+                new String[] { STORE_FOLLOW_PREFIX + "%" },
+                null)) {
+            while (cursor != null && cursor.moveToNext()) {
+                String follower = cursor.getString(0);
+                String following = cursor.getString(1);
+                if (isSellerAccount(following)) {
+                    legacyRows.add(new String[] { follower, following });
+                }
+            }
+        }
+        for (String[] row : legacyRows) {
+            followStore(row[0], row[1]);
+            unfollowUser(row[0], row[1]);
+        }
+        prefs().edit().putBoolean(KEY_LEGACY_STORE_FOLLOWS_MIGRATED, true).apply();
+    }
+
+    private boolean isSellerAccount(String username) {
+        int role = getUserRole(username);
+        return role == User.ROLE_SELLER || role == User.ROLE_BOTH;
     }
 }

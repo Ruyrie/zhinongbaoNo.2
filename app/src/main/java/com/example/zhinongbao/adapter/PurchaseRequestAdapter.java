@@ -47,10 +47,20 @@ public class PurchaseRequestAdapter extends RecyclerView.Adapter<PurchaseRequest
         this.listener = listener;
     }
 
+    private final Set<Long> lockedRequestIds = new HashSet<>();
+
     public void updateQuotedRequestIds(Set<Long> ids) {
         quotedRequestIds.clear();
         if (ids != null) {
             quotedRequestIds.addAll(ids);
+        }
+    }
+
+    // 已成交（买家已付款且未退款）的需求 id，报价按钮将被锁定
+    public void updateLockedRequestIds(Set<Long> ids) {
+        lockedRequestIds.clear();
+        if (ids != null) {
+            lockedRequestIds.addAll(ids);
         }
     }
 
@@ -67,8 +77,9 @@ public class PurchaseRequestAdapter extends RecyclerView.Adapter<PurchaseRequest
         PurchaseRequest req = items.get(position);
 
         h.tvCategory.setText(req.category != null && !req.category.isEmpty() ? req.category : "农产品");
+        boolean ownRequest = req.buyerUser != null && req.buyerUser.equals(currentUser);
         String buyerLabel = req.buyerNickname;
-        if (req.buyerUser.equals(currentUser)) buyerLabel += "（我）";
+        if (ownRequest) buyerLabel += "（我）";
         h.tvBuyer.setText(buyerLabel);
         h.tvProductName.setText(req.productName);
 
@@ -80,15 +91,25 @@ public class PurchaseRequestAdapter extends RecyclerView.Adapter<PurchaseRequest
         h.tvQuoteCount.setText(req.quoteCount > 0 ? "已有 " + req.quoteCount + " 个报价" : "暂无报价");
         h.tvTime.setText(formatTime(req.timestamp));
 
-        // 卖家看到"我要报价"，买家（自己发的）看到"查看报价"
-        if (isSeller && !req.buyerUser.equals(currentUser)) {
+        // 可报价用户看到"我要报价"，自己发布的需求看到"查看报价"
+        if (isSeller && !ownRequest) {
             h.btnQuote.setVisibility(View.VISIBLE);
-            h.btnQuote.setText(quotedRequestIds.contains(req.id) ? "再次报价" : "立即报价");
             h.btnViewQuotes.setVisibility(View.GONE);
             h.btnEdit.setVisibility(View.GONE);
             h.btnDelete.setVisibility(View.GONE);
-            h.btnQuote.setOnClickListener(v -> listener.onQuoteClick(req));
-        } else if (req.buyerUser.equals(currentUser)) {
+            // 已成交（买家已付款且未退款）→ 锁定报价；退款/取消后才可再次报价
+            if (lockedRequestIds.contains(req.id)) {
+                h.btnQuote.setText("已成交");
+                h.btnQuote.setEnabled(false);
+                h.btnQuote.setAlpha(0.5f);
+                h.btnQuote.setOnClickListener(null);
+            } else {
+                h.btnQuote.setText(quotedRequestIds.contains(req.id) ? "再次报价" : "立即报价");
+                h.btnQuote.setEnabled(true);
+                h.btnQuote.setAlpha(1f);
+                h.btnQuote.setOnClickListener(v -> listener.onQuoteClick(req));
+            }
+        } else if (ownRequest) {
             h.btnQuote.setVisibility(View.GONE);
             h.btnViewQuotes.setVisibility(View.VISIBLE);
             h.btnEdit.setVisibility(View.VISIBLE);

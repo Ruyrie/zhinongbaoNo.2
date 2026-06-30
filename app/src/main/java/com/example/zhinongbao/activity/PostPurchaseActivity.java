@@ -1,27 +1,72 @@
 package com.example.zhinongbao.activity;
 
 import com.example.zhinongbao.R;
+import android.content.Intent;
+import android.net.Uri;
 import android.os.Bundle;
 import android.text.Editable;
+import android.text.TextUtils;
 import android.text.TextWatcher;
 import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
+import androidx.core.content.FileProvider;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
+import com.example.zhinongbao.adapter.ImagePickerAdapter;
 import com.example.zhinongbao.base.BaseMvpActivity;
 import com.example.zhinongbao.model.PurchaseRequest;
 import com.example.zhinongbao.mvp.postpurchase.PostPurchaseContract;
 import com.example.zhinongbao.mvp.postpurchase.PostPurchasePresenter;
+import com.example.zhinongbao.utils.ImageUtils;
+import java.io.File;
 import java.math.BigInteger;
 import java.text.NumberFormat;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Locale;
 
 public class PostPurchaseActivity extends BaseMvpActivity<PostPurchaseContract.Presenter>
         implements PostPurchaseContract.View {
 
+    private static final int MAX_IMAGES = 9;
+
     private EditText etProductName, etCategory, etQuantity, etUnit, etTargetPrice, etDesc;
     private TextView tvTotal, tvBudgetUnitLabel;
     private boolean formattingPrice;
     private long editRequestId = -1;
+
+    // 需求图片选择
+    private final List<Uri> imageUris = new ArrayList<>();
+    private ImagePickerAdapter imageAdapter;
+    private Uri currentCameraUri;
+
+    private final ActivityResultLauncher<String> pickImages = registerForActivityResult(
+            new ActivityResultContracts.GetMultipleContents(), uris -> {
+                if (uris == null || uris.isEmpty()) {
+                    return;
+                }
+                for (Uri uri : uris) {
+                    if (imageUris.size() >= MAX_IMAGES) {
+                        break;
+                    }
+                    try {
+                        getContentResolver().takePersistableUriPermission(uri,
+                                Intent.FLAG_GRANT_READ_URI_PERMISSION);
+                    } catch (SecurityException ignored) {
+                    }
+                    addImage(uri);
+                }
+            });
+
+    private final ActivityResultLauncher<Uri> takePicture = registerForActivityResult(
+            new ActivityResultContracts.TakePicture(), success -> {
+                if (success && currentCameraUri != null) {
+                    addImage(currentCameraUri);
+                }
+            });
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -41,6 +86,7 @@ public class PostPurchaseActivity extends BaseMvpActivity<PostPurchaseContract.P
         tvBudgetUnitLabel = findViewById(R.id.tvBudgetUnitLabel);
         bindAmountInputs();
         bindUnitLabel();
+        setupImagePicker();
 
         findViewById(R.id.ivPostPurchaseBack).setOnClickListener(v -> finish());
         findViewById(R.id.btnSubmitPurchase).setOnClickListener(v -> submit());
@@ -57,12 +103,84 @@ public class PostPurchaseActivity extends BaseMvpActivity<PostPurchaseContract.P
         String unit = etUnit.getText().toString().trim();
         String priceStr = cleanNumber(etTargetPrice.getText().toString().trim());
         String desc = etDesc.getText().toString().trim();
+        String images = buildImageList();
 
         if (editRequestId > 0) {
-            presenter.submitEdit(editRequestId, name, category, qtyStr, unit, priceStr, desc);
+            presenter.submitEdit(editRequestId, name, category, qtyStr, unit, priceStr, desc, images);
         } else {
-            presenter.submit(name, category, qtyStr, unit, priceStr, desc);
+            presenter.submit(name, category, qtyStr, unit, priceStr, desc, images);
         }
+    }
+
+    // ── 需求图片选择 ──
+
+    private void setupImagePicker() {
+        RecyclerView rv = findViewById(R.id.rvPurchaseImages);
+        rv.setLayoutManager(new LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false));
+        imageAdapter = new ImagePickerAdapter(imageUris, MAX_IMAGES,
+                new ImagePickerAdapter.OnImagePickerClickListener() {
+                    @Override
+                    public void onAddClick() {
+                        if (imageUris.size() >= MAX_IMAGES) {
+                            showToast("最多上传 9 张图片");
+                            return;
+                        }
+                        showImagePicker();
+                    }
+
+                    @Override
+                    public void onDeleteClick(int position) {
+                        imageUris.remove(position);
+                        imageAdapter.notifyDataSetChanged();
+                    }
+                });
+        rv.setAdapter(imageAdapter);
+    }
+
+    private void showImagePicker() {
+        ImageUtils.showImagePickerDialog(this, "添加图片",
+                new ImageUtils.OnImagePickerListener() {
+                    @Override
+                    public void onTakePhoto() {
+                        currentCameraUri = createImageFile();
+                        takePicture.launch(currentCameraUri);
+                    }
+
+                    @Override
+                    public void onPickFromGallery() {
+                        pickImages.launch("image/*");
+                    }
+                });
+    }
+
+    private void addImage(Uri uri) {
+        if (imageUris.size() >= MAX_IMAGES) {
+            showToast("最多上传 9 张图片");
+            return;
+        }
+        imageUris.add(uri);
+        imageAdapter.notifyDataSetChanged();
+    }
+
+    private Uri createImageFile() {
+        File imagePath = new File(getCacheDir(), "images");
+        if (!imagePath.exists()) {
+            imagePath.mkdirs();
+        }
+        File newFile = new File(imagePath, "photo_" + System.currentTimeMillis() + ".jpg");
+        return FileProvider.getUriForFile(this, getPackageName() + ".fileprovider", newFile);
+    }
+
+    // 把已选图片拼成逗号分隔字符串存库（与订单 proof_images 同一格式）
+    private String buildImageList() {
+        StringBuilder sb = new StringBuilder();
+        for (Uri uri : imageUris) {
+            if (sb.length() > 0) {
+                sb.append(",");
+            }
+            sb.append(uri.toString());
+        }
+        return sb.toString();
     }
 
     @Override
@@ -73,6 +191,18 @@ public class PostPurchaseActivity extends BaseMvpActivity<PostPurchaseContract.P
         etUnit.setText(request.unit);
         etTargetPrice.setText(formatEditableNumber(formatPlain(request.targetPrice)));
         etDesc.setText(request.description == null ? "" : request.description);
+        imageUris.clear();
+        if (!TextUtils.isEmpty(request.images)) {
+            for (String uri : request.images.split(",")) {
+                String trimmed = uri.trim();
+                if (!trimmed.isEmpty() && imageUris.size() < MAX_IMAGES) {
+                    imageUris.add(Uri.parse(trimmed));
+                }
+            }
+        }
+        if (imageAdapter != null) {
+            imageAdapter.notifyDataSetChanged();
+        }
         updateTotal();
     }
 

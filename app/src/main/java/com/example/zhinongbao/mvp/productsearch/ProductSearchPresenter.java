@@ -20,8 +20,9 @@ public class ProductSearchPresenter implements ProductSearchContract.Presenter {
 
     @Override
     public void start() {
+        String currentUser = purchaseRepository.getLoggedUser();
         view.showInitialData(productRepository.getProducts(), purchaseRepository.getPurchaseRequests(),
-                purchaseRepository.getLoggedUser(), purchaseRepository.isSellerMode());
+                currentUser, currentUser != null && !currentUser.isEmpty());
     }
 
     @Override

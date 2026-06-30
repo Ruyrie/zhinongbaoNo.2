@@ -53,12 +53,20 @@ public class ProductDetailPresenter implements ProductDetailContract.Presenter {
             view.showToast("请先登录");
             return;
         }
+        if (product.isOffShelf()) {
+            view.showToast("商品已下架");
+            return;
+        }
         repository.addToCart(username, product);
         view.showToast("已加入购物车");
     }
 
     @Override
     public void buyNow() {
+        if (product.isOffShelf()) {
+            view.showToast("商品已下架");
+            return;
+        }
         if (repository.getDefaultAddress(username) == null) {
             view.showToast("请先添加收货地址");
             view.openAddressManager();
@@ -81,9 +89,16 @@ public class ProductDetailPresenter implements ProductDetailContract.Presenter {
     }
 
     @Override
-    public void deleteProduct() {
-        repository.deleteProduct(product.id);
+    public void delistProduct() {
+        repository.delistProduct(product.id);
         view.showToast("已下架");
+        view.closePage();
+    }
+
+    @Override
+    public void relistProduct() {
+        repository.relistProduct(product.id);
+        view.showToast("已重新上架");
         view.closePage();
     }
 

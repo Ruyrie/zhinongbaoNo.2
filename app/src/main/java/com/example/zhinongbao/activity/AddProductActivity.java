@@ -339,6 +339,15 @@ public class AddProductActivity extends BaseMvpActivity<AddProductContract.Prese
         return value % 1 == 0 ? String.valueOf((long) value) : String.valueOf(value);
     }
 
+    // 必填项缺失时：聚焦该输入框、显示行内错误，并弹出友好提示
+    private void showFieldError(EditText field, String message) {
+        if (field != null) {
+            field.requestFocus();
+            field.setError(message);
+        }
+        Toast.makeText(this, message, Toast.LENGTH_SHORT).show();
+    }
+
     private void submitProduct() {
         String name = etName.getText().toString().trim();
         String desc = etDesc.getText().toString().trim();
@@ -349,14 +358,18 @@ public class AddProductActivity extends BaseMvpActivity<AddProductContract.Prese
         String spec = etSpec.getText().toString().trim();
         String packageType = etPackage.getText().toString().trim();
 
-        if (name.isEmpty() || desc.isEmpty() || priceStr.isEmpty() || storePhone.isEmpty()
-                || brand.isEmpty() || origin.isEmpty() || spec.isEmpty() || packageType.isEmpty()) {
-            Toast.makeText(this, "请完整填写商品信息", Toast.LENGTH_SHORT).show();
-            return;
-        }
+        // 逐项校验必填，缺哪项就提示哪项并聚焦到对应输入框
+        if (name.isEmpty()) { showFieldError(etName, "请填写商品名称"); return; }
+        if (desc.isEmpty()) { showFieldError(etDesc, "请填写商品描述"); return; }
+        if (priceStr.isEmpty()) { showFieldError(etPrice, "请填写商品价格"); return; }
+        if (storePhone.isEmpty()) { showFieldError(etStorePhone, "请填写店铺电话"); return; }
+        if (brand.isEmpty()) { showFieldError(etBrand, "请填写品牌"); return; }
+        if (origin.isEmpty()) { showFieldError(etOrigin, "请填写产地"); return; }
+        if (spec.isEmpty()) { showFieldError(etSpec, "请填写规格"); return; }
+        if (packageType.isEmpty()) { showFieldError(etPackage, "请填写包装方式"); return; }
 
         if (selectedCategories.isEmpty()) {
-            Toast.makeText(this, "请选择至少一个商品分类", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, "请至少选择一个商品分类", Toast.LENGTH_SHORT).show();
             return;
         }
 

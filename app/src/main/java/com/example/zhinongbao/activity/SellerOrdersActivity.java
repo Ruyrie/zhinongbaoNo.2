@@ -162,8 +162,16 @@ public class SellerOrdersActivity extends BaseMvpActivity<SellerOrdersContract.P
         adapter.notifyDataSetChanged();
     }
 
-    // 点击订单卡片：打开该订单商品的详情页；商品已下架/不存在时给出提示
+    // 点击订单卡片：
+    //   采购订单（无真实商品，productId=0）→ 打开「卖家订单详情」页（展示买家需求图片、买家信息、收货地址等，并提供卖家操作）；
+    //   零售订单 → 打开商品详情页；商品已下架/不存在时给出提示。
     private void openProductDetail(Order o) {
+        if (Order.ORDER_TYPE_PROCUREMENT.equals(o.orderType)) {
+            Intent intent = new Intent(this, SellerOrderDetailActivity.class);
+            intent.putExtra("order_id", o.orderId);
+            startActivity(intent);
+            return;
+        }
         if (o.productId <= 0 || presenter.getProductById(o.productId) == null) {
             showToast("商品已下架或不存在");
             return;

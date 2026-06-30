@@ -46,8 +46,9 @@ public class MyProductAdapter extends RecyclerView.Adapter<MyProductAdapter.View
     @Override
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
         Product p = list.get(position);
-        holder.tvName.setText(p.name);
+        holder.tvName.setText(p.isOffShelf() ? "［已下架］" + p.name : p.name);
         holder.tvDesc.setText(p.desc);
+        holder.itemView.setAlpha(p.isOffShelf() ? 0.6f : 1f);
         holder.tvPrice.setText(String.format("¥%.2f", p.price));
 
         String[] cats = p.category != null ? p.category.split(",") : new String[] { "推荐" };

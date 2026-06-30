@@ -145,6 +145,9 @@
         <!-- 卖家：订单管理 -->
         <activity android:name=".activity.SellerOrdersActivity" />
 
+        <!-- 卖家：订单详情 -->
+        <activity android:name=".activity.SellerOrderDetailActivity" />
+
         <!-- 卖家：销售流水分析 -->
         <activity android:name=".activity.SellerSalesAnalysisActivity" />
 

@@ -13,5 +13,7 @@ public interface SellerSalesContract {
 
     interface Presenter extends BasePresenter {
         double getOrderPaidAmount(Order order);
+        // 计入营收的净额（退款生效后才扣减；售后处理中不扣）
+        double getOrderNetRevenue(Order order);
     }
 }

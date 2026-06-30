@@ -67,10 +67,15 @@ public class SellerOrderAdapter extends RecyclerView.Adapter<SellerOrderAdapter.
 
         Product p = productResolver.getProductById(o.productId);
         int defaultRes = getDefaultProductImageRes(o.productId);
-        if (defaultRes != 0) {
+        String orderImage = firstImage(o.proofImages); // 采购订单展示买家上传的需求图片
+        if (Order.ORDER_TYPE_PROCUREMENT.equals(o.orderType) && orderImage != null) {
+            holder.ivCover.setImageURI(android.net.Uri.parse(orderImage));
+        } else if (defaultRes != 0) {
             holder.ivCover.setImageResource(defaultRes);
         } else if (p != null && p.coverUri != null && !p.coverUri.isEmpty()) {
             holder.ivCover.setImageURI(android.net.Uri.parse(p.coverUri.split(",")[0]));
+        } else if (orderImage != null) {
+            holder.ivCover.setImageURI(android.net.Uri.parse(orderImage));
         } else {
             holder.ivCover.setImageResource(R.drawable.ic_product_placeholder);
         }
@@ -153,6 +158,15 @@ public class SellerOrderAdapter extends RecyclerView.Adapter<SellerOrderAdapter.
     @Override
     public int getItemCount() {
         return list.size();
+    }
+
+    // 取逗号分隔图片串里的第一张，空则返回 null
+    private String firstImage(String images) {
+        if (TextUtils.isEmpty(images)) {
+            return null;
+        }
+        String first = images.split(",")[0].trim();
+        return first.isEmpty() ? null : first;
     }
 
     private int getDefaultProductImageRes(int productId) {

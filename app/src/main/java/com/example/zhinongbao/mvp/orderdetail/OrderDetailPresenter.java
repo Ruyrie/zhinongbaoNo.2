@@ -43,12 +43,12 @@ public class OrderDetailPresenter implements OrderDetailContract.Presenter {
             order.status = Order.STATUS_CANCELLED;
         }
 
-        // 采购订单：订单自带的商家配图为空时，回源到对应报价取图，避免（取消后等情况下）详情页只剩占位图
+        // 采购订单：订单自带的图片为空时（如旧订单），回源到买家发布的需求图片，避免详情页只剩占位图
         if ((order.proofImages == null || order.proofImages.trim().isEmpty())
                 && Order.ORDER_TYPE_PROCUREMENT.equals(order.orderType)) {
-            String quoteImages = purchaseRepository.getQuoteImages(order.purchaseRequestId, order.seller);
-            if (quoteImages != null && !quoteImages.trim().isEmpty()) {
-                order.proofImages = quoteImages;
+            String requestImages = purchaseRepository.getRequestImages(order.purchaseRequestId);
+            if (requestImages != null && !requestImages.trim().isEmpty()) {
+                order.proofImages = requestImages;
             }
         }
 
@@ -68,7 +68,9 @@ public class OrderDetailPresenter implements OrderDetailContract.Presenter {
 
         if (Order.STATUS_SHIPPED.equals(order.status)) {
             repository.confirmReceipt(username, order.orderId);
-            view.showToast("已确认收货，现在可以评价商品");
+            // 采购订单（无真实商品）不支持评价，提示语不带「评价」
+            boolean reviewable = order.productId > 0 && !Order.ORDER_TYPE_PROCUREMENT.equals(order.orderType);
+            view.showToast(reviewable ? "已确认收货，现在可以评价商品" : "已确认收货");
             view.closePage();
         } else if (Order.STATUS_PAID.equals(order.status)) {
             view.showRefundDialog();

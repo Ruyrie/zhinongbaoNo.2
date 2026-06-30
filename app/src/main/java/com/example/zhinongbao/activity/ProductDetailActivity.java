@@ -462,14 +462,26 @@ public class ProductDetailActivity extends BaseMvpActivity<ProductDetailContract
                 startActivity(intent);
             });
 
-            btnBuy.setText("下架商品");
-            btnBuy.setBackgroundTintList(android.content.res.ColorStateList.valueOf(0xFFE53935));
-            btnBuy.setOnClickListener(v -> DialogUtils.showConfirm(this, "下架商品",
-                    "确认将「" + product.name + "」下架？下架后买家将无法购买。",
-                    "取消", "确认下架", true, () -> {
-                        presenter.deleteProduct();
-                        return true;
-                    }));
+            if (product.isOffShelf()) {
+                // 已下架商品：提供「重新上架」
+                btnBuy.setText("重新上架");
+                btnBuy.setBackgroundTintList(android.content.res.ColorStateList.valueOf(0xFF34C759));
+                btnBuy.setOnClickListener(v -> DialogUtils.showConfirm(this, "重新上架",
+                        "确认将「" + product.name + "」重新上架？上架后买家可正常购买。",
+                        "取消", "确认上架", true, () -> {
+                            presenter.relistProduct();
+                            return true;
+                        }));
+            } else {
+                btnBuy.setText("下架商品");
+                btnBuy.setBackgroundTintList(android.content.res.ColorStateList.valueOf(0xFFE53935));
+                btnBuy.setOnClickListener(v -> DialogUtils.showConfirm(this, "下架商品",
+                        "确认将「" + product.name + "」下架？下架后买家将无法购买，可随时重新上架。",
+                        "取消", "确认下架", true, () -> {
+                            presenter.delistProduct();
+                            return true;
+                        }));
+            }
         } else {
             btnAddCart.setOnClickListener(v -> presenter.addToCart());
             btnBuy.setOnClickListener(v -> presenter.buyNow());

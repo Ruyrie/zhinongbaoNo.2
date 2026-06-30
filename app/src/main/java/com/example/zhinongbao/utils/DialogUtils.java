@@ -185,7 +185,8 @@ public final class DialogUtils {
             root.addView(row);
         }
         AlertDialog dialog = new AlertDialog.Builder(context).setView(root).create();
-        dialog.setCancelable(false);
+        dialog.setCancelable(true);
+        dialog.setCanceledOnTouchOutside(false);
         root.setTag(dialog);
         showRounded(dialog, context);
         return dialog;

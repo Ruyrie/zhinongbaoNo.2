@@ -29,6 +29,8 @@ public class FollowListActivity extends BaseMvpActivity<FollowListContract.Prese
     private TextView tvStoreFollowTab;
     private String type;
     private List<String> allUsers = Collections.emptyList();
+    private List<String> userFollows = Collections.emptyList();
+    private List<String> storeFollows = Collections.emptyList();
     private String currentUser;
 
     @Override
@@ -82,15 +84,19 @@ public class FollowListActivity extends BaseMvpActivity<FollowListContract.Prese
         }
     }
 
+    @Override
+    public void showFollowing(List<String> userFollows, List<String> storeFollows, String currentUser) {
+        this.userFollows = userFollows == null ? Collections.emptyList() : userFollows;
+        this.storeFollows = storeFollows == null ? Collections.emptyList() : storeFollows;
+        this.currentUser = currentUser;
+        tabContainer.setVisibility(View.VISIBLE);
+        showFollowingTab(false);
+    }
+
     private void showFollowingTab(boolean storeTab) {
         updateFollowTabStyle(storeTab);
-        List<String> filteredUsers = new ArrayList<>();
-        for (String user : allUsers) {
-            if (presenter.isStoreAccount(user) == storeTab) {
-                filteredUsers.add(user);
-            }
-        }
-        rv.setAdapter(new FollowUserAdapter(filteredUsers, currentUser, presenter, storeTab));
+        rv.setAdapter(new FollowUserAdapter(storeTab ? storeFollows : userFollows,
+                currentUser, presenter, storeTab));
     }
 
     private void updateFollowTabStyle(boolean storeTab) {
@@ -186,16 +192,16 @@ public class FollowListActivity extends BaseMvpActivity<FollowListContract.Prese
             }
 
             h.tvToggle.setVisibility(View.VISIBLE);
-            refreshToggle(h, username);
+            refreshToggle(h, row);
 
             h.tvToggle.setOnClickListener(v -> {
-                presenter.toggleFollow(username);
-                refreshToggle(h, username);
+                presenter.toggleFollow(username, row.store);
+                refreshToggle(h, row);
             });
         }
 
-        private void refreshToggle(VH h, String username) {
-            boolean following = presenter.isFollowing(username);
+        private void refreshToggle(VH h, Row row) {
+            boolean following = presenter.isFollowing(row.username, row.store);
             h.tvToggle.setText(following ? "已关注" : "关注");
             h.tvToggle.setTextColor(following ? 0xFF999999 : 0xFF2F80ED);
         }

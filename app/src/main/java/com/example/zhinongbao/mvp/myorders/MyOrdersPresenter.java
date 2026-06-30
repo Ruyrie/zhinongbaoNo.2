@@ -73,7 +73,9 @@ public class MyOrdersPresenter implements MyOrdersContract.Presenter {
     @Override
     public void onConfirmReceipt(Order order) {
         repository.confirmReceipt(username, order.orderId);
-        view.showToast("已确认收货，现在可以评价商品");
+        // 采购订单不支持评价，提示语不带「评价」
+        boolean reviewable = order.productId > 0 && !Order.ORDER_TYPE_PROCUREMENT.equals(order.orderType);
+        view.showToast(reviewable ? "已确认收货，现在可以评价商品" : "已确认收货");
         refresh();
     }
 

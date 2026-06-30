@@ -228,9 +228,10 @@ public class SellerMineFragment extends BaseMvpFragment<SellerMineContract.Prese
     }
 
     private void bindArticleThumb(ImageView thumb, Article article) {
-        if (article.coverUri != null && !article.coverUri.isEmpty()) {
+        String coverImage = article.getCoverImage();
+        if (coverImage != null) {
             try {
-                thumb.setImageURI(Uri.parse(article.coverUri.split(",")[0]));
+                thumb.setImageURI(Uri.parse(coverImage));
                 return;
             } catch (Exception ignored) {
             }

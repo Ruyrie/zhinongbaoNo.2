@@ -97,6 +97,34 @@ public class ImageUtils {
         }
     }
 
+    // 全屏查看大图：点击缩略图后弹出一个全屏黑底对话框显示原图，点击任意处关闭。
+    // 支持普通图片地址(Uri)与 Base64 图片文本两种来源。
+    public static void showFullImage(Context context, String imageUri) {
+        if (imageUri == null || imageUri.trim().isEmpty()) {
+            return;
+        }
+        final String img = imageUri.trim();
+        android.app.Dialog dialog = new android.app.Dialog(context,
+                android.R.style.Theme_Black_NoTitleBar_Fullscreen);
+        ImageView imageView = new ImageView(context);
+        imageView.setLayoutParams(new android.view.ViewGroup.LayoutParams(
+                android.view.ViewGroup.LayoutParams.MATCH_PARENT,
+                android.view.ViewGroup.LayoutParams.MATCH_PARENT));
+        imageView.setBackgroundColor(0xFF000000);
+        imageView.setScaleType(ImageView.ScaleType.FIT_CENTER);
+        try {
+            if (img.startsWith("data:image")) {
+                setAvatarFromBase64(imageView, img);
+            } else {
+                imageView.setImageURI(Uri.parse(img));
+            }
+        } catch (Exception ignored) {
+        }
+        imageView.setOnClickListener(v -> dialog.dismiss());
+        dialog.setContentView(imageView);
+        dialog.show();
+    }
+
     // 把数据库里那串 Base64 图片文本 → 还原成图片 → 显示到 ImageView
     public static void setAvatarFromBase64(ImageView imageView, String base64Str) {
         if (base64Str == null || !base64Str.startsWith("data:image")) {

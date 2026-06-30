@@ -62,6 +62,9 @@ public class MyArticlesActivity extends BaseMvpActivity<MyArticlesContract.Prese
         findViewById(R.id.ivAddArticleIcon).setVisibility(viewingSelf ? View.VISIBLE : View.INVISIBLE);
         findViewById(R.id.btnAddArticle).setVisibility(viewingSelf ? View.VISIBLE : View.GONE);
         if (articles == null || articles.isEmpty()) {
+            // 看自己的列表用「您」，看别人的列表用其名字，避免对访客显示「您还未上传过文章」
+            TextView tvEmpty = findViewById(R.id.tvEmptyArticleText);
+            tvEmpty.setText(viewingSelf ? "您还未上传过文章" : targetAuthor + " 还未上传过文章");
             rv.setVisibility(View.GONE);
             llEmptyState.setVisibility(View.VISIBLE);
         } else {

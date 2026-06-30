@@ -11,16 +11,20 @@ public interface SellerStoreContract {
         void showStoreMeta(String seller, String storeName, String storePhone, String avatarUri, boolean ownStore);
         void showProducts(List<Product> products);
         void showStats(int totalOrders, double totalRevenue);
+        // following=当前是否已关注；canFollow=是否显示关注按钮（非自己店铺且已登录）
+        void showFollowState(boolean following, boolean canFollow);
         void showToast(String message);
     }
 
     interface Presenter extends BasePresenter {
         String getCurrentUser();
         void loadStore(String seller);
+        void toggleFollow();
         void refreshProducts();
         void refreshStats();
         int getProductOrderCount(int productId);
-        void deleteProduct(int productId);
+        void delistProduct(int productId);
+        void relistProduct(int productId);
         void updateStoreInfo(String name, String phone);
     }
 }

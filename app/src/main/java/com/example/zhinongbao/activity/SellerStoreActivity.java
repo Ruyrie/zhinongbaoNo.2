@@ -54,6 +54,8 @@ public class SellerStoreActivity extends BaseMvpActivity<SellerStoreContract.Pre
         TextView tvEditStoreInfo = findViewById(R.id.tvEditStoreInfo);
         tvEditStoreInfo.setOnClickListener(v -> showEditStoreDialog());
 
+        findViewById(R.id.tvFollowStore).setOnClickListener(v -> presenter.toggleFollow());
+
         // 列表
         RecyclerView rv = findViewById(R.id.rvProducts);
         rv.setLayoutManager(new LinearLayoutManager(this));
@@ -63,13 +65,18 @@ public class SellerStoreActivity extends BaseMvpActivity<SellerStoreContract.Pre
             i.putExtra("product_id", product.id);
             startActivity(i);
         }, product -> {
+            // 下架（软状态，可重新上架）
             DialogUtils.showConfirm(this, "下架商品",
-                    "确认将「" + product.name + "」下架？下架后买家将无法购买。",
+                    "确认将「" + product.name + "」下架？下架后买家将无法购买，可随时重新上架。",
                     "取消", "确认下架", true, () -> {
-                        presenter.deleteProduct(product.id);
+                        presenter.delistProduct(product.id);
                         Toast.makeText(this, "已下架", Toast.LENGTH_SHORT).show();
                         return true;
                     });
+        }, product -> {
+            // 重新上架
+            presenter.relistProduct(product.id);
+            Toast.makeText(this, "已重新上架", Toast.LENGTH_SHORT).show();
         }, presenter::getProductOrderCount);
         rv.setAdapter(adapter);
         presenter.loadStore(seller);
@@ -106,6 +113,14 @@ public class SellerStoreActivity extends BaseMvpActivity<SellerStoreContract.Pre
         }
         bindStoreAvatar((ImageView) findViewById(R.id.ivStoreAvatar),
                 (TextView) findViewById(R.id.tvStoreAvatarPlaceholder), latestAvatarUri, storeName);
+    }
+
+    @Override
+    public void showFollowState(boolean following, boolean canFollow) {
+        TextView btnFollow = findViewById(R.id.tvFollowStore);
+        btnFollow.setVisibility(canFollow ? View.VISIBLE : View.GONE);
+        btnFollow.setText(following ? "已关注" : "+ 关注");
+        btnFollow.setAlpha(following ? 0.7f : 1f);
     }
 
     private void bindStoreAvatar(ImageView avatar, TextView placeholder, String avatarUri, String storeName) {
@@ -184,8 +199,12 @@ public class SellerStoreActivity extends BaseMvpActivity<SellerStoreContract.Pre
 
         RecyclerView rv = findViewById(R.id.rvProducts);
         TextView tvEmpty = findViewById(R.id.tvEmpty);
+        int onSaleCount = 0;
+        for (Product p : products) {
+            if (!p.isOffShelf()) onSaleCount++;
+        }
         ((TextView) findViewById(R.id.tvStoreProductCount)).setText("商品 " + products.size() + " 件");
-        ((TextView) findViewById(R.id.tvProductSummary)).setText(products.size() + " 件在售");
+        ((TextView) findViewById(R.id.tvProductSummary)).setText(onSaleCount + " 件在售");
         boolean empty = products.isEmpty();
         rv.setVisibility(empty ? View.GONE : View.VISIBLE);
         tvEmpty.setVisibility(empty ? View.VISIBLE : View.GONE);
@@ -212,6 +231,7 @@ public class SellerStoreActivity extends BaseMvpActivity<SellerStoreContract.Pre
         private boolean isOwn;
         private final OnProductClick clickListener;
         private final OnProductClick delistListener;
+        private final OnProductClick relistListener;
         private final ProductSalesResolver salesResolver;
 
         interface ProductSalesResolver {
@@ -219,16 +239,13 @@ public class SellerStoreActivity extends BaseMvpActivity<SellerStoreContract.Pre
         }
 
         StoreProductAdapter(List<Product> items, boolean isOwn,
-                OnProductClick click, OnProductClick delist) {
-            this(items, isOwn, click, delist, productId -> 0);
-        }
-
-        StoreProductAdapter(List<Product> items, boolean isOwn,
-                OnProductClick click, OnProductClick delist, ProductSalesResolver salesResolver) {
+                OnProductClick click, OnProductClick delist, OnProductClick relist,
+                ProductSalesResolver salesResolver) {
             this.items = items;
             this.isOwn = isOwn;
             this.clickListener = click;
             this.delistListener = delist;
+            this.relistListener = relist;
             this.salesResolver = salesResolver;
         }
 
@@ -252,7 +269,9 @@ public class SellerStoreActivity extends BaseMvpActivity<SellerStoreContract.Pre
             h.tvPrice.setText(String.format("¥%.2f", p.price));
 
             int orderCount = salesResolver.getProductOrderCount(p.id);
-            h.tvSales.setText("已售 " + orderCount + " 件");
+            h.tvSales.setText(p.isOffShelf() ? "已下架" : "已售 " + orderCount + " 件");
+            // 已下架商品整行降低不透明度，给出视觉区分
+            h.itemView.setAlpha(p.isOffShelf() ? 0.55f : 1f);
 
             // 封面图
             int defaultRes = getDefaultProductImageRes(p.id);
@@ -275,10 +294,16 @@ public class SellerStoreActivity extends BaseMvpActivity<SellerStoreContract.Pre
                 h.ivCover.setImageResource(R.drawable.ic_product_placeholder);
             }
 
-            // 下架按钮
+            // 上下架按钮：在售→「下架」，已下架→「上架」
             if (isOwn) {
                 h.btnDelist.setVisibility(View.VISIBLE);
-                h.btnDelist.setOnClickListener(v -> delistListener.onClick(p));
+                if (p.isOffShelf()) {
+                    h.btnDelist.setText("上架");
+                    h.btnDelist.setOnClickListener(v -> relistListener.onClick(p));
+                } else {
+                    h.btnDelist.setText("下架");
+                    h.btnDelist.setOnClickListener(v -> delistListener.onClick(p));
+                }
             } else {
                 h.btnDelist.setVisibility(View.GONE);
             }

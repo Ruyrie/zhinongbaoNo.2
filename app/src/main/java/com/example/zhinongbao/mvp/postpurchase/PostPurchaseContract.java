@@ -13,8 +13,9 @@ public interface PostPurchaseContract {
 
     interface Presenter extends BasePresenter {
         void loadRequest(long requestId);
-        void submit(String name, String category, String qty, String unit, String targetPrice, String desc);
+        void submit(String name, String category, String qty, String unit, String targetPrice, String desc,
+                String images);
         void submitEdit(long requestId, String name, String category, String qty, String unit,
-                String targetPrice, String desc);
+                String targetPrice, String desc, String images);
     }
 }

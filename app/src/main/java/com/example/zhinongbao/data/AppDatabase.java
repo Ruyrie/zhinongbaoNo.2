@@ -38,7 +38,7 @@ import android.database.sqlite.SQLiteOpenHelper;
 public class AppDatabase extends SQLiteOpenHelper {
 
         private static final String DB_NAME = "zhinongbao.db";  // 数据库文件名
-        private static final int DB_VERSION = 22;               // 数据库版本号（改表结构就 +1）
+        private static final int DB_VERSION = 24;               // 数据库版本号（改表结构就 +1）
 
         private static AppDatabase instance;                    // 单例对象（全 App 共用一个）
 
@@ -103,6 +103,7 @@ public class AppDatabase extends SQLiteOpenHelper {
                                 "spec TEXT," +
                                 "package_type TEXT," +
                                 "view_count INTEGER DEFAULT 0," +
+                                "status INTEGER DEFAULT 0," +
                                 "seller TEXT)");
 
                 // 购物车（每用户独立）
@@ -250,6 +251,7 @@ public class AppDatabase extends SQLiteOpenHelper {
                                 "unit TEXT NOT NULL," +
                                 "target_price REAL NOT NULL," +
                                 "description TEXT," +
+                                "images TEXT," +
                                 "timestamp INTEGER NOT NULL)");
 
                 // 商家报价表
@@ -443,6 +445,14 @@ public class AppDatabase extends SQLiteOpenHelper {
                         // 收货地址新增「地址标签」字段（家/公司/学校…）
                         db.execSQL("ALTER TABLE addresses ADD COLUMN tag TEXT");
                 }
+                if (oldVersion < 23) {
+                        // 采购需求新增「需求图片」字段（买家发布时上传，逗号分隔多张）
+                        db.execSQL("ALTER TABLE purchase_requests ADD COLUMN images TEXT");
+                }
+                if (oldVersion < 24) {
+                        // 商品新增「上下架状态」字段（0=在售，1=已下架）；下架改为软状态，便于重新上架
+                        db.execSQL("ALTER TABLE products ADD COLUMN status INTEGER DEFAULT 0");
+                }
         }
 
         // 种子数据：保证 App 一打开就有可用的演示账号/商品/文章，方便登录体验。
@@ -456,6 +466,7 @@ public class AppDatabase extends SQLiteOpenHelper {
                         ensureDefaultProducts(db);      // 内置 10 个示例商品
                         ensureDefaultArticles(db);      // 内置 5 篇示例文章
                         ensureExpiredReturnTestOrder(db); // 内置一条「已完成」测试订单
+                        ensureAdminSalesDemoOrders(db);   // 内置 admin 的本月/往月已完成订单，验证营收统计
                         db.setTransactionSuccessful(); // 标记事务成功（不调用则会整体回滚）
                 } finally {
                         db.endTransaction();
@@ -565,6 +576,90 @@ public class AppDatabase extends SQLiteOpenHelper {
                 values.put("receiver_phone", "13800138000");
                 values.put("receiver_address", "测试地址：用于验证超过七天联系客服按钮，并检查累计销售流水");
                 values.put("completed_at", completedAt);
+                db.insertWithOnConflict("orders", null, values, SQLiteDatabase.CONFLICT_REPLACE);
+        }
+
+        // 内置 admin 作为「卖家」的几笔【已完成】订单，用来验证「本月营收」与「累计营收」两个统计：
+        //   - 本月 2 笔：同时计入「本月营收」和「累计营收」；
+        //   - 往月 2 笔：只计入「累计营收」。
+        // 这样「累计营收」会明显大于「本月营收」，可直观证明两个统计各自生效。
+        // 日期按当前系统时间动态生成，保证「本月」永远落在当月（营收按 time 的 yyyy-MM 过滤）。
+        private void ensureAdminSalesDemoOrders(SQLiteDatabase db) {
+                long demoTodayBase = todayAtMillis(9, 0);
+                long firstOfThisMonth = monthOffsetMillis(0, 1, 10, 0);   // 本月 1 号
+                long lastMonth = monthOffsetMillis(1, 15, 14, 0);         // 上月 15 号
+                long twoMonthsAgo = monthOffsetMillis(2, 10, 11, 0);      // 上上月 10 号
+
+                // 本月（含今日）：计入「今日/本月/累计营收」，同时让「订单流水」有足够条数演示分页
+                insertAdminSale(db, "DEMO_ADMIN_SALE_M1", 3, "农家蜂蜜（500g）", 68.00, 2, demoTodayBase);
+                insertAdminSale(db, "DEMO_ADMIN_SALE_T1", 1, "东北大米（5kg）", 45.00, 1,
+                                demoTodayBase + 5L * 60 * 1000);
+                insertAdminSale(db, "DEMO_ADMIN_SALE_T2", 2, "有机黑木耳（250g）", 38.00, 2,
+                                demoTodayBase + 10L * 60 * 1000);
+                insertAdminSale(db, "DEMO_ADMIN_SALE_T3", 6, "农家红薯（5kg）", 29.90, 1,
+                                demoTodayBase + 15L * 60 * 1000);
+                insertAdminSale(db, "DEMO_ADMIN_SALE_T4", 9, "鲜货鹿茸菇（250g）", 45.00, 1,
+                                demoTodayBase + 20L * 60 * 1000);
+                insertAdminSale(db, "DEMO_ADMIN_SALE_M2", 10, "散养土鹅蛋（10枚）", 65.00, 1, firstOfThisMonth);
+
+                // 往月：只计入「累计营收」
+                insertAdminSale(db, "DEMO_ADMIN_SALE_P1", 1, "东北大米（5kg）", 45.00, 3, lastMonth);
+                insertAdminSale(db, "DEMO_ADMIN_SALE_P2", 8, "野生羊肚菌（100g）", 128.00, 1, twoMonthsAgo);
+        }
+
+        // 生成「相对当前时间往前 monthsAgo 个月、指定日/时/分」的毫秒时间戳
+        private long monthOffsetMillis(int monthsAgo, int dayOfMonth, int hour, int minute) {
+                java.util.Calendar c = java.util.Calendar.getInstance();
+                c.add(java.util.Calendar.MONTH, -monthsAgo);
+                c.set(java.util.Calendar.DAY_OF_MONTH, dayOfMonth);
+                c.set(java.util.Calendar.HOUR_OF_DAY, hour);
+                c.set(java.util.Calendar.MINUTE, minute);
+                c.set(java.util.Calendar.SECOND, 0);
+                c.set(java.util.Calendar.MILLISECOND, 0);
+                return c.getTimeInMillis();
+        }
+
+        private long todayAtMillis(int hour, int minute) {
+                java.util.Calendar c = java.util.Calendar.getInstance();
+                c.set(java.util.Calendar.HOUR_OF_DAY, hour);
+                c.set(java.util.Calendar.MINUTE, minute);
+                c.set(java.util.Calendar.SECOND, 0);
+                c.set(java.util.Calendar.MILLISECOND, 0);
+                return c.getTimeInMillis();
+        }
+
+        // 工具方法：插入一笔 admin 卖出的【已完成】零售订单（演示营收用）
+        private void insertAdminSale(SQLiteDatabase db, String orderId, int productId, String name,
+                        double unitPrice, int quantity, long timeMillis) {
+                String time = new java.text.SimpleDateFormat("yyyy-MM-dd HH:mm", java.util.Locale.getDefault())
+                                .format(new java.util.Date(timeMillis));
+                ContentValues values = new ContentValues();
+                values.put("order_id", orderId);
+                values.put("username", "test_seller");   // 买家（示例）
+                values.put("product_id", productId);
+                values.put("name", name);
+                values.put("price", unitPrice);
+                values.put("quantity", quantity);
+                values.put("time", time);
+                values.put("status", "completed");
+                values.put("seller", "admin");           // 卖家=admin，用于演示 admin 的本月/累计营收
+                values.put("order_type", "retail");
+                values.put("purchase_request_id", -1);
+                values.put("ship_type", "express");
+                values.put("ship_name", "顺丰快递");
+                values.put("ship_no", "SF" + orderId);
+                values.put("ship_phone", "");
+                values.put("proof_images", "");
+                values.put("unit_price", unitPrice);
+                values.put("discount", 0);
+                values.put("refund_amount", 0);
+                values.put("refund_reason", "");
+                values.put("refund_requested_at", 0);
+                values.putNull("refund_previous_status");
+                values.put("receiver_name", "示例买家");
+                values.put("receiver_phone", "13900139000");
+                values.put("receiver_address", "演示地址：用于验证本月营收与累计营收统计");
+                values.put("completed_at", timeMillis);
                 db.insertWithOnConflict("orders", null, values, SQLiteDatabase.CONFLICT_REPLACE);
         }
 

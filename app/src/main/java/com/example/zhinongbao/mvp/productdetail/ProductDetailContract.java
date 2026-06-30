@@ -31,7 +31,9 @@ public interface ProductDetailContract {
 
         void toggleFavorite();
 
-        void deleteProduct();
+        void delistProduct();
+
+        void relistProduct();
 
         String getStorePhone();
     }

@@ -20,7 +20,8 @@
 
         <LinearLayout
             android:layout_width="0dp"
-            android:layout_height="match_parent"
+            android:layout_height="wrap_content"
+            android:minHeight="84dp"
             android:layout_weight="1"
             android:orientation="vertical"
             android:layout_marginEnd="14dp">
@@ -53,9 +54,7 @@
 
             <View
                 android:layout_width="match_parent"
-                android:layout_height="0dp"
-                android:layout_weight="1"
-                android:minHeight="10dp" />
+                android:layout_height="10dp" />
 
             <LinearLayout
                 android:layout_width="match_parent"

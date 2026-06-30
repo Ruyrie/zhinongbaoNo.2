@@ -20,6 +20,7 @@ public class PurchaseRequest {
     public String unit;         // 数量单位（如 斤/箱/吨）
     public double targetPrice;  // 期望/目标单价
     public String description;  // 需求补充说明
+    public String images;       // 需求图片（买家发布时上传，逗号分隔多张；同意报价后写入采购订单 proof_images）
     public long timestamp;      // 发布时间戳
     public int quoteCount;      // 已收到的报价条数
 }

@@ -24,7 +24,7 @@ public class SellerSalesPresenter implements SellerSalesContract.Presenter {
         List<Order> orders = repository.getSellerSalesOrders(repository.getLoggedUser(), scope);
         double total = 0;
         for (Order order : orders) {
-            total += Math.max(0, getOrderPaidAmount(order) - order.refundAmount);
+            total += getOrderNetRevenue(order);   // 净额：退款生效后才扣减
         }
         view.showSales(scope, orders, total);
     }
@@ -32,5 +32,10 @@ public class SellerSalesPresenter implements SellerSalesContract.Presenter {
     @Override
     public double getOrderPaidAmount(Order order) {
         return repository.getOrderPaidAmount(order);
+    }
+
+    @Override
+    public double getOrderNetRevenue(Order order) {
+        return repository.getOrderNetRevenue(order);
     }
 }

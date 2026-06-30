@@ -24,7 +24,8 @@ public class SellerMyProductsPresenter implements SellerMyProductsContract.Prese
 
     @Override
     public void refresh() {
-        view.showProducts(repository.getProductsBySeller(currentUser));
+        // 「我的货品」展示全部（含已下架），方便卖家管理与删除
+        view.showProducts(repository.getAllProductsBySeller(currentUser));
     }
 
     @Override

@@ -2,6 +2,7 @@ package com.example.zhinongbao.mvp.agricircle;
 
 import android.content.Context;
 
+import com.example.zhinongbao.model.Article;
 import com.example.zhinongbao.repository.ArticleRepository;
 
 public class AgriCirclePresenter implements AgriCircleContract.Presenter {
@@ -64,6 +65,10 @@ public class AgriCirclePresenter implements AgriCircleContract.Presenter {
 
     @Override
     public void toggleCircleLike(int articleId) {
+        if (isOwnCirclePost(articleId)) {
+            repository.unlikeCirclePost(currentUser, articleId);
+            return;
+        }
         if (repository.isCirclePostLiked(currentUser, articleId)) {
             repository.unlikeCirclePost(currentUser, articleId);
         } else {
@@ -74,5 +79,10 @@ public class AgriCirclePresenter implements AgriCircleContract.Presenter {
     @Override
     public void followUser(String author) {
         repository.followUser(currentUser, author);
+    }
+
+    private boolean isOwnCirclePost(int articleId) {
+        Article article = repository.getArticleById(articleId);
+        return article != null && currentUser != null && currentUser.equals(article.author);
     }
 }

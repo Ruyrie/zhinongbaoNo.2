@@ -40,6 +40,10 @@ public class SellerPurchasePresenter implements SellerPurchaseContract.Presenter
 
     @Override
     public void submitQuote(PurchaseRequest request, String price, String desc, String images) {
+        if (repository.isRequestLockedByPaidOrder(request.id)) {
+            view.showToast("该需求已成交，退款后才能再次报价");
+            return;
+        }
         try {
             boolean ok = repository.addQuote(request.id, currentUser,
                     Double.parseDouble(price.replace(",", "").replace("¥", "").trim()), desc, images);
@@ -80,6 +84,11 @@ public class SellerPurchasePresenter implements SellerPurchaseContract.Presenter
     @Override
     public boolean hasQuoted(long requestId) {
         return repository.hasQuoted(requestId, currentUser);
+    }
+
+    @Override
+    public boolean isRequestLocked(long requestId) {
+        return repository.isRequestLockedByPaidOrder(requestId);
     }
 
     @Override

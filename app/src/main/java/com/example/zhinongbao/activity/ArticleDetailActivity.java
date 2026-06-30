@@ -165,8 +165,9 @@ public class ArticleDetailActivity extends BaseMvpActivity<ArticleDetailContract
                 .append("<div class='content'>")
                 .append(article.content.replace("\n", "<br/>"));
 
-        // Add internal images for seed articles
+        // 正文配图：详情页只展示「内容配图」，专门封面不在正文重复显示
         if (article.coverUri == null) {
+            // 种子文章：按固定 id 映射内置插图
             String imageTag = "";
             switch (article.id) {
                 case 5:
@@ -189,9 +190,9 @@ public class ArticleDetailActivity extends BaseMvpActivity<ArticleDetailContract
                 htmlBuilder.append("<br/><img src=\"file:///android_res/mipmap/").append(imageTag.replace(".png", ""))
                         .append("\"/>");
             }
-        } else if (!article.coverUri.isEmpty()) {
-            String[] uris = article.coverUri.split(",");
-            for (String uri : uris) {
+        } else {
+            // 用户文章：只取内容配图（有专门封面时自动跳过封面段）
+            for (String uri : article.getContentImages()) {
                 htmlBuilder.append("<br/><img src=\"").append(uri).append("\"/>");
             }
         }

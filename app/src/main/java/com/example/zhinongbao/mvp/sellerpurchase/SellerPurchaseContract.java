@@ -24,6 +24,7 @@ public interface SellerPurchaseContract {
         void rejectQuote(long quoteId, String reply);
         List<PurchaseQuote> getQuotesForRequest(long requestId);
         boolean hasQuoted(long requestId);
+        boolean isRequestLocked(long requestId);
         boolean canModify(PurchaseRequest request);
         boolean deleteRequest(PurchaseRequest request);
     }

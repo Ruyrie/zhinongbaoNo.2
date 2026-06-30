@@ -139,6 +139,21 @@
                 android:visibility="gone"
                 android:clickable="true"
                 android:focusable="true" />
+
+            <TextView
+                android:id="@+id/tvFollowStore"
+                android:layout_width="wrap_content"
+                android:layout_height="32dp"
+                android:text="+ 关注"
+                android:textSize="13sp"
+                android:textColor="#2F7D46"
+                android:textStyle="bold"
+                android:gravity="center"
+                android:paddingHorizontal="14dp"
+                android:background="@drawable/bg_store_chip"
+                android:visibility="gone"
+                android:clickable="true"
+                android:focusable="true" />
         </LinearLayout>
 
         <LinearLayout

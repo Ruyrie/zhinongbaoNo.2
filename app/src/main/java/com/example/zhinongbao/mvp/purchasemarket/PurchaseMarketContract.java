@@ -12,6 +12,8 @@ public interface PurchaseMarketContract {
         void showRequests(List<PurchaseRequest> requests, String currentUser, boolean sellerMode);
         void showQuoteEditor(PurchaseRequest request);
         void showQuoteList(PurchaseRequest request, List<PurchaseQuote> quotes);
+        void promptAddAddress();
+        void openPayment(String orderId);
         void showToast(String message);
     }
 
@@ -23,6 +25,9 @@ public interface PurchaseMarketContract {
         boolean canModify(PurchaseRequest request);
         boolean deleteRequest(PurchaseRequest request);
         boolean hasQuoted(PurchaseRequest request);
+        boolean isRequestLocked(PurchaseRequest request);
         void submitQuote(PurchaseRequest request, String price, String desc, String images);
+        void acceptQuote(PurchaseRequest request, long quoteId, String reply);
+        void rejectQuote(PurchaseRequest request, long quoteId, String reply);
     }
 }

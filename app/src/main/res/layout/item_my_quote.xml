@@ -61,6 +61,22 @@
             android:textColor="#999999"
             android:textSize="12sp" />
 
+        <HorizontalScrollView
+            android:id="@+id/hsvMyQuoteImages"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:scrollbars="none"
+            android:overScrollMode="never"
+            android:visibility="gone">
+
+            <LinearLayout
+                android:id="@+id/llMyQuoteImages"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal" />
+        </HorizontalScrollView>
+
         <TextView
             android:id="@+id/btnEditQuote"
             android:layout_width="match_parent"

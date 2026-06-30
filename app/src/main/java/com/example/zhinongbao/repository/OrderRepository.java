@@ -29,6 +29,7 @@ import com.example.zhinongbao.model.Order;
 import com.example.zhinongbao.provider.ZhiNongBaoProvider;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.text.SimpleDateFormat;
 import java.text.ParseException;
 import java.util.Date;
@@ -145,12 +146,45 @@ public class OrderRepository {
                 "id DESC");
     }
 
-    // 卖家销售分析：取「已完成且未退款」的订单，scope 控制时间范围（今天/本月/全部）
+    // 卖家销售流水订单（营收来源 + 退款记录），scope 控制时间范围（今天/本月/全部）。
+    // 计入口径（与 countsTowardRevenue 一致）：买家确认收货「已完成」后才到账；
+    // 售后处理中(REFUND)：仅退款前已完成的订单保留在流水里（退款未生效，营收暂不变化）。
+    //  已退款的「已完成」订单会保留在流水里，作为「收入 + 退款」记录展示（不再隐藏）。
     public List<Order> getSellerSalesOrders(String seller, String scope) {
         String dateFilter = salesDateFilter(scope);
-        // 已退款订单（refund_amount>0）不计入正常销售订单/销售分析
-        String selection = "seller=? AND status=? AND refund_amount=0" + dateFilter;
-        return queryOrders(selection, new String[] { seller, Order.STATUS_COMPLETED }, "id DESC");
+        // 先取候选（已完成 / 售后处理中），再用 countsTowardRevenue 精确判定
+        String selection = "seller=? AND (status=? OR status=?)" + dateFilter;
+        List<Order> candidates = queryOrders(selection,
+                new String[] { seller, Order.STATUS_COMPLETED, Order.STATUS_REFUND },
+                "id DESC");
+        List<Order> result = new ArrayList<>();
+        for (Order order : candidates) {
+            if (countsTowardRevenue(order)) {
+                result.add(order);
+            }
+        }
+        Collections.sort(result, (left, right) -> Long.compare(
+                salesTimestamp(right), salesTimestamp(left)));
+        return result;
+    }
+
+    // 一笔订单是否计入卖家营收：
+    //   零售/采购(报价)订单都需买家确认收货「已完成」后到账；
+    //   售后处理中(REFUND)按「退款前状态」判定——退款只是申请、尚未生效，营收维持不变。
+    //   实际退款金额在 getOrderNetRevenue 中按是否生效再扣减；待付款/已取消订单不计入。
+    private boolean countsTowardRevenue(Order order) {
+        if (order == null) {
+            return false;
+        }
+        // 售后处理中：用退款前的状态判断，保证「买家申请退款」时营收不变
+        String status = Order.STATUS_REFUND.equals(order.status)
+                && order.refundPreviousStatus != null && !order.refundPreviousStatus.isEmpty()
+                ? order.refundPreviousStatus
+                : order.status;
+        if (Order.STATUS_COMPLETED.equals(status)) {
+            return true;
+        }
+        return false;
     }
 
     // 计算一笔订单的实付金额 = 单价(改过价用改后的)×数量 - 折扣，最低 0
@@ -158,6 +192,16 @@ public class OrderRepository {
         double unit = order.unitPrice > 0 ? order.unitPrice : order.price;
         double total = unit * order.quantity - order.discount;
         return Math.max(0, total);
+    }
+
+    /**
+     * 一笔订单计入营收的净额 = 实付 − 已「生效」的退款。
+     * 关键：售后处理中(REFUND) 的退款属于「申请中、未生效」，此时不扣减（营收保持不变）；
+     * 只有退款真正生效（卖家同意或 24 小时超时自动同意 → 订单变为「已完成」且 refund_amount>0）才扣减。
+     */
+    public double getOrderNetRevenue(Order order) {
+        double effectiveRefund = Order.STATUS_REFUND.equals(order.status) ? 0 : order.refundAmount;
+        return Math.max(0, getOrderPaidAmount(order) - effectiveRefund);
     }
 
     // 卖家累计订单总数
@@ -172,20 +216,22 @@ public class OrderRepository {
         }
     }
 
-    // 卖家累计总营收 = 所有已完成订单的(实付 - 退款)累加
+    // 卖家累计总营收 = 所有确认收货后的订单净额累加（退款仅在生效后扣减）
     public double getTotalRevenueForSeller(String seller) {
         double revenue = 0;
-        for (Order order : getSellerSoldOrdersByStatus(seller, Order.STATUS_COMPLETED)) {
-            revenue += Math.max(0, getOrderPaidAmount(order) - order.refundAmount);
+        for (Order order : getSellerSoldOrders(seller)) {
+            if (countsTowardRevenue(order)) {
+                revenue += getOrderNetRevenue(order);
+            }
         }
         return revenue;
     }
 
-    // 卖家某时间范围(今天/本月/全部)的营收
+    // 卖家某时间范围(今天/本月/全部)的营收（getSellerSalesOrders 已按口径筛选，这里只需累加净额）
     public double getRevenueForSeller(String seller, String scope) {
         double revenue = 0;
         for (Order order : getSellerSalesOrders(seller, scope)) {
-            revenue += Math.max(0, getOrderPaidAmount(order) - order.refundAmount);
+            revenue += getOrderNetRevenue(order);
         }
         return revenue;
     }
@@ -272,10 +318,21 @@ public class OrderRepository {
         if (approve) {
             values.put("status", Order.STATUS_COMPLETED);
         } else {
+            // 拒绝退款 → 恢复到退款前的真实状态。优先按订单实际进度推断，避免误把
+            // 「已收货/已完成」的订单退回「待发货」：已完成(有完成时间)→已完成；已发货→已发货；
+            // 否则用记录的退款前状态，再不行才回退到「待发货」。
             Order order = getOrderById(orderId);
-            String restore = order != null && order.refundPreviousStatus != null && !order.refundPreviousStatus.isEmpty()
-                    ? order.refundPreviousStatus
-                    : Order.STATUS_SHIPPED;
+            String restore;
+            if (order != null && order.completedAt > 0) {
+                restore = Order.STATUS_COMPLETED;
+            } else if (order != null && order.shipName != null && !order.shipName.trim().isEmpty()) {
+                restore = Order.STATUS_SHIPPED;
+            } else if (order != null && order.refundPreviousStatus != null
+                    && !order.refundPreviousStatus.isEmpty()) {
+                restore = order.refundPreviousStatus;
+            } else {
+                restore = Order.STATUS_PAID;
+            }
             values.put("refund_amount", 0);
             values.put("status", restore);
         }
@@ -357,15 +414,44 @@ public class OrderRepository {
         return orders;
     }
 
-    // 根据范围拼出按时间过滤的 SQL 片段：today→当天、month→当月、其它→不过滤
+    // 根据范围拼出按到账时间过滤的 SQL 片段：today→当天、month→当月、其它→不过滤
     private String salesDateFilter(String scope) {
         if ("today".equals(scope)) {
-            return " AND time LIKE '" + now("yyyy-MM-dd") + "%'";
+            return " AND (completed_at>=" + startOfTodayMillis() + ")";
         }
         if ("month".equals(scope)) {
-            return " AND time LIKE '" + now("yyyy-MM") + "%'";
+            return " AND (completed_at>=" + startOfMonthMillis() + ")";
         }
         return "";
+    }
+
+    private long salesTimestamp(Order order) {
+        if (order == null) {
+            return 0;
+        }
+        if (order.completedAt > 0) {
+            return order.completedAt;
+        }
+        return parseOrderTime(order.time);
+    }
+
+    private long startOfTodayMillis() {
+        java.util.Calendar c = java.util.Calendar.getInstance();
+        c.set(java.util.Calendar.HOUR_OF_DAY, 0);
+        c.set(java.util.Calendar.MINUTE, 0);
+        c.set(java.util.Calendar.SECOND, 0);
+        c.set(java.util.Calendar.MILLISECOND, 0);
+        return c.getTimeInMillis();
+    }
+
+    private long startOfMonthMillis() {
+        java.util.Calendar c = java.util.Calendar.getInstance();
+        c.set(java.util.Calendar.DAY_OF_MONTH, 1);
+        c.set(java.util.Calendar.HOUR_OF_DAY, 0);
+        c.set(java.util.Calendar.MINUTE, 0);
+        c.set(java.util.Calendar.SECOND, 0);
+        c.set(java.util.Calendar.MILLISECOND, 0);
+        return c.getTimeInMillis();
     }
 
     // 按格式返回当前时间字符串

@@ -75,13 +75,13 @@ public class ProductRepository {
         return null;
     }
 
-    // 取全部商品（最新在前）
+    // 取全部「在售」商品（最新在前）——买家端首页/搜索用，已下架的不展示
     public List<Product> getProducts() {
         List<Product> products = new ArrayList<>();
         try (Cursor cursor = resolver.query(
                 ZhiNongBaoProvider.CONTENT_URI_PRODUCTS,
                 productProjection(),
-                null,
+                "status=0",
                 null,
                 "id DESC")) {
             while (cursor != null && cursor.moveToNext()) {
@@ -91,8 +91,24 @@ public class ProductRepository {
         return products;
     }
 
-    // 取某卖家发布的全部商品（卖家「我的货品」用）
+    // 取某卖家「在售」商品（买家看别人店铺、店铺商品数统计用，已下架不计）
     public List<Product> getProductsBySeller(String seller) {
+        List<Product> products = new ArrayList<>();
+        try (Cursor cursor = resolver.query(
+                ZhiNongBaoProvider.CONTENT_URI_PRODUCTS,
+                productProjection(),
+                "seller=? AND status=0",
+                new String[] { seller },
+                "id DESC")) {
+            while (cursor != null && cursor.moveToNext()) {
+                products.add(cursorToProduct(cursor));
+            }
+        }
+        return products;
+    }
+
+    // 取某卖家发布的「全部」商品（含已下架）——卖家自己的店铺/我的货品用，便于重新上架
+    public List<Product> getAllProductsBySeller(String seller) {
         List<Product> products = new ArrayList<>();
         try (Cursor cursor = resolver.query(
                 ZhiNongBaoProvider.CONTENT_URI_PRODUCTS,
@@ -379,9 +395,26 @@ public class ProductRepository {
         resolver.insert(ZhiNongBaoProvider.CONTENT_URI_ORDERS, values);
     }
 
-    // 删除商品（卖家下架）
+    // 彻底删除商品（卖家在「我的货品」里删除货品，不可恢复）
     public void deleteProduct(int productId) {
         resolver.delete(ZhiNongBaoProvider.CONTENT_URI_PRODUCTS, "id=?", new String[] { String.valueOf(productId) });
+    }
+
+    // 下架商品（软状态：status=1，买家看不到/不可买，卖家可重新上架）
+    public void delistProduct(int productId) {
+        setProductStatus(productId, 1);
+    }
+
+    // 重新上架商品（status=0 恢复在售）
+    public void relistProduct(int productId) {
+        setProductStatus(productId, 0);
+    }
+
+    private void setProductStatus(int productId, int status) {
+        ContentValues values = new ContentValues();
+        values.put("status", status);
+        resolver.update(ZhiNongBaoProvider.CONTENT_URI_PRODUCTS, values,
+                "id=?", new String[] { String.valueOf(productId) });
     }
 
     // 统计某商品被下单的次数（销量参考）
@@ -605,14 +638,16 @@ public class ProductRepository {
     // 查询商品要取的列名（集中定义，配合 cursorToProduct 按列号取值）
     private String[] productProjection() {
         return new String[] { "id", "name", "`desc`", "price", "cover_uri", "category", "seller", "view_count",
-                "brand", "origin", "spec", "package_type" };
+                "brand", "origin", "spec", "package_type", "status" };
     }
 
     // 把查询结果的当前一行翻译成 Product 对象
     private Product cursorToProduct(Cursor cursor) {
-        return new Product(cursor.getInt(0), cursor.getString(1), cursor.getString(2), cursor.getDouble(3),
+        Product product = new Product(cursor.getInt(0), cursor.getString(1), cursor.getString(2), cursor.getDouble(3),
                 cursor.getString(4), cursor.getString(5), cursor.getString(6), cursor.getInt(7),
                 cursor.getString(8), cursor.getString(9), cursor.getString(10), cursor.getString(11));
+        product.status = cursor.getInt(12);
+        return product;
     }
 
     // 清理参数：null 转空串，并去掉首尾空格

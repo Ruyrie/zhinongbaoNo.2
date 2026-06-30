@@ -86,6 +86,12 @@ public class ArticleDetailPresenter implements ArticleDetailContract.Presenter {
             return;
         }
         if (isCircleArticle()) {
+            if (article != null && currentUser.equals(article.author)) {
+                repository.unlikeCirclePost(currentUser, articleId);
+                view.showToast("不能给自己的动态点赞");
+                refreshLikeState();
+                return;
+            }
             if (repository.isCirclePostLiked(currentUser, articleId)) {
                 repository.unlikeCirclePost(currentUser, articleId);
             } else {
@@ -93,6 +99,9 @@ public class ArticleDetailPresenter implements ArticleDetailContract.Presenter {
             }
         } else if (repository.isArticleLiked(currentUser, articleId)) {
             repository.unlikeArticle(currentUser, articleId);
+        } else if (article != null && currentUser.equals(article.author)) {
+            repository.unlikeArticle(currentUser, articleId);
+            view.showToast("不能给自己的文章点赞");
         } else {
             repository.likeArticle(currentUser, articleId);
         }

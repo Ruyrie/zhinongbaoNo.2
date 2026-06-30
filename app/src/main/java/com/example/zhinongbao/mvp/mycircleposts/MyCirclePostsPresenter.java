@@ -78,6 +78,11 @@ public class MyCirclePostsPresenter implements MyCirclePostsContract.Presenter {
 
     @Override
     public void toggleCircleLike(int articleId) {
+        if (isOwnCirclePost(articleId)) {
+            repository.unlikeCirclePost(currentUser, articleId);
+            view.showToast("不能给自己的动态点赞");
+            return;
+        }
         if (repository.isCirclePostLiked(currentUser, articleId)) {
             repository.unlikeCirclePost(currentUser, articleId);
         } else {
@@ -88,5 +93,10 @@ public class MyCirclePostsPresenter implements MyCirclePostsContract.Presenter {
     @Override
     public void followUser(String author) {
         repository.followUser(currentUser, author);
+    }
+
+    private boolean isOwnCirclePost(int articleId) {
+        Article article = repository.getArticleById(articleId);
+        return article != null && currentUser != null && currentUser.equals(article.author);
     }
 }

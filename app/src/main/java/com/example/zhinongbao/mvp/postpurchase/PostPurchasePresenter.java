@@ -32,18 +32,19 @@ public class PostPurchasePresenter implements PostPurchaseContract.Presenter {
     }
 
     @Override
-    public void submit(String name, String category, String qtyStr, String unit, String priceStr, String desc) {
-        submitInternal(-1, name, category, qtyStr, unit, priceStr, desc);
+    public void submit(String name, String category, String qtyStr, String unit, String priceStr, String desc,
+            String images) {
+        submitInternal(-1, name, category, qtyStr, unit, priceStr, desc, images);
     }
 
     @Override
     public void submitEdit(long requestId, String name, String category, String qtyStr, String unit,
-            String priceStr, String desc) {
-        submitInternal(requestId, name, category, qtyStr, unit, priceStr, desc);
+            String priceStr, String desc, String images) {
+        submitInternal(requestId, name, category, qtyStr, unit, priceStr, desc, images);
     }
 
     private void submitInternal(long requestId, String name, String category, String qtyStr, String unit,
-            String priceStr, String desc) {
+            String priceStr, String desc, String images) {
         if (TextUtils.isEmpty(name)) {
             view.showToast("请填写货品名称");
             return;
@@ -64,8 +65,9 @@ public class PostPurchasePresenter implements PostPurchaseContract.Presenter {
             double quantity = Double.parseDouble(qtyStr);
             double targetPrice = Double.parseDouble(priceStr);
             boolean ok = requestId > 0
-                    ? repository.updatePurchaseRequest(requestId, name, category, quantity, unit, targetPrice, desc)
-                    : repository.addPurchaseRequest(name, category, quantity, unit, targetPrice, desc);
+                    ? repository.updatePurchaseRequest(requestId, name, category, quantity, unit, targetPrice, desc,
+                            images)
+                    : repository.addPurchaseRequest(name, category, quantity, unit, targetPrice, desc, images);
             view.showToast(ok ? (requestId > 0 ? "采购需求已更新" : "采购需求发布成功！")
                     : (requestId > 0 ? "更新失败，请确认订单未付款" : "发布失败，请重试"));
             if (ok) {

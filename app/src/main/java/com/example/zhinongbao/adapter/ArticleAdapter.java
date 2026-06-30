@@ -101,14 +101,13 @@ public class ArticleAdapter extends RecyclerView.Adapter<ArticleAdapter.VH> {
         }
 
         // --- Cover Image ---
-        if (a.coverUri != null && !a.coverUri.isEmpty()) {
-            String[] uris = a.coverUri.split(",");
-            if (uris.length > 0) {
-                try {
-                    holder.ivArticleThumb.setImageURI(android.net.Uri.parse(uris[0]));
-                } catch (Exception e) {
-                    holder.ivArticleThumb.setImageResource(R.drawable.ic_launcher_background);
-                }
+        // 封面 = 专门封面（有则用）否则第一张内容配图，统一由 Article.getCoverImage() 解析
+        String coverImage = a.getCoverImage();
+        if (coverImage != null) {
+            try {
+                holder.ivArticleThumb.setImageURI(android.net.Uri.parse(coverImage));
+            } catch (Exception e) {
+                holder.ivArticleThumb.setImageResource(R.drawable.ic_launcher_background);
             }
         } else {
             // Seed data cover logic

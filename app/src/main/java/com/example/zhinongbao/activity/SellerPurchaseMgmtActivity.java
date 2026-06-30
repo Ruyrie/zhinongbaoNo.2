@@ -152,7 +152,6 @@ public class SellerPurchaseMgmtActivity extends BaseMvpActivity<SellerPurchaseCo
             holder.tvDesc.setText(r.description);
             holder.tvTime.setText(formatTime(r.timestamp));
 
-            holder.btnQuote.setText(presenter.hasQuoted(r.id) ? "再次报价" : "立即报价");
             holder.btnQuote.setTextColor(0xFF2E7D32);
             holder.btnQuote.setBackgroundResource(R.drawable.bg_action_outline_green);
             if (r.buyerUser != null && r.buyerUser.equals(currentUser)) {
@@ -161,9 +160,20 @@ public class SellerPurchaseMgmtActivity extends BaseMvpActivity<SellerPurchaseCo
                 holder.btnViewQuotes.setText("我的采购");
                 holder.btnViewQuotes.setOnClickListener(v -> switchTab(2));
             } else {
-                holder.btnQuote.setVisibility(View.VISIBLE);
-                holder.btnQuote.setOnClickListener(v -> showQuoteDialog(r));
                 holder.btnViewQuotes.setVisibility(View.GONE);
+                holder.btnQuote.setVisibility(View.VISIBLE);
+                // 买家已付款且未退款 → 需求已成交，锁定报价；退款/取消后才可再次报价
+                if (presenter.isRequestLocked(r.id)) {
+                    holder.btnQuote.setText("已成交");
+                    holder.btnQuote.setEnabled(false);
+                    holder.btnQuote.setAlpha(0.5f);
+                    holder.btnQuote.setOnClickListener(null);
+                } else {
+                    holder.btnQuote.setText(presenter.hasQuoted(r.id) ? "再次报价" : "立即报价");
+                    holder.btnQuote.setEnabled(true);
+                    holder.btnQuote.setAlpha(1f);
+                    holder.btnQuote.setOnClickListener(v -> showQuoteDialog(r));
+                }
             }
         }
 
@@ -253,6 +263,7 @@ public class SellerPurchaseMgmtActivity extends BaseMvpActivity<SellerPurchaseCo
             holder.tvPrice.setText("我的报价: ¥" + formatPrice(q.price));
             holder.tvDesc.setText("备注: " + q.description);
             holder.tvTime.setText(formatTime(q.timestamp));
+            bindQuotePreviews(holder.hsvImages, holder.llImages, q.images); // 我的报价配图（可点击放大）
 
             if ("accepted".equals(q.status)) {
                 holder.tvStatus.setText("已接受");
@@ -283,7 +294,8 @@ public class SellerPurchaseMgmtActivity extends BaseMvpActivity<SellerPurchaseCo
 
         class VH extends RecyclerView.ViewHolder {
             TextView tvName, tvStatus, tvPrice, tvDesc, tvTime, tvReply, btnEditQuote;
-            LinearLayout llReply;
+            LinearLayout llReply, llImages;
+            HorizontalScrollView hsvImages;
 
             VH(View v) {
                 super(v);
@@ -295,6 +307,8 @@ public class SellerPurchaseMgmtActivity extends BaseMvpActivity<SellerPurchaseCo
                 btnEditQuote = v.findViewById(R.id.btnEditQuote);
                 llReply = v.findViewById(R.id.llReplyContainer);
                 tvReply = v.findViewById(R.id.tvReplyDesc);
+                hsvImages = v.findViewById(R.id.hsvMyQuoteImages);
+                llImages = v.findViewById(R.id.llMyQuoteImages);
             }
         }
     }
@@ -605,6 +619,7 @@ public class SellerPurchaseMgmtActivity extends BaseMvpActivity<SellerPurchaseCo
             imageView.setScaleType(ImageView.ScaleType.CENTER_CROP);
             imageView.setBackgroundResource(R.drawable.bg_dialog_input);
             imageView.setImageURI(Uri.parse(trimmed));
+            imageView.setOnClickListener(v -> ImageUtils.showFullImage(this, trimmed)); // 点击放大查看
             LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(dp(64), dp(64));
             lp.setMarginEnd(dp(8));
             container.addView(imageView, lp);

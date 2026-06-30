@@ -146,26 +146,29 @@ public class AddArticleActivity extends BaseMvpActivity<AddArticleContract.Prese
         });
     }
 
-    /** 封面图作为首图（列表缩略图），其后拼接内容配图，逗号分隔存入 cover_uri */
+    /**
+     * 组装存入 cover_uri 的图片串（格式约定见 Article 类注释）：
+     *   有专门封面：  "封面URI\n内容图1,内容图2,..."（换行分隔，详情页据此只显示内容配图）
+     *   没有专门封面："内容图1,内容图2,..."（首张内容图兼作列表封面）
+     *   都没有：       null
+     */
     private String buildImageList() {
-        List<String> all = new ArrayList<>();
-        if (coverUri != null) {
-            all.add(coverUri.toString());
-        }
+        StringBuilder content = new StringBuilder();
         for (Uri uri : contentImageUris) {
-            all.add(uri.toString());
-        }
-        if (all.isEmpty()) {
-            return null;
-        }
-        StringBuilder sb = new StringBuilder();
-        for (String s : all) {
-            if (sb.length() > 0) {
-                sb.append(",");
+            if (content.length() > 0) {
+                content.append(",");
             }
-            sb.append(s);
+            content.append(uri.toString());
         }
-        return sb.toString();
+        // 有专门封面：封面段 + 换行 + 内容段（内容段可能为空）
+        if (coverUri != null) {
+            return coverUri.toString() + "\n" + content;
+        }
+        // 没有专门封面：只存内容配图，首张兼作封面
+        if (content.length() > 0) {
+            return content.toString();
+        }
+        return null;
     }
 
     private void addContentImage(Uri uri) {

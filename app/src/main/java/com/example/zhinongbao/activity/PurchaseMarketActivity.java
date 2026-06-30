@@ -133,11 +133,13 @@ public class PurchaseMarketActivity extends BaseMvpActivity<PurchaseMarketContra
                             presenter.onItemClick(req);
                         }
                     });
+            adapter.updateLockedRequestIds(lockedRequestIds(newItems));
             rvRequests.setAdapter(adapter);
         } else {
             items.clear();
             items.addAll(newItems);
             adapter.updateQuotedRequestIds(quotedRequestIds(newItems));
+            adapter.updateLockedRequestIds(lockedRequestIds(newItems));
             adapter.notifyDataSetChanged();
         }
     }
@@ -149,6 +151,20 @@ public class PurchaseMarketActivity extends BaseMvpActivity<PurchaseMarketContra
         }
         for (PurchaseRequest request : requests) {
             if (presenter.hasQuoted(request)) {
+                ids.add(request.id);
+            }
+        }
+        return ids;
+    }
+
+    // 已成交（买家已付款且未退款）的需求 id，用于锁定报价按钮
+    private Set<Long> lockedRequestIds(List<PurchaseRequest> requests) {
+        Set<Long> ids = new HashSet<>();
+        if (requests == null) {
+            return ids;
+        }
+        for (PurchaseRequest request : requests) {
+            if (presenter.isRequestLocked(request)) {
                 ids.add(request.id);
             }
         }
@@ -378,8 +394,68 @@ public class PurchaseMarketActivity extends BaseMvpActivity<PurchaseMarketContra
                     LinearLayout.LayoutParams.MATCH_PARENT, dp(42));
             editLp.topMargin = dp(12);
             card.addView(edit, editLp);
+        } else if (currentUser != null && currentUser.equals(req.buyerUser) && "pending".equals(quote.status)) {
+            LinearLayout actions = new LinearLayout(this);
+            actions.setOrientation(LinearLayout.HORIZONTAL);
+            actions.setGravity(Gravity.CENTER_VERTICAL);
+
+            TextView reject = createButton("拒绝", true);
+            reject.setOnClickListener(v -> showReplyDialog(req, quote.id, false));
+            actions.addView(reject, new LinearLayout.LayoutParams(0, dp(42), 1));
+
+            TextView accept = createButton("同意", false);
+            accept.setOnClickListener(v -> showReplyDialog(req, quote.id, true));
+            LinearLayout.LayoutParams acceptLp = new LinearLayout.LayoutParams(0, dp(42), 1);
+            acceptLp.setMarginStart(dp(10));
+            actions.addView(accept, acceptLp);
+
+            LinearLayout.LayoutParams actionsLp = new LinearLayout.LayoutParams(
+                    LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
+            actionsLp.topMargin = dp(12);
+            card.addView(actions, actionsLp);
         }
         return card;
+    }
+
+    private void showReplyDialog(PurchaseRequest req, long quoteId, boolean isAccept) {
+        View v = LayoutInflater.from(this).inflate(R.layout.dialog_quote_reply, null);
+        TextView tvInfo = v.findViewById(R.id.tvQuoteReplyInfo);
+        EditText etReply = v.findViewById(R.id.etReplyDesc);
+
+        tvInfo.setText(isAccept
+                ? "同意后将生成一笔待付款采购订单，请确认报价和收货地址无误。"
+                : "拒绝后该商家的报价将不再进入采购订单。");
+
+        DialogUtils.showContent(this, isAccept ? "同意报价" : "拒绝报价", null, v,
+                "取消", isAccept ? "确定订单" : "确认拒绝", !isAccept, () -> {
+                    String reply = etReply.getText().toString();
+                    if (quoteListDialog != null && quoteListDialog.isShowing()) {
+                        quoteListDialog.dismiss();
+                    }
+                    if (isAccept) {
+                        presenter.acceptQuote(req, quoteId, reply);
+                    } else {
+                        presenter.rejectQuote(req, quoteId, reply);
+                    }
+                    return true;
+                });
+    }
+
+    @Override
+    public void promptAddAddress() {
+        DialogUtils.showConfirm(this, "缺少收货地址",
+                "同意报价前需要先设置默认收货地址，用于生成采购订单。",
+                "取消", "去设置地址", false, () -> {
+                    startActivity(new Intent(this, AddressManagerActivity.class));
+                    return true;
+                });
+    }
+
+    @Override
+    public void openPayment(String orderId) {
+        Intent intent = new Intent(this, OrderDetailActivity.class);
+        intent.putExtra("order_id", orderId);
+        startActivity(intent);
     }
 
     private LinearLayout createCard(int fill, int stroke) {
@@ -515,6 +591,7 @@ public class PurchaseMarketActivity extends BaseMvpActivity<PurchaseMarketContra
             image.setScaleType(ImageView.ScaleType.CENTER_CROP);
             image.setBackgroundResource(R.drawable.bg_dialog_input);
             image.setImageURI(Uri.parse(trimmed));
+            image.setOnClickListener(v -> ImageUtils.showFullImage(this, trimmed)); // 点击放大查看
             LinearLayout.LayoutParams imageLp = new LinearLayout.LayoutParams(dp(88), dp(88));
             imageLp.setMarginEnd(dp(8));
             row.addView(image, imageLp);

@@ -30,6 +30,12 @@ public class Product {
     public String packageType; // 包装方式
     public int viewCount;      // 浏览次数
     public long viewedAt;      // 最近浏览时间（用于「足迹」排序）
+    public int status;         // 上下架状态：0=在售，1=已下架（下架后买家看不到，可重新上架）
+
+    /** 是否已下架（已从货架移除，买家不可见/不可购买，卖家可重新上架）。 */
+    public boolean isOffShelf() {
+        return status == 1;
+    }
 
     // 构造方法①：最简版，只有 id/名称/描述/价格，分类默认「推荐」
     public Product(int id, String name, String desc, double price) {
