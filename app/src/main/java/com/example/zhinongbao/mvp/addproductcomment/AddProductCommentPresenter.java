@@ -4,11 +4,25 @@ import android.content.Context;
 
 import com.example.zhinongbao.repository.ProductRepository;
 
+/**
+ * ============================================================
+ * 【发表商品评价 / Add Product Comment】Presenter（业务逻辑）
+ * 整体逻辑：canComment 判断当前用户是否购买过该商品（或为 admin）；
+ *   getReviewBlockMessage 区分「有订单但未确认收货」与「没买过」给出不同提示；
+ *   submit 时校验文字与图片不能同时为空，通过 Repository 写入评价后提示并关闭页面。
+ * 数据来源：走 repository/ProductRepository，Repository 内部通过 ContentProvider
+ *   访问 SQLite；本类不直接操作数据库。
+ * 配合的文件：接口约定 mvp/addproductcomment/AddProductCommentContract；View 实现 =
+ *   AddProductCommentActivity。
+ * 在 MVP 数据流中的位置：业务层。
+ * 提示：在 IDE 里搜索「发表评价」可看本组相关文件。
+ * ============================================================
+ */
 public class AddProductCommentPresenter implements AddProductCommentContract.Presenter {
-    private final AddProductCommentContract.View view;
-    private final ProductRepository repository;
-    private final int productId;
-    private final String username;
+    private final AddProductCommentContract.View view; // 对应的界面
+    private final ProductRepository repository;        // 商品/评价数据访问
+    private final int productId;                       // 要评价的商品 id
+    private final String username;                     // 当前登录用户
 
     public AddProductCommentPresenter(Context context, AddProductCommentContract.View view, int productId) {
         this.view = view;

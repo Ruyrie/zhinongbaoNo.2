@@ -28,6 +28,22 @@ import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * ============================================================
+ * 【商城首页 / Mall】View（Fragment）
+ * 整体逻辑：onViewCreated 初始化瀑布流 RecyclerView 与 ProductAdapter，
+ *   绑定各入口点击；创建 MallPresenter 并 start() 拉商品；showProducts 收到
+ *   全量数据后按当前分类 filterByCategory() 本地过滤展示。点商品项跳
+ *   ProductDetailActivity；点加购调 presenter.addToCart()。onResume 会 refresh。
+ * 数据来源：商品数据来自 Presenter → ProductRepository → SQLite；
+ *   部分图标(如回到顶部)来自 assets/pic/ 本地图片。
+ * 配合的文件：接口 MallContract；业务 MallPresenter；适配器 adapter/ProductAdapter；
+ *   布局 fragment_mall.xml；跳转 ProductDetailActivity / ProductSearchActivity /
+ *   AddProductActivity；模型 model/Product。
+ * 在 MVP 中的位置：View 层。
+ * 提示：在 IDE 里搜索「商城」可看本组相关文件。
+ * ============================================================
+ */
 public class MallFragment extends BaseMvpFragment<MallContract.Presenter>
         implements MallContract.View {
 
@@ -149,6 +165,7 @@ public class MallFragment extends BaseMvpFragment<MallContract.Presenter>
         Toast.makeText(getContext(), message, Toast.LENGTH_SHORT).show();
     }
 
+    // 按当前选中分类本地过滤：「推荐」显示全部，其它分类按 category 包含匹配
     private void filterByCategory() {
         displayed.clear();
         for (Product p : allProducts) {
@@ -158,7 +175,7 @@ public class MallFragment extends BaseMvpFragment<MallContract.Presenter>
             }
         }
         adapter.notifyDataSetChanged();
-        resetProductListPosition();
+        resetProductListPosition(); // 切换分类后回到列表顶部
     }
 
     private void resetProductListPosition() {

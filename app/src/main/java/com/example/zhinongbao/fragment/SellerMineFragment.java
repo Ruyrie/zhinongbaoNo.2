@@ -32,6 +32,24 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.List;
 
+/**
+ * ============================================================
+ * 【卖家我的 / Seller Mine】View（Fragment 页面）
+ * 整体逻辑（关键步骤）：
+ *   1. onCreateView 加载布局 fragment_seller_mine.xml。
+ *   2. onViewCreated 绑定各图标与点击事件，创建 SellerMinePresenter 并 start()。
+ *   3. onResume 每次回到页面重新 start() 刷新数据。
+ *   4. Presenter 回调 renderSeller/renderOrderBadges/renderNews 时把数据填进控件。
+ *   5. 各入口跳转到「我的货品/采购管理/订单管理/店铺管理/销售分析/发布商品」等页面。
+ * 数据来源：不直接碰数据库；数据由 SellerMinePresenter 经 UserRepository/OrderRepository/
+ *   ArticleRepository（内部走 ContentProvider 访问 SQLite）取得后回调本类。
+ * 配合的文件：接口 = mvp/sellermine/SellerMineContract；Presenter = SellerMinePresenter；
+ *   布局 = res/layout/fragment_seller_mine.xml；资讯行 = res/layout/item_article.xml；
+ *   跳转页 = SellerMyProductsActivity/SellerOrdersActivity/SellerStoreActivity 等。
+ * 在 MVP 数据流中的位置：View（界面层），只负责展示与转发用户操作。
+ * 提示：在 IDE 里搜索「卖家我的」可看本组相关文件。
+ * ============================================================
+ */
 public class SellerMineFragment extends BaseMvpFragment<SellerMineContract.Presenter> implements SellerMineContract.View {
 
     @Nullable
@@ -54,6 +72,7 @@ public class SellerMineFragment extends BaseMvpFragment<SellerMineContract.Prese
             presenter.start();
     }
 
+    // 绑定固定图标与各入口点击事件（只在页面创建时执行一次）
     private void bindStaticViews(View view) {
         loadAssetImage(view.findViewById(R.id.ivMyProducts), "wodehuopin.png");
         loadAssetImage(view.findViewById(R.id.ivPurchaseMgmt), "caigouguanli.png");
@@ -166,6 +185,7 @@ public class SellerMineFragment extends BaseMvpFragment<SellerMineContract.Prese
         startActivity(intent);
     }
 
+    // 打开销售分析页，scope 指定统计范围：today/month/all
     private void openSalesOrders(String scope) {
         Intent i = new Intent(getContext(), SellerSalesAnalysisActivity.class);
         i.putExtra("sales_scope", scope);
@@ -221,6 +241,7 @@ public class SellerMineFragment extends BaseMvpFragment<SellerMineContract.Prese
         });
     }
 
+    // 打开卖家订单页并按状态过滤：pending/paid/shipped/refund
     private void openSellerOrders(String filter) {
         Intent i = new Intent(getContext(), SellerOrdersActivity.class);
         i.putExtra("filter", filter);
@@ -257,6 +278,7 @@ public class SellerMineFragment extends BaseMvpFragment<SellerMineContract.Prese
         }
     }
 
+    // 从 assets/pic 目录读取图片文件并显示到 ImageView
     private void loadAssetImage(ImageView iv, String filename) {
         if (iv == null)
             return;

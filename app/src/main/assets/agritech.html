@@ -1,4 +1,14 @@
 <!DOCTYPE html>
+<!--
+=================================================================
+ 【农技学堂 / AgriTech Academy】WebView 页面（HTML5 + JS 单页）
+ 技术点：纯 HTML5 + CSS + 原生 JS 实现「列表页」和「新闻详情页」两个视图，
+   点击列表项用 JS 切换显隐（单页应用 SPA 思路），无需切换 Activity。
+ 在数据流中的位置：View 层静态资源（示例数据内置在下方 NEWS_DATA 中）。
+ 提示：在 IDE 里搜索「农技学堂」可看本组相关文件
+   （AgriTechFragment / AgriTechContract / AgriTechPresenter / fragment_agritech.xml）。
+=================================================================
+-->
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
@@ -25,6 +35,7 @@
             left: 15px;
             top: 15px;
             font-size: 20px;
+            cursor: pointer;
         }
         .tabs {
             display: flex;
@@ -56,6 +67,10 @@
             justify-content: space-between;
             padding: 15px 0;
             border-bottom: 1px solid #eee;
+            cursor: pointer;
+        }
+        .news-item:active {
+            background-color: #fafafa;
         }
         .news-info {
             flex: 1;
@@ -82,6 +97,11 @@
             background-color: #ddd;
             border-radius: 5px;
             object-fit: cover;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
         }
         .fab {
             position: fixed;
@@ -98,69 +118,216 @@
             font-size: 30px;
             box-shadow: 0 4px 8px rgba(0,0,0,0.2);
         }
+
+        /* ==== 新闻详情页样式 ==== */
+        .detail-content {
+            background: white;
+            padding: 20px 18px 40px;
+            min-height: 100vh;
+        }
+        .detail-title {
+            font-size: 22px;
+            font-weight: bold;
+            color: #1a1a1a;
+            line-height: 1.4;
+        }
+        .detail-meta {
+            font-size: 12px;
+            color: #999;
+            margin-top: 14px;
+            padding-bottom: 14px;
+            border-bottom: 1px solid #f0f0f0;
+        }
+        .detail-meta .source {
+            color: #ff5722;
+            font-weight: bold;
+            margin-right: 12px;
+        }
+        .detail-body {
+            font-size: 16px;
+            color: #333;
+            line-height: 1.9;
+            margin-top: 16px;
+        }
+        .detail-body p {
+            margin: 0 0 16px;
+        }
+        .detail-banner {
+            width: 100%;
+            height: 160px;
+            border-radius: 8px;
+            margin: 8px 0 18px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 20px;
+            font-weight: bold;
+        }
+        .detail-readcount {
+            font-size: 12px;
+            color: #bbb;
+            margin-top: 24px;
+        }
+        .hidden {
+            display: none;
+        }
     </style>
 </head>
 <body>
 
-    <div class="header">
-        <span class="back"><</span>
-        农技学堂
+    <!-- ==== 视图一：新闻列表页 ==== -->
+    <div id="listView">
+        <div class="header">
+            农技学堂
+        </div>
+
+        <div class="tabs">
+            <div class="tab active">热点新闻</div>
+            <div class="tab">专家咨询</div>
+            <div class="tab">支农宝新闻</div>
+            <div class="tab">创业项...</div>
+        </div>
+
+        <!-- 新闻列表容器：内容由 JS 根据 NEWS_DATA 动态渲染 -->
+        <div class="content" id="newsList"></div>
+
+        <div class="fab">+</div>
     </div>
 
-    <div class="tabs">
-        <div class="tab active">热点新闻</div>
-        <div class="tab">专家咨询</div>
-        <div class="tab">支农宝新闻</div>
-        <div class="tab">创业项...</div>
-    </div>
-
-    <div class="content">
-        <div class="news-item">
-            <div class="news-info">
-                <div class="news-title">农为体 融为用</div>
-                <div class="news-meta">
-                    <span>2024-05-19</span>
-                    <span>👁 21794</span>
-                </div>
-            </div>
-            <div class="news-image" style="background-color: #c00; color: white; display: flex; align-items: center; justify-content: center; font-weight: bold;">评论员文章</div>
+    <!-- ==== 视图二：新闻详情页（默认隐藏，点击列表项后显示） ==== -->
+    <div id="detailView" class="hidden">
+        <div class="header">
+            <!-- 详情页返回按钮：点击回到列表页 -->
+            <span class="back" onclick="backToList()">&lt;</span>
+            <span id="detailHeaderTitle">资讯详情</span>
         </div>
-
-        <div class="news-item">
-            <div class="news-info">
-                <div class="news-title">山为仓 海为廪</div>
-                <div class="news-meta">
-                    <span>2024-05-18</span>
-                    <span>👁 28045</span>
-                </div>
+        <div class="detail-content">
+            <div class="detail-title" id="detailTitle"></div>
+            <div class="detail-meta">
+                <span class="source" id="detailSource"></span>
+                <span id="detailDate"></span>
             </div>
-            <div class="news-image" style="background-color: #c00; color: white; display: flex; align-items: center; justify-content: center; font-weight: bold;">评论员文章</div>
-        </div>
-
-        <div class="news-item">
-            <div class="news-info">
-                <div class="news-title">全国乡村人才工作会议在陕西咸阳召开</div>
-                <div class="news-meta">
-                    <span>2024-05-17</span>
-                    <span>👁 24712</span>
-                </div>
-            </div>
-            <div class="news-image" style="background-color: #003399; color: white; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 20px;">要闻</div>
-        </div>
-        
-        <div class="news-item">
-            <div class="news-info">
-                <div class="news-title">食为天 民为大</div>
-                <div class="news-meta">
-                    <span>2024-05-17</span>
-                    <span>👁 12381</span>
-                </div>
-            </div>
-            <div class="news-image" style="background-color: #c00; color: white; display: flex; align-items: center; justify-content: center; font-weight: bold;">评论员文章</div>
+            <div class="detail-banner" id="detailBanner"></div>
+            <div class="detail-body" id="detailBody"></div>
+            <div class="detail-readcount" id="detailReadCount"></div>
         </div>
     </div>
 
-    <div class="fab">+</div>
+    <script>
+        // ==== 新闻数据（示例内置数据，id 为唯一标识）====
+        // 每条包含：标题 / 日期 / 阅读数 / 来源标签 / 标签底色 / 正文段落数组
+        var NEWS_DATA = {
+            "n1": {
+                title: "农为体 融为用",
+                date: "2024-05-19",
+                views: 21794,
+                source: "评论员文章",
+                color: "#c00",
+                body: [
+                    "农业是国民经济的基础，是安天下、稳民心的战略产业。近年来，随着乡村振兴战略深入推进，如何让农业既守住根本、又焕发新活力，成为各地探索的重点。",
+                    "“农为体”，强调的是始终把粮食安全和农业生产放在首位，牢牢守住耕地红线，把饭碗端在自己手里；“融为用”，则是通过产业融合、科技赋能，让农业与加工、旅游、电商等业态深度结合，延长产业链、提升价值链。",
+                    "实践证明，只有体用结合、以体带用，才能让农业既有底气又有活力，真正把资源优势转化为发展优势，为农民增收、农村繁荣提供坚实支撑。"
+                ]
+            },
+            "n2": {
+                title: "山为仓 海为廪",
+                date: "2024-05-18",
+                views: 28045,
+                source: "评论员文章",
+                color: "#c00",
+                body: [
+                    "树立大农业观、大食物观，向森林要食物、向江河湖海要食物、向设施农业要食物，是保障国家粮食安全的重要途径。",
+                    "“山为仓、海为廪”，形象地道出了广阔国土蕴藏的食物潜力。从山林中的干鲜果品、林下经济，到江河湖海的水产养殖，再到现代设施农业里的蔬菜瓜果，多元food供给体系正在加快构建。",
+                    "开发丰富多样的食物资源，既要向自然要产量，也要靠科技提效率、靠绿色保生态，走出一条产出高效、产品安全、资源节约、环境友好的现代农业发展之路。"
+                ]
+            },
+            "n3": {
+                title: "全国乡村人才工作会议在陕西咸阳召开",
+                date: "2024-05-17",
+                views: 24712,
+                source: "要闻",
+                color: "#003399",
+                body: [
+                    "近日，全国乡村人才工作会议在陕西咸阳召开。会议强调，全面推进乡村振兴，关键在人、关键在干，要把人才振兴摆在乡村振兴的重要位置。",
+                    "会议指出，要加快培育高素质农民队伍，支持农业科技人才、乡村工匠、返乡创业青年在广阔田野上施展才华；要完善人才下乡激励机制，让各类人才引得进、留得住、干得好。",
+                    "与会代表围绕人才培养、平台搭建、政策保障等进行了交流研讨，并实地考察了当地乡村人才培育和产业发展的典型做法。"
+                ]
+            },
+            "n4": {
+                title: "食为天 民为大",
+                date: "2024-05-17",
+                views: 12381,
+                source: "评论员文章",
+                color: "#c00",
+                body: [
+                    "民以食为天，粮食安全是“国之大者”。任何时候都不能放松粮食生产，必须始终绷紧粮食安全这根弦。",
+                    "端牢中国饭碗，既要稳面积、稳产量，也要提品质、增效益。要严守耕地红线，加强高标准农田建设，推动良田、良种、良法、良机深度融合，不断夯实粮食生产根基。",
+                    "把“食为天”的分量记在心上，把“民为大”的责任扛在肩上，才能确保重要农产品特别是粮食供给稳定，为经济社会发展大局提供有力支撑。"
+                ]
+            }
+        };
+
+        // 列表展示顺序
+        var NEWS_ORDER = ["n1", "n2", "n3", "n4"];
+
+        // ==== 渲染新闻列表 ====
+        function renderList() {
+            var html = "";
+            for (var i = 0; i < NEWS_ORDER.length; i++) {
+                var id = NEWS_ORDER[i];
+                var n = NEWS_DATA[id];
+                html +=
+                    '<div class="news-item" onclick="openNews(\'' + id + '\')">' +
+                        '<div class="news-info">' +
+                            '<div class="news-title">' + n.title + '</div>' +
+                            '<div class="news-meta">' +
+                                '<span>' + n.date + '</span>' +
+                                '<span>&#128065; ' + n.views + '</span>' +
+                            '</div>' +
+                        '</div>' +
+                        '<div class="news-image" style="background-color:' + n.color + ';">' + n.source + '</div>' +
+                    '</div>';
+            }
+            document.getElementById("newsList").innerHTML = html;
+        }
+
+        // ==== 打开新闻详情：填充详情页并切换视图 ====
+        function openNews(id) {
+            var n = NEWS_DATA[id];
+            if (!n) { return; }
+
+            document.getElementById("detailTitle").innerText = n.title;
+            document.getElementById("detailSource").innerText = n.source;
+            document.getElementById("detailDate").innerText = n.date;
+
+            var banner = document.getElementById("detailBanner");
+            banner.style.backgroundColor = n.color;
+            banner.innerText = n.source;
+
+            var bodyHtml = "";
+            for (var i = 0; i < n.body.length; i++) {
+                bodyHtml += "<p>" + n.body[i] + "</p>";
+            }
+            document.getElementById("detailBody").innerHTML = bodyHtml;
+            document.getElementById("detailReadCount").innerText = "阅读 " + n.views + " 次";
+
+            // 切换视图：隐藏列表，显示详情，并回到顶部
+            document.getElementById("listView").classList.add("hidden");
+            document.getElementById("detailView").classList.remove("hidden");
+            window.scrollTo(0, 0);
+        }
+
+        // ==== 返回列表页 ====
+        function backToList() {
+            document.getElementById("detailView").classList.add("hidden");
+            document.getElementById("listView").classList.remove("hidden");
+            window.scrollTo(0, 0);
+        }
+
+        // 页面加载后渲染列表
+        renderList();
+    </script>
 
 </body>
 </html>

@@ -22,13 +22,30 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
+/**
+ * ============================================================
+ * 【发表商品评价 / Add Product Comment】View（界面/Activity）
+ * 整体逻辑：onCreate 先创建 Presenter 并校验 canComment()——没买过或未确认收货
+ *   则显示拦截提示、隐藏输入区；可评价时点提交会校验内容与图片不能同时为空，
+ *   把图片 Uri 拼成逗号分隔字符串交给 presenter.submit 发布。图片选择用
+ *   ActivityResultLauncher（拍照 TakePicture / 相册 GetMultipleContents），
+ *   选好后加入 imageUris 并刷新 ImagePickerAdapter。
+ * 数据来源：不直接碰数据库；经 Presenter 走 repository/ProductRepository，
+ *   Repository 内部通过 ContentProvider 访问 SQLite。
+ * 配合的文件：接口约定 mvp/addproductcomment/AddProductCommentContract；业务逻辑
+ *   AddProductCommentPresenter；图片选择适配器 adapter/ImagePickerAdapter；
+ *   图片工具 utils/ImageUtils；页面布局 res/layout/activity_add_product_comment.xml。
+ * 在 MVP 数据流中的位置：View 层。
+ * 提示：在 IDE 里搜索「发表评价」可看本组相关文件。
+ * ============================================================
+ */
 public class AddProductCommentActivity extends BaseMvpActivity<AddProductCommentContract.Presenter>
         implements AddProductCommentContract.View {
 
-    private int productId;
-    private List<Uri> imageUris = new ArrayList<>();
-    private ImagePickerAdapter adapter;
-    private Uri currentCameraUri;
+    private int productId;                          // 要评价的商品 id
+    private List<Uri> imageUris = new ArrayList<>(); // 已选择的图片，最多 9 张
+    private ImagePickerAdapter adapter;             // 图片选择/预览适配器
+    private Uri currentCameraUri;                   // 本次拍照写入的临时文件 Uri
 
     private final ActivityResultLauncher<String> pickImages = registerForActivityResult(
             new ActivityResultContracts.GetMultipleContents(), uris -> {

@@ -1,4 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!--
+ ============================================================
+ 【聊天对话-撤回气泡 / Chat Recalled】布局（列表项布局）
+ 关键控件：tvRecalledHint 提示文字（由适配器填「你撤回了一条消息 / 对方撤回了一条消息」）。
+ 配合的文件：适配器 adapter/ChatAdapter（RecalledHolder 使用本布局）；
+   数据模型 model/ChatMessage；使用页面 activity/ChatActivity。
+ MVP 数据流位置：本文件是 View 层的静态气泡模板，文字由适配器填入。
+ 提示：在 IDE 里搜索「聊天」可看本组相关文件。
+ ============================================================
+-->
 <!-- 撤回提示行：居中灰色一行小字，仿微信「你撤回了一条消息 / 对方撤回了一条消息」 -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"

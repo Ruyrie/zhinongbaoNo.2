@@ -30,6 +30,22 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+/**
+ * ============================================================
+ * 【发布/编辑商品 / Add Product】View（Activity）
+ * 这里是卖家新增商品或编辑已有商品的表单页：填名称/描述/价格/分类/店铺电话/
+ *   品牌·产地·规格·包装，并可多图选择上传。
+ * 整体逻辑：onCreate 绑定表单控件、分类多选 chip、图片选择(ImagePickerAdapter，
+ *   走系统相册/拍照的 ActivityResult)；若 Intent 带 product_id 则 loadProduct 回填
+ *   进入「编辑」模式；点提交 → presenter.submitProduct(...)，成功回调 closePage。
+ * 数据来源：本类不碰数据库，读写经 Presenter → ProductRepository/UserRepository。
+ * 配合的文件：接口 AddProductContract；业务 AddProductPresenter；
+ *   图片适配器 adapter/ImagePickerAdapter；图片工具 utils/ImageUtils；
+ *   布局 activity_add_product.xml；模型 model/Product。
+ * 在 MVP 中的位置：View 层。
+ * 提示：在 IDE 里搜索「发布商品」可看本组相关文件。
+ * ============================================================
+ */
 public class AddProductActivity extends BaseMvpActivity<AddProductContract.Presenter> implements AddProductContract.View {
 
     private static final String[] CATEGORIES = { "推荐", "水果蔬菜", "米面粮油", "农资农具" };

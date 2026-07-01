@@ -18,6 +18,25 @@ import com.example.zhinongbao.mvp.profileedit.ProfileEditContract;
 import com.example.zhinongbao.mvp.profileedit.ProfileEditPresenter;
 import java.io.File;
 
+/**
+ * ============================================================
+ * 【资料编辑 / ProfileEdit】View（编辑个人资料页 Activity）
+ * 整体逻辑（关键步骤）：
+ *   1. onCreate 加载 activity_profile_edit 布局，new ProfileEditPresenter 拉取现有资料。
+ *   2. 点头像先弹全屏预览框（dialog_avatar_preview），再选「拍照/相册」选图。
+ *   3. 选图后用 UCrop 圆形裁剪（走 UCropCompatActivity），裁剪结果转 Base64 预览。
+ *   4. 点「保存」把昵称/签名/头像交给 presenter.saveProfile 校验并写库。
+ *   5. 绑定手机号弹 dialog_bind_phone，本地校验 11 位手机号后交 presenter.bindPhone。
+ *   6. Presenter 回调 showProfile/showPhone 回填数据，showToast 提示，closePage 关闭页面。
+ * 数据来源：经 ProfileEditPresenter 走 UserRepository；Repository 内部经
+ *   ContentProvider 访问 SQLite，本类不直接碰数据库。图片处理用 utils/ImageUtils。
+ * 配合的文件：接口约定 = mvp/profileedit/ProfileEditContract；业务逻辑 =
+ *   mvp/profileedit/ProfileEditPresenter；布局 = res/layout/activity_profile_edit.xml；
+ *   裁剪页 = UCropCompatActivity；工具 = utils/ImageUtils。
+ * 在 MVP 数据流中的位置：View（界面层），通过 Presenter 读写资料，不直接访问数据库。
+ * 提示：在 IDE 里搜索「资料编辑」可看本组相关文件。
+ * ============================================================
+ */
 public class ProfileEditActivity extends BaseMvpActivity<ProfileEditContract.Presenter>
         implements ProfileEditContract.View {
 

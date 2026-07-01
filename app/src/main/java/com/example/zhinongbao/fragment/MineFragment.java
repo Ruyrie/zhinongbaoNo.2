@@ -30,6 +30,24 @@ import com.example.zhinongbao.mvp.mine.MinePresenter;
 import java.io.IOException;
 import java.io.InputStream;
 
+/**
+ * ============================================================
+ * 【我的 / Mine】View（个人中心 Fragment）
+ * 整体逻辑（关键步骤）：
+ *   1. onCreateView 加载 fragment_mine 布局。
+ *   2. onViewCreated 里 bindStaticViews 绑定图标与各入口的点击跳转，并 new MinePresenter 启动。
+ *   3. Presenter 回调 renderUser 填充资料/头像/统计数据、设置买卖家切换按钮。
+ *   4. renderOrderBadges 回调设置订单状态角标（待付款/待发货/待收货/待评价/退款）。
+ *   5. onResume 时重新 start 刷新数据；restartMain 用于切换角色后重建主界面。
+ * 数据来源：经 MinePresenter 走 UserRepository / ArticleRepository / OrderRepository；
+ *   Repository 内部经 ContentProvider 访问 SQLite，本类不直接碰数据库。
+ * 配合的文件：接口约定 = mvp/mine/MineContract；业务逻辑 = mvp/mine/MinePresenter；
+ *   布局 = res/layout/fragment_mine.xml；跳转页面 = ProfileEditActivity / CartActivity /
+ *   MyOrdersActivity / SettingsActivity / FollowListActivity 等。
+ * 在 MVP 数据流中的位置：View（界面层），通过 Presenter 取数据，不直接访问数据库。
+ * 提示：在 IDE 里搜索「我的」可看本组相关文件。
+ * ============================================================
+ */
 public class MineFragment extends BaseMvpFragment<MineContract.Presenter> implements MineContract.View {
 
         @Nullable

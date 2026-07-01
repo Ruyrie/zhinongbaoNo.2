@@ -30,6 +30,25 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Locale;
 
+/**
+ * ============================================================
+ * 【收货地址管理 / Address】View（地址管理页 Activity）
+ * 整体逻辑（关键步骤）：
+ *   1. onCreate 加载 activity_address_manager 布局，new AddressPresenter 拉取地址。
+ *   2. showAddresses 用 item_address 逐条渲染地址卡片并绑定编辑/默认/删除按钮。
+ *   3. 新增或编辑时弹全屏 dialog_address，含收件人、电话、地区、详细地址、标签胶囊、默认开关。
+ *   4. 点「获取本地位置」先申请定位权限，再用 LocationManager 取一次坐标，
+ *      经 Geocoder 反向解析为中文地址（子线程处理）后回填输入框。
+ *   5. 点保存把信息交 presenter.saveAddress 校验并写库。
+ * 数据来源：经 AddressPresenter 走 AddressRepository；Repository 内部经
+ *   ContentProvider 访问 SQLite，本类不直接碰数据库。定位用系统 LocationManager/Geocoder。
+ * 配合的文件：接口约定 = mvp/address/AddressContract；业务逻辑 = mvp/address/AddressPresenter；
+ *   布局 = res/layout/activity_address_manager.xml、item_address.xml、dialog_address.xml；
+ *   模型 = model/Address。
+ * 在 MVP 数据流中的位置：View（界面层），通过 Presenter 读写地址，不直接访问数据库。
+ * 提示：在 IDE 里搜索「收货地址管理」可看本组相关文件。
+ * ============================================================
+ */
 public class AddressManagerActivity extends BaseMvpActivity<AddressContract.Presenter> implements AddressContract.View {
 
     /** 可选的地址标签 */

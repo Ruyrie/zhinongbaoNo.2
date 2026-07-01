@@ -23,9 +23,28 @@ import com.example.zhinongbao.mvp.orderdetail.OrderDetailContract;
 import com.example.zhinongbao.mvp.orderdetail.OrderDetailPresenter;
 import com.example.zhinongbao.utils.DialogUtils;
 
+/**
+ * ============================================================
+ * 【订单详情 / Order Detail】View（界面/Activity）
+ * 整体逻辑：onCreate 只负责创建 Presenter 并 start()；Presenter 查好数据后
+ *   回调 showOrder(...) 把各字段填进控件；根据 order.status 走不同分支决定
+ *   状态文案、倒计时与主/次按钮；主按钮点击调 onPrimaryAction、次按钮调
+ *   onSecondaryAction，具体做什么由 Presenter 依状态判断。右上「更多」弹出
+ *   PopupWindow 提供「加入购物车」。
+ * 数据来源：不直接碰数据库；经 Presenter 走 repository/OrderRepository 等，
+ *   Repository 内部通过 ContentProvider 访问 SQLite。
+ * 配合的文件：接口约定 mvp/orderdetail/OrderDetailContract；业务逻辑
+ *   OrderDetailPresenter；页面布局 res/layout/activity_order_detail.xml；
+ *   确认弹窗 res/layout/dialog_confirm.xml；退款理由弹窗 utils/DialogUtils；
+ *   模型 model/Order；会跳转到评价页 AddProductCommentActivity、
+ *   店铺主页 SellerStoreActivity、聊天页 ChatActivity。
+ * 在 MVP 数据流中的位置：View 层，接收 Presenter 回调渲染，把用户操作回传 Presenter。
+ * 提示：在 IDE 里搜索「订单详情」可看本组相关文件。
+ * ============================================================
+ */
 public class OrderDetailActivity extends BaseMvpActivity<OrderDetailContract.Presenter> implements OrderDetailContract.View {
 
-    private Order order;
+    private Order order; // 当前正在展示的订单对象，由 Presenter 回调传入
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -154,6 +173,7 @@ public class OrderDetailActivity extends BaseMvpActivity<OrderDetailContract.Pre
         tvOrderQtyInfo.setText(order.quantity + " 件");
         bindShipmentInfo(layoutShipment, tvShipType, tvShipMain, tvShipNo, tvShipPhone, order);
 
+        // 按订单状态决定状态文案、倒计时提示、以及底部主/次按钮的显示与文字
         switch (order.status) {
             case Order.STATUS_PENDING:
                 tvStatus.setText("待支付");

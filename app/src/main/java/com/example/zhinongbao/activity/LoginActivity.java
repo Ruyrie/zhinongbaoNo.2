@@ -15,7 +15,21 @@ import com.example.zhinongbao.mvp.login.LoginContract;
 import com.example.zhinongbao.mvp.login.LoginPresenter;
 import com.example.zhinongbao.utils.DialogUtils;
 
-/** 登录界面 */
+/**
+ * ============================================================
+ * 【登录 / Login】View（Activity）
+ * 整体逻辑：onCreate 先 new LoginPresenter().start() —— 若已登录会直接
+ *   跳主页并 finish()（所以先判断 isFinishing 再加载布局）；否则绑定控件与
+ *   点击事件。点「登录」→ presenter.login()；Presenter 处理后回调
+ *   goMain/showToast/showUnregisteredDialog/showRoleSelection。
+ * 数据来源：本类不碰数据库，登录判断由 Presenter → UserRepository 完成。
+ * 配合的文件：接口 LoginContract；业务 LoginPresenter；布局 activity_login.xml；
+ *   跳转 RegisterActivity / ForgotPasswordActivity / MainActivity；
+ *   弹窗工具 utils/DialogUtils；模型 model/User。
+ * 在 MVP 中的位置：View 层。
+ * 提示：在 IDE 里搜索「登录」可看本组相关文件。
+ * ============================================================
+ */
 public class LoginActivity extends BaseMvpActivity<LoginContract.Presenter> implements LoginContract.View {
 
     private EditText etUsername, etPassword;

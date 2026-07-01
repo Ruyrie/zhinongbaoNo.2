@@ -24,6 +24,23 @@ import com.example.zhinongbao.mvp.articledetail.ArticleDetailContract;
 import com.example.zhinongbao.mvp.articledetail.ArticleDetailPresenter;
 import java.util.List;
 
+/**
+ * ============================================================
+ * 【文章详情 / Article Detail】View（Activity）
+ * 整体逻辑（混合渲染，重点）：
+ *   1) 正文区域用 WebView + HTML5 渲染：读取模板 assets/article_detail.html，
+ *      把标题/作者/正文/配图等替换进 {{占位符}} 后，用 loadDataWithBaseURL 显示；
+ *      网页里的「关注」按钮通过 JS 桥 Android.toggleFollow() 回调到原生。
+ *   2) 顶部标题栏、评论列表(RecyclerView)、底部输入栏是原生控件（非网页）。
+ * 数据来源：本类不直接碰数据库，所有数据由 Presenter 提供（Presenter 再向
+ *   ArticleRepository → ContentProvider → SQLite 取数）。
+ * 配合的文件：接口 ArticleDetailContract；业务 ArticleDetailPresenter；
+ *   评论适配器 adapter/CommentAdapter；布局 activity_article_detail.xml；
+ *   正文网页模板 assets/article_detail.html；模型 model/Article、model/Comment。
+ * 在 MVP 中的位置：View 层。
+ * 提示：在 IDE 里搜索「文章详情」可看本组相关文件。
+ * ============================================================
+ */
 public class ArticleDetailActivity extends BaseMvpActivity<ArticleDetailContract.Presenter>
         implements ArticleDetailContract.View {
 
@@ -46,6 +63,7 @@ public class ArticleDetailActivity extends BaseMvpActivity<ArticleDetailContract
         if (getSupportActionBar() != null)
             getSupportActionBar().hide();
 
+        // 取上个页面传来的文章 id，创建 Presenter 并启动（由它去加载数据后回调 showArticle）
         articleId = getIntent().getIntExtra("article_id", -1);
         new ArticleDetailPresenter(this, this, articleId).start();
     }
@@ -119,51 +137,9 @@ public class ArticleDetailActivity extends BaseMvpActivity<ArticleDetailContract
             followHtml = "<div id='followBtn' class='" + btnClass + "' onclick='toggleFollow()'>" + btnText + "</div>";
         }
 
-        StringBuilder htmlBuilder = new StringBuilder();
-        htmlBuilder.append(
-                "<html><head><meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no\" />")
-                .append("<style>")
-                .append("body { font-family: sans-serif; padding: 16px; margin: 0; background: #ffffff; }")
-                .append(".title { font-size: 22px; font-weight: bold; color: #1A1A1A; line-height: 1.4; margin-bottom: 16px; }")
-                .append(".author-row { display: flex; align-items: center; margin-bottom: 16px; }")
-                .append(".avatar-container { width: 38px; height: 38px; border-radius: 19px; overflow: hidden; margin-right: 10px; background: #F04142; display: flex; justify-content: center; align-items: center; }")
-                .append(".avatar { width: 100%; height: 100%; object-fit: cover; }")
-                .append(".avatar-initial { color: white; font-size: 16px; font-weight: bold; }")
-                .append(".author-info { flex: 1; display: flex; flex-direction: column; justify-content: center; }")
-                .append(".author-name { font-size: 15px; font-weight: bold; color: #1F1F1F; }")
-                .append(".author-time { font-size: 12px; color: #AAAAAA; margin-top: 2px; }")
-                .append(".follow-btn { font-size: 13px; color: #2F80ED; padding: 5px 14px; border-radius: 15px; background: #F2F2F7; font-weight: bold; }")
-                .append(".follow-btn.following { color: #999999; }")
-                .append(".content { font-size: 16px; color: #333333; line-height: 1.8; }")
-                .append(".content img { max-width: 100%; height: auto; display: block; margin: 12px 0; border-radius: 6px; }")
-                .append(".read-count { font-size: 12px; color: #BBBBBB; margin-top: 24px; padding-bottom: 10px; }")
-                .append("</style>")
-                .append("<script>")
-                .append("function toggleFollow() { Android.toggleFollow(); }")
-                .append("function updateFollowBtn(following) { ")
-                .append("  var btn = document.getElementById('followBtn');")
-                .append("  if(following) { btn.className = 'follow-btn following'; btn.innerText = '已关注'; }")
-                .append("  else { btn.className = 'follow-btn'; btn.innerText = '+ 关注'; }")
-                .append("}")
-                .append("</script>")
-                .append("</head><body>")
-
-                // Title
-                .append("<div class='title'>").append(article.title).append("</div>")
-
-                // Author Row
-                .append("<div class='author-row'>")
-                .append("  <div class='avatar-container'>").append(avatarHtml).append("</div>")
-                .append("  <div class='author-info'>")
-                .append("    <div class='author-name'>").append(authorName).append("</div>")
-                .append("    <div class='author-time'>").append(article.time).append("</div>")
-                .append("  </div>")
-                .append(followHtml)
-                .append("</div>")
-
-                // Content
-                .append("<div class='content'>")
-                .append(article.content.replace("\n", "<br/>"));
+        // 正文 HTML：正文文本 + 配图，最终替换到模板的 {{CONTENT}} 占位符
+        StringBuilder contentHtml = new StringBuilder();
+        contentHtml.append(article.content == null ? "" : article.content.replace("\n", "<br/>"));
 
         // 正文配图：详情页只展示「内容配图」，专门封面不在正文重复显示
         if (article.coverUri == null) {
@@ -187,21 +163,27 @@ public class ArticleDetailActivity extends BaseMvpActivity<ArticleDetailContract
                     break;
             }
             if (!imageTag.isEmpty()) {
-                htmlBuilder.append("<br/><img src=\"file:///android_res/mipmap/").append(imageTag.replace(".png", ""))
+                contentHtml.append("<br/><img src=\"file:///android_res/mipmap/").append(imageTag.replace(".png", ""))
                         .append("\"/>");
             }
         } else {
             // 用户文章：只取内容配图（有专门封面时自动跳过封面段）
             for (String uri : article.getContentImages()) {
-                htmlBuilder.append("<br/><img src=\"").append(uri).append("\"/>");
+                contentHtml.append("<br/><img src=\"").append(uri).append("\"/>");
             }
         }
 
-        htmlBuilder.append("</div>")
-                .append("<div class='read-count'>阅读 ").append(article.readCount).append(" 次</div>")
-                .append("</body></html>");
+        // 读取 assets 下的 HTML5 模板，用文章数据替换占位符后交给 WebView 渲染
+        String html = loadAssetText("article_detail.html")
+                .replace("{{TITLE}}", nz(article.title))
+                .replace("{{AVATAR}}", avatarHtml)
+                .replace("{{AUTHOR_NAME}}", nz(authorName))
+                .replace("{{TIME}}", nz(article.time))
+                .replace("{{FOLLOW_BTN}}", followHtml)
+                .replace("{{CONTENT}}", contentHtml.toString())
+                .replace("{{READ_COUNT}}", String.valueOf(article.readCount));
 
-        webView.loadDataWithBaseURL("file:///android_asset/", htmlBuilder.toString(), "text/html", "UTF-8", null);
+        webView.loadDataWithBaseURL("file:///android_asset/", html, "text/html", "UTF-8", null);
         setupBottomBar();
     }
 
@@ -210,6 +192,28 @@ public class ArticleDetailActivity extends BaseMvpActivity<ArticleDetailContract
         public void toggleFollow() {
             runOnUiThread(() -> presenter.toggleFollow());
         }
+    }
+
+    // ─── HTML5 模板辅助 ───────────────────────────────────────────────────────
+
+    /** 读取 assets 目录下的文本文件（HTML 模板），失败时返回空串。 */
+    private String loadAssetText(String fileName) {
+        try (java.io.InputStream is = getAssets().open(fileName);
+                java.io.ByteArrayOutputStream bos = new java.io.ByteArrayOutputStream()) {
+            byte[] buffer = new byte[4096];
+            int len;
+            while ((len = is.read(buffer)) != -1) {
+                bos.write(buffer, 0, len);
+            }
+            return bos.toString("UTF-8");
+        } catch (java.io.IOException e) {
+            return "";
+        }
+    }
+
+    /** null 安全：null 转空串，避免 String.replace 抛 NPE。 */
+    private String nz(String s) {
+        return s == null ? "" : s;
     }
 
     // ─── Comments ────────────────────────────────────────────────────────────
@@ -315,6 +319,17 @@ public class ArticleDetailActivity extends BaseMvpActivity<ArticleDetailContract
             return false;
         });
 
+        // 输入评论时：隐藏「点赞/评论」图标，改为显示「发送」按钮；失焦后还原
+        View layoutLike = findViewById(R.id.layoutLike);
+        View layoutCommentIcon = findViewById(R.id.layoutCommentIcon);
+        View btnSendComment = findViewById(R.id.btnSendComment);
+        etComment.setOnFocusChangeListener((v, hasFocus) -> {
+            layoutLike.setVisibility(hasFocus ? View.GONE : View.VISIBLE);
+            layoutCommentIcon.setVisibility(hasFocus ? View.GONE : View.VISIBLE);
+            btnSendComment.setVisibility(hasFocus ? View.VISIBLE : View.GONE);
+        });
+        btnSendComment.setOnClickListener(v -> submitComment(etComment));
+
         // Scroll to comments when clicking the comment icon
         findViewById(R.id.layoutCommentIcon).setOnClickListener(v -> {
             if (tvCommentCount != null) {
@@ -354,6 +369,8 @@ public class ArticleDetailActivity extends BaseMvpActivity<ArticleDetailContract
 
         presenter.submitComment(text);
         et.setText("");
+        // 发送后清除焦点，触发焦点监听还原「点赞/评论」图标
+        et.clearFocus();
 
         // Hide keyboard
         InputMethodManager imm = (InputMethodManager) getSystemService(INPUT_METHOD_SERVICE);

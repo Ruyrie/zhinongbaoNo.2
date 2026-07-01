@@ -17,8 +17,24 @@ import java.text.SimpleDateFormat;
 import java.util.List;
 import java.util.Locale;
 
+/**
+ * ============================================================
+ * 【订单列表 / Order】Adapter（RecyclerView 适配器）
+ * 整体逻辑：onBindViewHolder 按 order.status 决定状态文案与颜色、倒计时提示、
+ *   以及两个按钮（btnPay / btnCancel）的显示与文字；待支付订单会启动每秒刷新的
+ *   倒计时 Runnable，倒计时归零则本地置为已取消；reviewMode=true 时整列切成
+ *   「去评价」样式。按钮点击按当前状态转成不同回调（支付/取消/确认收货/申请退款/去评价），
+ *   由外部（MyOrdersActivity → Presenter）执行真正的数据库操作。
+ * 数据来源：构造时传入的 List<Order>（由 MyOrdersActivity 从 Presenter 拿到），
+ *   本类不查数据库。
+ * 配合的文件：数据模型 model/Order；行布局 res/layout/item_order.xml；
+ *   使用方 activity/MyOrdersActivity（实现两个回调接口）。
+ * 提示：在 IDE 里搜索「订单列表」可看本组相关文件。
+ * ============================================================
+ */
 public class OrderAdapter extends RecyclerView.Adapter<OrderAdapter.VH> {
 
+    // 点击整行的回调
     public interface OnItemClickListener { void onClick(Order order); }
     public interface OnActionListener {
         void onPay(Order order);
@@ -28,11 +44,11 @@ public class OrderAdapter extends RecyclerView.Adapter<OrderAdapter.VH> {
         void onRequestRefund(Order order);
     }
 
-    private final List<Order> data;
-    private OnItemClickListener clickListener;
-    private OnActionListener actionListener;
-    private final Handler handler = new Handler(Looper.getMainLooper());
-    private boolean reviewMode = false;
+    private final List<Order> data;                     // 订单数据源
+    private OnItemClickListener clickListener;           // 整行点击回调
+    private OnActionListener actionListener;             // 按钮操作回调
+    private final Handler handler = new Handler(Looper.getMainLooper()); // 用于每秒刷新倒计时
+    private boolean reviewMode = false;                  // 是否「待评价」模式（整列显示去评价）
 
     public OrderAdapter(List<Order> data) { this.data = data; }
     public void setOnItemClickListener(OnItemClickListener l) { this.clickListener = l; }

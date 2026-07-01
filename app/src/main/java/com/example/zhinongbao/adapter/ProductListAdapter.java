@@ -13,6 +13,16 @@ import com.example.zhinongbao.model.Product;
 import java.util.List;
 import java.util.Locale;
 
+/**
+ * ============================================================
+ * 【商品列表(单列) / Product List】Adapter（RecyclerView 适配器）
+ * 整体逻辑：优先用 coverUri（支持 res:// 资源或普通 Uri），种子商品回退到固定
+ *   mipmap 图，否则占位图；价格格式化去掉多余的 .00。
+ * 数据来源：构造时传入的 List<Product>。
+ * 配合的文件：模型 model/Product；行布局 res/layout/item_product_list.xml。
+ * 提示：在 IDE 里搜索「商品列表」可看本组相关文件。
+ * ============================================================
+ */
 public class ProductListAdapter extends RecyclerView.Adapter<ProductListAdapter.ViewHolder> {
 
     private final List<Product> products;

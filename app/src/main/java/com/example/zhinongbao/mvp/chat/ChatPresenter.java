@@ -5,6 +5,22 @@ import android.content.Context;
 import com.example.zhinongbao.model.ChatMessage;
 import com.example.zhinongbao.repository.MessageRepository;
 
+/**
+ * ============================================================
+ * 【聊天对话 / Chat】Presenter（业务逻辑）
+ * 整体逻辑：构造时创建 MessageRepository，取当前登录账号与双方昵称，注册给 View；
+ *   start 做前置校验（未登录或对方是自己则提示并关页），设置标题后刷新消息；
+ *   sendMessage/sendImage 写库后清空输入并刷新；markRead 标记对方消息已读；
+ *   recallMessage 校验「是本人且未超 2 分钟」才允许撤回；deleteMessage 仅对当前用户删除。
+ * 关键概念：RECALL_WINDOW_MS 为撤回时限（2 分钟），超时不能撤回。
+ * 数据来源：repository/MessageRepository；Repository 内部经 ContentProvider 访问 SQLite。
+ *   本类不直接碰数据库。
+ * 配合的文件：接口约定 ChatContract；View 实现 = ChatActivity；
+ *   适配器 adapter/ChatAdapter；数据模型 model/ChatMessage。
+ * MVP 数据流位置：本类是 Presenter，居中协调 View 与 Repository。
+ * 提示：在 IDE 里搜索「聊天」可看本组相关文件。
+ * ============================================================
+ */
 public class ChatPresenter implements ChatContract.Presenter {
     /** 撤回时限：2 分钟（毫秒）。超过这个时间发送方就不能再撤回。 */
     public static final long RECALL_WINDOW_MS = 2 * 60 * 1000L;

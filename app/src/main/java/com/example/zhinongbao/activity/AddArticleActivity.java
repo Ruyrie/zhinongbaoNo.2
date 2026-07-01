@@ -25,6 +25,24 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * ============================================================
+ * 【发文章 / Add Article】View（Activity）
+ * 整体逻辑（关键步骤）：
+ *   1) onCreate 初始化标题/正文输入框、封面选择区、内容配图横向列表、分类 chip、返回/提交按钮。
+ *   2) 选图分两类：封面(pickCover 单选) 与 内容配图(pickContentImages 多选)，都支持拍照(takePicture)。
+ *   3) buildImageList 把封面与内容图按约定格式拼成一个字符串（有封面则「封面URI\n内容图1,内容图2」，
+ *      无封面则「内容图1,内容图2」，首张兼作封面），存入 cover_uri 字段。
+ *   4) 提交时校验标题正文非空，调 presenter.submit(title, content, 图片串, 分类)。
+ * 数据来源：本类不直接碰数据库，写入由 Presenter 调 ArticleRepository.addArticle
+ *   完成（Repository 内部经 ContentProvider 写 SQLite）。
+ * 配合的文件：接口 AddArticleContract；业务 AddArticlePresenter；
+ *   选图适配器 adapter/ImagePickerAdapter；选图工具 utils/ImageUtils；
+ *   布局 activity_add_article.xml；模型 model/Article（cover_uri 图片串格式见其注释）。
+ * 在 MVP 数据流中的位置：View 层（View → Presenter → Repository → ContentProvider → SQLite）。
+ * 提示：在 IDE 里搜索「发文章」可看本组相关文件。
+ * ============================================================
+ */
 public class AddArticleActivity extends BaseMvpActivity<AddArticleContract.Presenter>
         implements AddArticleContract.View {
 

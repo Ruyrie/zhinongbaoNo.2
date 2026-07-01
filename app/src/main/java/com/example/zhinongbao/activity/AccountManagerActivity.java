@@ -12,7 +12,26 @@ import com.example.zhinongbao.mvp.accountmanager.AccountManagerContract;
 import com.example.zhinongbao.mvp.accountmanager.AccountManagerPresenter;
 import java.util.List;
 
-/** 账号管理界面：列出所有账号，支持短按修改密码、长按删除、添加账号 */
+/**
+ * ============================================================
+ * 【账号管理 / AccountManager】View（账号管理页 Activity）
+ * 整体逻辑（关键步骤）：
+ *   1. onCreate 加载 activity_account_manager 布局，配置 RecyclerView 与 UserAdapter。
+ *   2. UserAdapter 回调：短按跳 ChangePasswordActivity 改密码；长按弹确认框移除记录
+ *      （当前登录账号不可移除，会提示）。
+ *   3. new AccountManagerPresenter 启动加载账号列表；onResume 时刷新。
+ *   4. 「添加账号」按钮以添加模式跳转 RegisterActivity。
+ *   5. Presenter 回调 showUsers 刷新列表；showCannotRemoveCurrentUser 弹提示框。
+ * 数据来源：经 AccountManagerPresenter 走 UserRepository；Repository 内部经
+ *   ContentProvider 访问 SQLite，本类不直接碰数据库。
+ * 配合的文件：接口约定 = mvp/accountmanager/AccountManagerContract；业务逻辑 =
+ *   mvp/accountmanager/AccountManagerPresenter；适配器 = adapter/UserAdapter；
+ *   布局 = res/layout/activity_account_manager.xml；模型 = model/User；
+ *   跳转页面 = ChangePasswordActivity / RegisterActivity。
+ * 在 MVP 数据流中的位置：View（界面层），通过 Presenter 取数据，不直接访问数据库。
+ * 提示：在 IDE 里搜索「账号管理」可看本组相关文件。
+ * ============================================================
+ */
 public class AccountManagerActivity extends BaseMvpActivity<AccountManagerContract.Presenter>
         implements AccountManagerContract.View {
 

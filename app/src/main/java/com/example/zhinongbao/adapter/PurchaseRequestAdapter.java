@@ -17,6 +17,23 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Set;
 
+/**
+ * ============================================================
+ * 【采购市场-需求 / PurchaseRequest】Adapter（RecyclerView 适配器）
+ * 整体逻辑：onBindViewHolder 填充卡片数据，并根据「当前用户身份」决定显示哪组按钮：
+ *   可报价用户且非自己发布 → 显示「立即报价/再次报价」；自己发布的需求 → 显示
+ *   「查看报价/编辑/删除」；其余情况隐藏按钮。若需求在 lockedRequestIds 中（已成交），
+ *   报价按钮变灰显示「已成交」且不可点。各按钮点击均通过 OnActionListener 回调外部。
+ * 关键概念：quotedRequestIds = 当前用户已报过价的需求 id；lockedRequestIds = 已付款成交
+ *   被锁定的需求 id；两者由外部在数据刷新时更新进来。
+ * 数据来源：构造时传入的 List<PurchaseRequest>（由 PurchaseMarketActivity 从 Presenter 拿到），
+ *   本类不查数据库。
+ * 配合的文件：数据模型 model/PurchaseRequest；行布局 res/layout/item_purchase_request.xml；
+ *   使用方 PurchaseMarketActivity（实现按钮回调）。
+ * MVP 数据流位置：本类属于 View 层，只负责画卡片并把操作回调上抛。
+ * 提示：在 IDE 里搜索「采购」可看本组相关文件。
+ * ============================================================
+ */
 public class PurchaseRequestAdapter extends RecyclerView.Adapter<PurchaseRequestAdapter.ViewHolder> {
 
     public interface OnActionListener {

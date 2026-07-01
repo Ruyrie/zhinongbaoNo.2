@@ -21,6 +21,25 @@ import com.example.zhinongbao.mvp.message.MessagePresenter;
 import com.example.zhinongbao.utils.DialogUtils;
 import java.util.List;
 
+/**
+ * ============================================================
+ * 【消息列表 / Message】View（Fragment 界面）
+ * 整体逻辑：onCreateView 加载布局 fragment_message；onViewCreated 配置
+ *   RecyclerView 并启动 Presenter；onResume 每次回到前台刷新会话列表；
+ *   showConversations 由 Presenter 回调，把会话数据交给 ConversationAdapter 渲染，
+ *   空列表时显示「暂无消息」提示。点击某行跳 ChatActivity（带上对方账号），
+ *   长按某行弹确认框删除整段会话。
+ * 数据来源：MessagePresenter 经 repository/MessageRepository 读取；
+ *   Repository 内部经 ContentProvider 访问 SQLite。本类不直接碰数据库。
+ * 配合的文件：接口约定 MessageContract；业务 MessagePresenter；
+ *   列表适配器 adapter/ConversationAdapter；数据模型 model/ConversationItem；
+ *   布局 res/layout/fragment_message.xml；跳转页面 ChatActivity；
+ *   确认弹窗工具 utils/DialogUtils。
+ * MVP 数据流位置：本类是 View；数据流为 View 到 Presenter 到 Repository 到
+ *   ContentProvider 到 SQLite，再回调本类刷新界面。
+ * 提示：在 IDE 里搜索「消息」可看本组相关文件。
+ * ============================================================
+ */
 public class MessageFragment extends BaseMvpFragment<MessageContract.Presenter>
         implements MessageContract.View {
 

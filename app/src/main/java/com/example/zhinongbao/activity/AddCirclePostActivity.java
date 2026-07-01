@@ -21,6 +21,24 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * ============================================================
+ * 【发农友圈动态 / Add Circle Post】View（Activity）
+ * 整体逻辑（关键步骤）：
+ *   1) onCreate 初始化输入框、图片横向列表(ImagePickerAdapter)、取消/发布按钮。
+ *   2) 点「加号」弹选图对话框：拍照走 takePicture（先用 FileProvider 建临时文件），
+ *      相册走 pickImages（多选）；选中的图 addImage 加入列表并更新数量提示。
+ *   3) submit 校验文字非空，把多张图 URI 用逗号拼成一个字符串，交给
+ *      presenter.submit(content, imgUri)。
+ * 数据来源：本类不直接碰数据库，写入由 Presenter 调 ArticleRepository.addCirclePost
+ *   完成（Repository 内部经 ContentProvider 写 SQLite）。
+ * 配合的文件：接口 AddCirclePostContract；业务 AddCirclePostPresenter；
+ *   选图适配器 adapter/ImagePickerAdapter；选图工具 utils/ImageUtils；
+ *   布局 activity_add_circle_post.xml；发布成功后返回农友圈列表。
+ * 在 MVP 数据流中的位置：View 层（View → Presenter → Repository → ContentProvider → SQLite）。
+ * 提示：在 IDE 里搜索「发农友圈」可看本组相关文件。
+ * ============================================================
+ */
 public class AddCirclePostActivity extends BaseMvpActivity<AddCirclePostContract.Presenter>
         implements AddCirclePostContract.View {
 

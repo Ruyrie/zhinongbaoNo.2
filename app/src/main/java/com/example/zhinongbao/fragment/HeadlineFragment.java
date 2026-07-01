@@ -22,6 +22,25 @@ import com.google.android.material.tabs.TabLayout;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * ============================================================
+ * 【头条 / Headline】View（Fragment）
+ * 整体逻辑（关键步骤）：
+ *   1) onViewCreated 初始化 RecyclerView + ArticleAdapter，绑定搜索按钮与发文 FAB，
+ *      建立分类 tab，然后创建 Presenter 并 start()。
+ *   2) showArticles 回调拿到全部文章，用 ArticleAdapter 渲染并注入点赞交互委托。
+ *   3) 点击分类 tab 或收到数据后调 filterByCategory()，按 selectedCategory 过滤列表。
+ *   4) 点击某条进文章详情页。
+ * 数据来源：本类不直接碰数据库，全部经 Presenter 向 ArticleRepository 取数
+ *   （Repository 内部经 ContentProvider 访问 SQLite）。
+ * 配合的文件：接口 HeadlineContract；业务 HeadlinePresenter；
+ *   适配器 adapter/ArticleAdapter；布局 fragment_headline.xml、item_article.xml；
+ *   跳转页面 SearchActivity（搜索）、AddArticleActivity（发文）、ArticleDetailActivity（详情）；
+ *   模型 model/Article。
+ * 在 MVP 数据流中的位置：View 层（View → Presenter → Repository → ContentProvider → SQLite → 回调 View）。
+ * 提示：在 IDE 里搜索「头条」可看本组相关文件。
+ * ============================================================
+ */
 public class HeadlineFragment extends BaseMvpFragment<HeadlineContract.Presenter>
         implements HeadlineContract.View {
 

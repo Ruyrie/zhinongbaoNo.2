@@ -3,13 +3,6 @@ package com.example.zhinongbao.utils;
 /* ============================================================
  * 【弹窗 / 对话框 / DialogUtils】统一风格的弹窗工具（utils 工具类）
  * ============================================================
- * 这个文件是干什么的：
- *   全 App 的各种弹窗都从这里出，保证「圆角白卡片 + 绿色按钮」的统一风格。
- *   对外提供几种常用弹窗（都是 static 方法，直接 DialogUtils.xxx(...) 调用）：
- *     - showConfirm   ：确认框（标题+内容+取消/确认两个按钮），购物车清空就用它。
- *     - showTextInput ：带一个输入框的弹窗（让用户填一段文字）。
- *     - showRefundReason：退款原因选择弹窗（预置原因胶囊单选 + 选填说明）。
- *     - showRoleSelection：选择「买家/卖家」身份的弹窗。
  *
  * 关键点：本类不靠 XML 布局，而是「用 Java 代码动态创建控件」拼出弹窗。
  *   - createRoot/createTitle/createMessage/createButton：分别造出卡片、标题、正文、按钮。

@@ -23,9 +23,23 @@ import com.example.zhinongbao.repository.OrderRepository;
 import java.util.Locale;
 
 /**
- * 卖家侧「订单详情」页面。
- * 与买家版 {@link OrderDetailActivity} 区分：这里展示买家信息、收货地址等卖家需要的内容，
- * 底部提供卖家操作（去发货 / 处理售后 / 联系买家），而不是买家的「申请退款 / 进店逛逛 / 客服」。
+ * ============================================================
+ * 【卖家订单详情 / Seller Order Detail】View（独立 Activity 页面）
+ * 说明：本页没有对应的 mvp 包，是一个独立 Activity，直接持有 OrderRepository 自行取数与提交。
+ * 与买家版 OrderDetailActivity 的区别：这里面向卖家，展示买家/收货信息并给卖家操作，
+ *   而不是买家的「申请退款 / 进店逛逛 / 客服」。
+ * 整体逻辑（关键步骤）：
+ *   1. onCreate 加载布局 activity_seller_order_detail.xml，从 intent 取 order_id。
+ *   2. bind()：按 order_id 读订单并把状态/买家/商品/金额/收货/物流填进界面，再按状态生成底部按钮。
+ *   3. 发货/处理售后通过对话框收集信息后调用 OrderRepository 提交，成功后 bind() 刷新。
+ *   4. onResume 回到本页时重新 bind() 以显示最新状态。
+ * 数据来源：直接使用 OrderRepository（内部经 ContentProvider 访问 SQLite）；本类不直接写 SQL。
+ * 配合的文件：数据访问 = repository/OrderRepository；模型 = model/Order；
+ *   布局 = res/layout/activity_seller_order_detail.xml；
+ *   对话框布局 = dialog_seller_ship/dialog_partial_refund；跳转页 = ChatActivity。
+ * 在 MVP 数据流中的位置：View（界面层），因是独立页面而直接调用 Repository。
+ * 提示：在 IDE 里搜索「卖家订单详情」可看本组相关文件。
+ * ============================================================
  */
 public class SellerOrderDetailActivity extends AppCompatActivity {
 

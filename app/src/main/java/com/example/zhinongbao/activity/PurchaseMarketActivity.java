@@ -47,6 +47,28 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Set;
 
+/**
+ * ============================================================
+ * 【采购市场 / PurchaseMarket】View（Activity 界面）
+ * 整体逻辑：onCreate 配置 RecyclerView 与顶部「发布采购」入口（跳 PostPurchaseActivity），
+ *   注册相册/拍照选图器（用于报价时上传商品图），启动 PurchaseMarketPresenter；
+ *   showRequests 由 Presenter 回调渲染需求列表，并算出「已报价」「已成交锁定」两组 id
+ *   传给 PurchaseRequestAdapter 控制按钮状态；showQuoteEditor 弹出报价编辑框（含图片选择、
+ *   实时算成交总额）；showQuoteList 用代码动态搭建「采购详情+报价列表」对话框，买家在其中
+ *   同意/拒绝报价，卖家可修改自己的报价；同意报价前若无默认收货地址会提示去设置。
+ * 数据来源：PurchaseMarketPresenter 经 repository/PurchaseRepository 读写；
+ *   Repository 内部经 ContentProvider 访问 SQLite。本类不直接碰数据库。
+ * 配合的文件：接口约定 PurchaseMarketContract；业务 PurchaseMarketPresenter；
+ *   需求列表适配器 adapter/PurchaseRequestAdapter；图片选择适配器 adapter/ImagePickerAdapter；
+ *   数据模型 model/PurchaseRequest、model/PurchaseQuote；
+ *   布局 res/layout/activity_purchase_market.xml、dialog_quote.xml、dialog_quote_reply.xml；
+ *   跳转页面 PostPurchaseActivity、AddressManagerActivity、OrderDetailActivity；
+ *   工具 utils/DialogUtils、utils/ImageUtils。
+ * MVP 数据流位置：本类是 View；数据流为 View 到 Presenter 到 Repository 到
+ *   ContentProvider 到 SQLite，再回调本类刷新界面。
+ * 提示：在 IDE 里搜索「采购」可看本组相关文件。
+ * ============================================================
+ */
 public class PurchaseMarketActivity extends BaseMvpActivity<PurchaseMarketContract.Presenter>
         implements PurchaseMarketContract.View {
 

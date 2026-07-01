@@ -1,4 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!--
+    ============================================================
+    【我的足迹 / Footprint】布局（Activity 界面）
+    整体结构：顶部返回栏 + 标题 + 两个筛选标签 + 网格列表 + 空视图。
+    配合的文件：由 FootprintActivity 加载；列表内各行视图在代码中动态构建，
+      不使用单独 item 布局。
+    在 MVP 数据流中的位置：View 的界面资源，不含任何业务逻辑。
+    提示：在 IDE 里搜索「我的足迹」可看本组相关文件。
+    ============================================================
+-->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"

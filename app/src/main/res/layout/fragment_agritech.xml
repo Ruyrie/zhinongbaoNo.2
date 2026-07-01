@@ -1,4 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!--
+============================================================
+【农技学堂 / AgriTech】布局（Fragment）
+技术点：用 FrameLayout 包一个 WebView(id=webView)；真正显示的内容
+  是代码里加载的 HTML5 网页 assets/agritech.html，不在这里写死。
+配合的文件：AgriTechFragment 通过 findViewById(R.id.webView) 拿到它；
+  网页文件 assets/agritech.html。
+提示：在 IDE 里搜索「农技学堂」可看本组相关文件。
+============================================================
+-->
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent">

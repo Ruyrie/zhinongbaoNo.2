@@ -11,6 +11,21 @@ import com.example.zhinongbao.R;
 import com.example.zhinongbao.model.Article;
 import java.util.List;
 
+/**
+ * ============================================================
+ * 【头条文章列表项 / Article】Adapter（RecyclerView 适配器）
+ * 整体逻辑：onCreateViewHolder 用 item_article.xml 生成行；onBindViewHolder 填数据。
+ *   封面由 Article.getCoverImage() 统一解析（专门封面优先，否则首张内容配图，都无则用
+ *   内置示例图兜底）。传入 ArticleInteractionDelegate 时显示真实点赞/评论数并支持点赞切换，
+ *   未传时退化为只读展示。已删除文章显示删除遮罩且不可点击。setHideCategory 可隐藏分类标签。
+ * 数据来源：构造时传入的 List<Article>（由 Fragment/Activity 从 Presenter 拿到），
+ *   本类不查数据库；点赞数/是否已赞等通过 ArticleInteractionDelegate 现查（走 Presenter → Repository）。
+ * 配合的文件：数据模型 model/Article；行布局 res/layout/item_article.xml；
+ *   使用方 HeadlineFragment、MyArticlesActivity（实现点击与交互回调）。
+ * 在 MVP 数据流中的位置：View 层的一部分（把 Presenter 提供的数据展示出来）。
+ * 提示：在 IDE 里搜索「文章列表」可看本组相关文件。
+ * ============================================================
+ */
 public class ArticleAdapter extends RecyclerView.Adapter<ArticleAdapter.VH> {
 
     public interface OnItemClickListener {

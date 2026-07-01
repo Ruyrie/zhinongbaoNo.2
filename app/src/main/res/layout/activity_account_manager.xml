@@ -1,4 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!--
+    ============================================================
+    【账号管理 / AccountManager】布局（Activity 界面）
+    整体结构：顶部返回栏 + 账号列表 RecyclerView + 添加账号按钮。
+    配合的文件：由 AccountManagerActivity 加载；每行用 item_user 布局，
+      经 UserAdapter 渲染；操作确认复用 dialog_confirm。
+    在 MVP 数据流中的位置：View 的界面资源，不含任何业务逻辑。
+    提示：在 IDE 里搜索「账号管理」可看本组相关文件。
+    ============================================================
+-->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"

@@ -1,4 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!--
+    ============================================================
+    【收货地址管理 / Address】布局（Activity 界面）
+    整体结构：顶部返回栏 + 地址列表区（代码动态填充地址卡片）+ 新增按钮。
+    配合的文件：由 AddressManagerActivity 加载；每条地址用 item_address 布局，
+      新增/编辑弹 dialog_address。
+    在 MVP 数据流中的位置：View 的界面资源，不含任何业务逻辑。
+    提示：在 IDE 里搜索「收货地址管理」可看本组相关文件。
+    ============================================================
+-->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"

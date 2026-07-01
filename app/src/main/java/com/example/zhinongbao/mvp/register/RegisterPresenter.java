@@ -4,9 +4,23 @@ import android.content.Context;
 
 import com.example.zhinongbao.repository.UserRepository;
 
+/**
+ * ============================================================
+ * 【注册 / Register】Presenter（业务逻辑）
+ * 整体逻辑（register 的校验顺序）：
+ *   1) 用户名/密码非空；2) 用户名字符合法(字母数字及 -@_.)；3) 密码≥6 位；
+ *   4) 账号是否已存在；5) 若填了手机号，校验格式并检查是否被占用；
+ *   6) 写入数据库；7) 注册成功后：添加模式只关页面，普通模式记录登录并进主页。
+ * 数据来源：全部走 UserRepository（内部通过 ContentProvider 访问 SQLite）。
+ * 配合的文件：接口 = RegisterContract；View = RegisterActivity；
+ *   数据访问 = repository/UserRepository；模型 = model/User。
+ * 在 MVP 中的位置：Presenter 层。
+ * 提示：在 IDE 里搜索「注册」可看本组相关文件。
+ * ============================================================
+ */
 public class RegisterPresenter implements RegisterContract.Presenter {
-    private final RegisterContract.View view;
-    private final UserRepository repository;
+    private final RegisterContract.View view;    // 回调界面
+    private final UserRepository repository;      // 用户数据访问入口
 
     public RegisterPresenter(Context context, RegisterContract.View view) {
         this.view = view;
@@ -16,8 +30,10 @@ public class RegisterPresenter implements RegisterContract.Presenter {
 
     @Override
     public void start() {
+        // 注册页无需初始化数据
     }
 
+    // 注册主流程：逐项校验通过后写库；addMode 决定注册完是关页面还是登录进主页
     @Override
     public void register(String username, String password, String phone, int role, boolean addMode) {
         if (username.isEmpty() || password.isEmpty()) {

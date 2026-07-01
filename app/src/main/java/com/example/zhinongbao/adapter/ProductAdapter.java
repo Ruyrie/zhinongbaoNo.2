@@ -11,8 +11,20 @@ import com.example.zhinongbao.R;
 import com.example.zhinongbao.model.Product;
 import java.util.List;
 
+/**
+ * ============================================================
+ * 【商城-瀑布流商品 / Product】Adapter（RecyclerView 适配器）
+ * 整体逻辑：为制造错落瀑布流效果，按商品 id 取不同的图片高度；内置 10 个种子
+ *   商品用固定 mipmap 图，其余商品用 coverUri（用户上传）或占位图。
+ * 数据来源：构造时传入的 List<Product>（由 MallFragment 从 Presenter 拿到）。
+ * 配合的文件：模型 model/Product；行布局 res/layout/item_product.xml；
+ *   使用方 MallFragment（compactMode 供其它页面复用更矮的卡片）。
+ * 提示：在 IDE 里搜索「商城」可看本组相关文件。
+ * ============================================================
+ */
 public class ProductAdapter extends RecyclerView.Adapter<ProductAdapter.VH> {
 
+    // 点击整卡：进入商品详情
     public interface OnItemClickListener {
         void onItemClick(Product product);
     }

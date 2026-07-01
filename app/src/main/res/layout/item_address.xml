@@ -1,4 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!--
+    ============================================================
+    【收货地址行 / item_address】布局（列表项）
+    配合的文件：由 AddressManagerActivity 的 showAddresses 方法逐条 inflate 加载。
+    在 MVP 数据流中的位置：View 的界面资源（列表项），不含任何业务逻辑。
+    提示：在 IDE 里搜索「收货地址管理」可看本组相关文件。
+    ============================================================
+-->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"

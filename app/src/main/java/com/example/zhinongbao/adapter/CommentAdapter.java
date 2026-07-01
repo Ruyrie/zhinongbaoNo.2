@@ -12,7 +12,21 @@ import com.example.zhinongbao.R;
 import com.example.zhinongbao.model.Comment;
 import java.util.List;
 
-/** 评论列表适配器（抖音 / 小红书风格） */
+/**
+ * ============================================================
+ * 【文章详情-评论 / Comment】Adapter（RecyclerView 适配器）
+ * 整体逻辑：onCreateViewHolder 用 item_comment.xml 生成行视图；
+ *   onBindViewHolder 把第 position 条评论的数据填进控件，并绑定
+ *   「点赞」和「删除」的点击事件。点赞点击时先本地即时更新数字与图标，
+ *   再通过回调接口通知外部（Activity/Presenter）去写数据库。
+ * 数据来源：构造时传入的 List<Comment>（由 ArticleDetailActivity 从
+ *   Presenter 拿到），本类不查数据库。
+ * 权限规则：删除按钮只在「自己的评论」或「自己是文章作者」时显示。
+ * 配合的文件：数据模型 model/Comment；行布局 res/layout/item_comment.xml；
+ *   头像工具 utils/ImageUtils；使用方 ArticleDetailActivity（实现两个回调接口）。
+ * 提示：在 IDE 里搜索「评论」可看本组相关文件。
+ * ============================================================
+ */
 public class CommentAdapter extends RecyclerView.Adapter<CommentAdapter.VH> {
 
     public interface OnDeleteListener {

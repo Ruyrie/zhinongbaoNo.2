@@ -38,6 +38,22 @@ import java.util.Date;
 import java.util.List;
 import java.util.Locale;
 
+/**
+ * ============================================================
+ * 【卖家采购管理 / Seller Purchase】View（Activity）
+ * 卖家侧的采购业务中心，分三个 Tab：采购大厅(可对买家需求报价)、我的报价、
+ *   我的需求。支持提交/查看报价、接受或拒绝报价、删除需求等。
+ * 整体逻辑：onCreate 建 Presenter 并 start()；切 Tab 调 presenter.switchTab()，
+ *   Presenter 回调 showMarket/showMyQuotes/showMyRequests 刷新列表；报价、接受
+ *   (需先有收货地址，成交跳支付)、拒绝、删除等操作都转交 Presenter 处理。
+ * 数据来源：本类不碰数据库，经 Presenter → PurchaseRepository。
+ * 配合的文件：接口 SellerPurchaseContract；业务 SellerPurchasePresenter；
+ *   图片选择 adapter/ImagePickerAdapter；弹窗 utils/DialogUtils；
+ *   模型 model/PurchaseRequest、model/PurchaseQuote。
+ * 在 MVP 中的位置：View 层。
+ * 提示：在 IDE 里搜索「采购管理」可看本组相关文件。
+ * ============================================================
+ */
 public class SellerPurchaseMgmtActivity extends BaseMvpActivity<SellerPurchaseContract.Presenter>
         implements SellerPurchaseContract.View {
 

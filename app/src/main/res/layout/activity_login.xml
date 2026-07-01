@@ -1,4 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!--
+============================================================
+【登录 / Login】布局（Activity）
+技术点：背景用 drawable/bg_auth_page；密码显隐由代码切换 inputType。
+配合的文件：LoginActivity 通过 findViewById 绑定这些控件(etLoginUsername、
+  etLoginPassword、btnLogin、tvGoRegister、tvForgotPassword 等)。
+提示：在 IDE 里搜索「登录」可看本组相关文件。
+============================================================
+-->
 <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"

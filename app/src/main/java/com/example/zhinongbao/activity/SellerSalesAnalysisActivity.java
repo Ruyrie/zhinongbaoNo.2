@@ -19,6 +19,20 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 
+/**
+ * ============================================================
+ * 【卖家销售分析 / Seller Sales】View（Activity）
+ * 卖家的销售统计页：按时间范围展示营收合计、订单流水(收入/退款)与按商品汇总。
+ * 整体逻辑：onCreate 建 Presenter(带时间范围 scope)并 start()；Presenter 回调
+ *   showSales(订单列表+合计)后，本类在内存里做二次汇总(按商品 ProductSummary、
+ *   按时间 FlowRecord 收入/退款)并渲染图表式列表。营收用「净额」(退款生效才扣)。
+ * 数据来源：本类不碰数据库，经 Presenter → OrderRepository。
+ * 配合的文件：接口 SellerSalesContract；业务 SellerSalesPresenter；
+ *   布局 activity_seller_sales_analysis.xml；模型 model/Order。
+ * 在 MVP 中的位置：View 层。
+ * 提示：在 IDE 里搜索「销售分析」可看本组相关文件。
+ * ============================================================
+ */
 public class SellerSalesAnalysisActivity extends BaseMvpActivity<SellerSalesContract.Presenter>
         implements SellerSalesContract.View {
 

@@ -7,6 +7,23 @@ import com.example.zhinongbao.repository.UserRepository;
 
 import java.util.List;
 
+/**
+ * ============================================================
+ * 【关注/粉丝列表 / Follow List】Presenter（业务逻辑）
+ * 整体逻辑（关键步骤）：
+ *   1) 构造时同时创建 ArticleRepository（关注关系数据）与 UserRepository（用户资料），取当前登录用户名。
+ *   2) start() 按 type 分流："likes"取给某人文章点赞的人、"followers"取粉丝、
+ *      "following"取其关注（分用户/店铺两组，回调 showFollowing），其余默认取关注。
+ *   3) 提供昵称/头像/店铺名查询给 View 渲染每一行。
+ *   4) toggleFollow：按 store 与当前关注状态，调用关注/取关（用户或店铺）的对应方法。
+ * 数据来源：本类不直接碰数据库，通过 ArticleRepository + UserRepository 访问
+ *   （Repository 内部经 ContentProvider 访问 SQLite）。
+ * 配合的文件：接口 FollowListContract；View 实现 FollowListActivity；
+ *   数据访问 repository/ArticleRepository、repository/UserRepository。
+ * 在 MVP 数据流中的位置：Presenter 层（View → Presenter → Repository → ContentProvider → SQLite → 回调 View）。
+ * 提示：在 IDE 里搜索「关注列表」可看本组相关文件。
+ * ============================================================
+ */
 public class FollowListPresenter implements FollowListContract.Presenter {
     private final FollowListContract.View view;
     private final ArticleRepository articleRepository;

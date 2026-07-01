@@ -29,6 +29,25 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.List;
 
+/**
+ * ============================================================
+ * 【聊天对话 / Chat】View（Activity 界面）
+ * 整体逻辑：onCreate 读取传入的对方账号 other_user（缺省为客服 admin）与可选
+ *   商品名 product_name，配置 RecyclerView、输入框、更多面板，启动 ChatPresenter；
+ *   输入框有内容时显示「发送」按钮、无内容时显示「+」更多面板按钮；
+ *   拍照/选图先把图片复制到应用缓存目录，再经 FileProvider 生成可分享的 Uri 发出；
+ *   onResume 每次回到前台标记已读并刷新消息。showMessages 由 Presenter 回调，
+ *   首次创建 ChatAdapter 并把撤回/删除回调转交 Presenter，之后仅刷新数据并滚到底部。
+ * 数据来源：ChatPresenter 经 repository/MessageRepository 读写；
+ *   Repository 内部经 ContentProvider 访问 SQLite。本类不直接碰数据库。
+ * 配合的文件：接口约定 ChatContract；业务 ChatPresenter；
+ *   消息适配器 adapter/ChatAdapter；数据模型 model/ChatMessage；
+ *   布局 res/layout/activity_chat.xml 及气泡布局 item_chat_sent/received/recalled.xml。
+ * MVP 数据流位置：本类是 View；数据流为 View 到 Presenter 到 Repository 到
+ *   ContentProvider 到 SQLite，再回调本类刷新界面。
+ * 提示：在 IDE 里搜索「聊天」可看本组相关文件。
+ * ============================================================
+ */
 public class ChatActivity extends BaseMvpActivity<ChatContract.Presenter>
         implements ChatContract.View {
 

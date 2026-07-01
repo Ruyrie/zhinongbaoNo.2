@@ -15,6 +15,24 @@ import com.example.zhinongbao.mvp.mycircleposts.MyCirclePostsPresenter;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * ============================================================
+ * 【我的动态 / My Circle Posts】View（Activity）
+ * 整体逻辑（关键步骤）：
+ *   1) onCreate 读取模式，据此设标题、显隐发布 FAB 与「清理失效」入口，初始化列表。
+ *   2) onResume 调 presenter.refresh() 拉最新数据。
+ *   3) showPosts 用 AgriCircleAdapter 渲染；点赞时在点赞模式下取消点赞会即时从列表移除该行。
+ *   4) 「清理失效」弹确认框，确认后调 presenter.clearInvalidPosts() 清掉已被删动态的点赞记录。
+ * 数据来源：本类不直接碰数据库，全部经 Presenter 向 ArticleRepository 取数/写入
+ *   （Repository 内部经 ContentProvider 访问 SQLite）。
+ * 配合的文件：接口 MyCirclePostsContract；业务 MyCirclePostsPresenter；
+ *   适配器 adapter/AgriCircleAdapter；布局 activity_my_circle_posts.xml、item_agri_circle_post.xml；
+ *   确认弹窗 dialog_confirm.xml；跳转页面 AddCirclePostActivity、ArticleDetailActivity、
+ *   SellerStoreActivity；模型 model/Article。
+ * 在 MVP 数据流中的位置：View 层（View → Presenter → Repository → ContentProvider → SQLite → 回调 View）。
+ * 提示：在 IDE 里搜索「我的动态」可看本组相关文件。
+ * ============================================================
+ */
 public class MyCirclePostsActivity extends BaseMvpActivity<MyCirclePostsContract.Presenter>
         implements MyCirclePostsContract.View {
 

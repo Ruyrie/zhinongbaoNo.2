@@ -4,6 +4,17 @@ import android.content.Context;
 
 import com.example.zhinongbao.repository.UserRepository;
 
+/**
+ * ============================================================
+ * 【忘记密码 / Forgot Password】Presenter（业务逻辑）
+ * 整体逻辑（nextStep）：账号非空 → 验证码非空 → 验证码比对(忽略大小写) →
+ *   反查账号是否存在 → openResetPassword。任一步失败会提示并按需刷新验证码。
+ * 数据来源：走 UserRepository（内部经 ContentProvider 访问 SQLite）。
+ * 配合的文件：接口 = ForgotPasswordContract；View = ForgotPasswordActivity；
+ *   下一步 = ResetPasswordActivity。
+ * 提示：在 IDE 里搜索「忘记密码」可看本组相关文件。
+ * ============================================================
+ */
 public class ForgotPasswordPresenter implements ForgotPasswordContract.Presenter {
     private final ForgotPasswordContract.View view;
     private final UserRepository repository;
@@ -16,8 +27,10 @@ public class ForgotPasswordPresenter implements ForgotPasswordContract.Presenter
 
     @Override
     public void start() {
+        // 无需初始化
     }
 
+    // 校验账号与验证码，通过后带真实用户名进入重置页
     @Override
     public void nextStep(String account, String inputCaptcha, String realCaptcha) {
         if (account == null || account.isEmpty()) {

@@ -30,6 +30,26 @@ import java.util.ArrayList;
 import java.util.List;
 import java.io.InputStream;
 
+/**
+ * ============================================================
+ * 【农友圈 / Agri Circle】View（Fragment）
+ * 整体逻辑（关键步骤）：
+ *   1) onViewCreated 里初始化 RecyclerView、顶部「关注/最新」两个 tab 和滑动指示器、
+ *      「我的」入口、发布 FAB，然后创建 Presenter 并 start()。
+ *   2) selectTab 切换「关注」或「最新」时调 loadPosts()，按当前 tab 调用
+ *      presenter.loadFollowing() / loadLatest() / loadMine() 取对应动态。
+ *   3) showPosts 回调把数据交给 AgriCircleAdapter 渲染；空列表时按 tab 显示不同空态文案。
+ *   4) 点击某条进文章详情页；点赞/关注即时刷新对应行。
+ * 数据来源：本类不直接碰数据库，全部经 Presenter 向 ArticleRepository 取数
+ *   （Repository 内部经 ContentProvider 访问 SQLite）。
+ * 配合的文件：接口 AgriCircleContract；业务 AgriCirclePresenter；
+ *   适配器 adapter/AgriCircleAdapter；布局 fragment_agricircle.xml、item_agri_circle_post.xml；
+ *   跳转页面 AddCirclePostActivity（发动态）、MyCirclePostsActivity（我的动态）、
+ *   ArticleDetailActivity（详情）、SellerStoreActivity（进店）；模型 model/Article。
+ * 在 MVP 数据流中的位置：View 层（View → Presenter → Repository → ContentProvider → SQLite → 回调 View）。
+ * 提示：在 IDE 里搜索「农友圈」可看本组相关文件。
+ * ============================================================
+ */
 public class AgriCircleFragment extends BaseMvpFragment<AgriCircleContract.Presenter>
         implements AgriCircleContract.View {
 

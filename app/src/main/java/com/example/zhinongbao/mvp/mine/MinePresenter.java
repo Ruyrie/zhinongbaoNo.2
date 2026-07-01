@@ -10,11 +10,26 @@ import com.example.zhinongbao.repository.UserRepository;
 
 import java.util.List;
 
+/**
+ * ============================================================
+ * 【我的 / Mine】Presenter（业务逻辑）
+ * 整体逻辑（关键步骤）：
+ *   1. 构造时创建三个 Repository 并把自己注入 View。
+ *   2. start 取登录用户，汇总资料与统计数据回调 renderUser，再算订单角标。
+ *   3. renderOrderBadges 遍历订单按状态计数，加上待评价数量回调 View。
+ *   4. switchRole 校验可切换后翻转角色，通知 View 重建主界面。
+ * 数据来源：走 UserRepository / ArticleRepository / OrderRepository；
+ *   Repository 内部经 ContentProvider 访问 SQLite，本类不直接碰数据库。
+ * 配合的文件：接口约定 = MineContract；View = MineFragment；模型 = model/User、model/Order。
+ * 在 MVP 数据流中的位置：Presenter（业务层），承上（View）启下（Repository）。
+ * 提示：在 IDE 里搜索「我的」可看本组相关文件。
+ * ============================================================
+ */
 public class MinePresenter implements MineContract.Presenter {
-    private final MineContract.View view;
-    private final UserRepository userRepository;
-    private final ArticleRepository articleRepository;
-    private final OrderRepository orderRepository;
+    private final MineContract.View view;                    // 关联的界面
+    private final UserRepository userRepository;             // 用户资料数据
+    private final ArticleRepository articleRepository;       // 关注/获赞等社交数据
+    private final OrderRepository orderRepository;           // 订单数据
 
     public MinePresenter(Context context, MineContract.View view) {
         Context appContext = context.getApplicationContext();

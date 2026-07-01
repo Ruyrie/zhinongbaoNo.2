@@ -18,8 +18,21 @@ import java.util.Collections;
 import java.util.List;
 
 /**
- * 粉丝列表 / 关注列表通用界面。
- * 通过 Intent extra "type" ("followers" | "following") 和 "username" 传参。
+ * ============================================================
+ * 【关注/粉丝列表 / Follow List】View（Activity）
+ * 整体逻辑（关键步骤）：
+ *   1) onCreate 读取 type/username，设标题、准备两个关注 tab，创建 Presenter start()。
+ *   2) Presenter 按 type 取对应名单后回调 showUsers 或 showFollowing。
+ *   3) 内部适配器 FollowUserAdapter 逐行渲染（头像/昵称/关注按钮），点关注按钮即时切换
+ *      关注状态，点整行进对方主页（用户进其文章页、店铺进店铺页）。
+ * 数据来源：本类不直接碰数据库，全部经 Presenter 向 ArticleRepository + UserRepository
+ *   取数/写入（Repository 内部经 ContentProvider 访问 SQLite）。
+ * 配合的文件：接口 FollowListContract；业务 FollowListPresenter；
+ *   布局 activity_follow_list.xml、行布局 item_follow_user.xml；头像工具 utils/ImageUtils；
+ *   跳转页面 MyArticlesActivity（看用户文章）、SellerStoreActivity（进店铺）。
+ * 在 MVP 数据流中的位置：View 层（View → Presenter → Repository → ContentProvider → SQLite → 回调 View）。
+ * 提示：在 IDE 里搜索「关注列表」可看本组相关文件。
+ * ============================================================
  */
 public class FollowListActivity extends BaseMvpActivity<FollowListContract.Presenter> implements FollowListContract.View {
 

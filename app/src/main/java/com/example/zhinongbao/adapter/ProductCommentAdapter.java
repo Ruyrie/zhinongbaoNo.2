@@ -14,6 +14,17 @@ import com.example.zhinongbao.model.ProductComment;
 import java.util.Arrays;
 import java.util.List;
 
+/**
+ * ============================================================
+ * 【商品评价 / Product Comment】Adapter（RecyclerView 适配器）
+ * 整体逻辑：头像支持 Base64 或 Uri；配图用一个内嵌的横向小 RecyclerView 展示；
+ *   删除按钮只对「自己的评价」或管理员(admin)显示，点击回调外部删除。
+ * 数据来源：构造时传入的 List<ProductComment>。
+ * 配合的文件：数据模型 model/ProductComment；行布局 res/layout/item_product_comment.xml；
+ *   头像工具 utils/ImageUtils；使用方 ProductCommentsActivity。
+ * 提示：在 IDE 里搜索「商品评价」可看本组相关文件。
+ * ============================================================
+ */
 public class ProductCommentAdapter extends RecyclerView.Adapter<ProductCommentAdapter.CommentViewHolder> {
 
     private List<ProductComment> data;

@@ -11,6 +11,20 @@ import com.example.zhinongbao.base.BaseMvpActivity;
 import com.example.zhinongbao.mvp.password.ResetPasswordContract;
 import com.example.zhinongbao.mvp.password.ResetPasswordPresenter;
 
+/**
+ * ============================================================
+ * 【重置密码 / Reset Password】View（Activity）
+ * 整体逻辑：onCreate 取上一步传入的 username / display_account，显示账号；
+ *   点「提交」→ presenter.submit(新密码,确认密码)；成功回调 openLogin
+ *   （清空任务栈跳登录页）。
+ * 数据来源：本类不碰数据库，改密由 Presenter → UserRepository 完成。
+ * 配合的文件：接口 ResetPasswordContract；业务 ResetPasswordPresenter；
+ *   布局 activity_reset_password.xml；上一步 ForgotPasswordActivity；
+ *   成功后跳 LoginActivity。
+ * 在 MVP 中的位置：View 层。
+ * 提示：在 IDE 里搜索「重置密码」可看本组相关文件。
+ * ============================================================
+ */
 public class ResetPasswordActivity extends BaseMvpActivity<ResetPasswordContract.Presenter>
         implements ResetPasswordContract.View {
 

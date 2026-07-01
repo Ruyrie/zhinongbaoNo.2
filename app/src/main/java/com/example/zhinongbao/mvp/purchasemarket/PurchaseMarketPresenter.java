@@ -6,6 +6,24 @@ import android.text.TextUtils;
 import com.example.zhinongbao.model.PurchaseRequest;
 import com.example.zhinongbao.repository.PurchaseRepository;
 
+/**
+ * ============================================================
+ * 【采购市场 / PurchaseMarket】Presenter（业务逻辑）
+ * 整体逻辑：构造时创建 PurchaseRepository，取当前登录账号并判断是否可报价 canQuote；
+ *   refresh 拉取全部需求交 View 渲染；onQuoteClick 分流（自己的需求转看报价、已成交则拦下、
+ *   已报过价则展示列表、否则弹报价框）；submitQuote 做登录/自报/锁定/金额校验后写库；
+ *   acceptQuote 校验「是本人需求」且有默认地址后生成订单并打开付款页；rejectQuote 拒绝报价。
+ *   所有写操作成功后都 refresh 刷新界面。
+ * 关键概念：isRequestLockedByPaidOrder 表示需求已被某报价付款成交（退款前锁定，不能再报价）；
+ *   canModifyPurchaseRequest 表示需求未进入不可改状态（如已付款）才能编辑/删除。
+ * 数据来源：repository/PurchaseRepository；Repository 内部经 ContentProvider 访问 SQLite。
+ *   本类不直接碰数据库。
+ * 配合的文件：接口约定 PurchaseMarketContract；View 实现 = PurchaseMarketActivity；
+ *   适配器 adapter/PurchaseRequestAdapter；数据模型 model/PurchaseRequest、model/PurchaseQuote。
+ * MVP 数据流位置：本类是 Presenter，居中协调 View 与 Repository。
+ * 提示：在 IDE 里搜索「采购」可看本组相关文件。
+ * ============================================================
+ */
 public class PurchaseMarketPresenter implements PurchaseMarketContract.Presenter {
     private final PurchaseMarketContract.View view;
     private final PurchaseRepository repository;

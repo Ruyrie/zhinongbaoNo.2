@@ -1,4 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!--
+    ============================================================
+    【设置 / Settings】布局（Activity 界面）
+    整体结构：顶部返回栏，中部为纵向排列的设置项列表。
+    配合的文件：由 SettingsActivity 通过 setContentView 加载；退出确认复用 dialog_confirm。
+    在 MVP 数据流中的位置：View 的界面资源，不含任何业务逻辑。
+    提示：在 IDE 里搜索「设置」可看本组相关文件。
+    ============================================================
+-->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"

@@ -22,6 +22,24 @@ import com.example.zhinongbao.mvp.sellerorders.SellerOrdersPresenter;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * ============================================================
+ * 【卖家订单 / Seller Orders】View（Activity 页面）
+ * 整体逻辑（关键步骤）：
+ *   1. onCreate 加载布局 activity_seller_orders.xml，读取 intent 里的 filter/sales_scope 初始条件。
+ *   2. 绑定顶部状态标签(全部/待付款/待发货/已发货/售后)与搜索框，配置 RecyclerView 与 SellerOrderAdapter。
+ *   3. 适配器的按钮回调转交 Presenter；Presenter 再回调本页 showXxxDialog 弹出对话框，收集输入后提交。
+ *   4. 点击订单卡片：采购订单跳 SellerOrderDetailActivity，零售订单跳 ProductDetailActivity。
+ * 数据来源：不直接碰数据库；数据由 SellerOrdersPresenter 经 OrderRepository/ProductRepository
+ *   （内部走 ContentProvider 访问 SQLite）取得后回调 showOrders。
+ * 配合的文件：接口 = mvp/sellerorders/SellerOrdersContract；Presenter = SellerOrdersPresenter；
+ *   适配器 = adapter/SellerOrderAdapter；布局 = res/layout/activity_seller_orders.xml；
+ *   对话框布局 = dialog_seller_price/dialog_seller_ship/dialog_partial_refund；
+ *   跳转页 = SellerOrderDetailActivity/ProductDetailActivity/ChatActivity。
+ * 在 MVP 数据流中的位置：View（界面层）。
+ * 提示：在 IDE 里搜索「卖家订单」可看本组相关文件。
+ * ============================================================
+ */
 public class SellerOrdersActivity extends BaseMvpActivity<SellerOrdersContract.Presenter> implements SellerOrdersContract.View {
 
     private String currentFilter = "all"; // all, pending, paid, shipped, refund
@@ -136,6 +154,7 @@ public class SellerOrdersActivity extends BaseMvpActivity<SellerOrdersContract.P
         updateTabStyles();
     }
 
+    // 刷新顶部状态标签样式：当前选中项蓝色加粗，其余灰色常规
     private void updateTabStyles() {
         tabAll.setTextColor("all".equals(currentFilter) ? 0xFF007AFF : 0xFF666666);
         tabPending.setTextColor("pending".equals(currentFilter) ? 0xFF007AFF : 0xFF666666);

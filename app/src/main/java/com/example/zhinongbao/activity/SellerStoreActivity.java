@@ -24,6 +24,24 @@ import com.example.zhinongbao.utils.DialogUtils;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * ============================================================
+ * 【卖家店铺 / Seller Store】View（Activity 页面）
+ * 整体逻辑（关键步骤）：
+ *   1. onCreate 加载布局 activity_seller_store.xml，读取 intent 的 seller/public_store 参数。
+ *   2. 创建 SellerStorePresenter，配置 RecyclerView 与内部 StoreProductAdapter。
+ *   3. Presenter 回调 showStoreMeta/showProducts/showStats/showFollowState 时填充界面。
+ *   4. 点击商品进 ProductDetailActivity；添加商品进 AddProductActivity；改资料弹对话框提交给 Presenter。
+ *   5. onResume 回到本页重新 loadStore 刷新。
+ * 数据来源：不直接碰数据库；数据由 SellerStorePresenter 经多个 Repository
+ *   （内部走 ContentProvider 访问 SQLite）取得后回调本类。
+ * 配合的文件：接口 = mvp/sellerstore/SellerStoreContract；Presenter = SellerStorePresenter；
+ *   店铺商品适配器 = 本文件内部类 StoreProductAdapter；行布局 = res/layout/item_seller_product.xml；
+ *   页面布局 = res/layout/activity_seller_store.xml；跳转页 = ProductDetailActivity/AddProductActivity。
+ * 在 MVP 数据流中的位置：View（界面层）。
+ * 提示：在 IDE 里搜索「卖家店铺」可看本组相关文件。
+ * ============================================================
+ */
 public class SellerStoreActivity extends BaseMvpActivity<SellerStoreContract.Presenter> implements SellerStoreContract.View {
 
     private String seller;
@@ -144,6 +162,7 @@ public class SellerStoreActivity extends BaseMvpActivity<SellerStoreContract.Pre
         avatar.setContentDescription((storeName == null ? "店铺" : storeName) + "头像");
     }
 
+    // 弹出「修改店铺信息」对话框，收集店铺名称与电话后交给 Presenter 保存
     private void showEditStoreDialog() {
         LinearLayout box = new LinearLayout(this);
         box.setOrientation(LinearLayout.VERTICAL);
@@ -222,10 +241,11 @@ public class SellerStoreActivity extends BaseMvpActivity<SellerStoreContract.Pre
         Toast.makeText(this, message, Toast.LENGTH_SHORT).show();
     }
 
-    // ── 内部 Adapter ──
+    // 店铺商品列表适配器（内部类）
 
-    interface OnProductClick { void onClick(Product p); }
+    interface OnProductClick { void onClick(Product p); } // 商品行点击/上架/下架统一回调
 
+    // 把店铺商品渲染成一行（封面、名称、价格、销量/下架标记），本人店铺额外显示上/下架按钮
     static class StoreProductAdapter extends RecyclerView.Adapter<StoreProductAdapter.VH> {
         private final List<Product> items;
         private boolean isOwn;

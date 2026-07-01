@@ -1,4 +1,16 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!--
+    ============================================================
+    【订单详情 / Order Detail】布局（页面布局）
+    对应界面：activity/OrderDetailActivity 用 setContentView 加载本布局。
+    关键控件：tvDetailStatus 状态、tvDetailCountdown 倒计时、ivDetailProduct 商品图、
+      layoutStoreTrace 店铺区、layoutReceiverInfo 收货区、layoutShipmentInfo 物流区、
+      layoutDetailActions 里的 btnDetailPay/btnDetailCancel/btnDetailComment 操作按钮、
+      layoutDetailMore 更多入口。
+    在 MVP 数据流中的位置：View 层的静态界面描述。
+    提示：在 IDE 里搜索「订单详情」可看本组相关文件。
+    ============================================================
+-->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"

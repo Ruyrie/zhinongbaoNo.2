@@ -3,10 +3,6 @@ package com.example.zhinongbao.provider;
 /* ============================================================
  * 【数据库 / 数据总入口 / Provider】全 App 数据读写的统一大门（ContentProvider）
  * ============================================================
- * 这个文件是干什么的：
- *   它是「数据库的统一对外接口」。所有 Repository 想读写数据，都不直接碰 SQLite，
- *   而是通过 ContentResolver 调用这里的 query/insert/update/delete。
- *   好处：读写入口统一、数据一变就能自动通知界面刷新。
  *
  * 核心概念：
  *   - ContentProvider：安卓四大组件之一，专门「对外提供数据访问」。

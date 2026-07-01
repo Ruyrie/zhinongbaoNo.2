@@ -4,10 +4,25 @@ import android.content.Context;
 
 import com.example.zhinongbao.repository.UserRepository;
 
+/**
+ * ============================================================
+ * 【资料编辑 / ProfileEdit】Presenter（业务逻辑）
+ * 整体逻辑（关键步骤）：
+ *   1. 构造时创建 UserRepository、取登录用户名并注入 View。
+ *   2. start 拉取昵称/签名/头像/手机号回填界面。
+ *   3. saveProfile 校验昵称非空且不超长，仅对有改动的字段写库，按结果提示。
+ *   4. bindPhone 校验 11 位手机号后写库，处理「已被其他账号绑定」等失败情况。
+ * 数据来源：走 repository/UserRepository；Repository 内部经 ContentProvider
+ *   访问 SQLite，本类不直接碰数据库。
+ * 配合的文件：接口约定 = ProfileEditContract；View = ProfileEditActivity。
+ * 在 MVP 数据流中的位置：Presenter（业务层），承上（View）启下（Repository）。
+ * 提示：在 IDE 里搜索「资料编辑」可看本组相关文件。
+ * ============================================================
+ */
 public class ProfileEditPresenter implements ProfileEditContract.Presenter {
-    private final ProfileEditContract.View view;
-    private final UserRepository repository;
-    private final String username;
+    private final ProfileEditContract.View view;    // 关联的界面
+    private final UserRepository repository;        // 用户数据访问入口
+    private final String username;                  // 当前登录用户名
 
     public ProfileEditPresenter(Context context, ProfileEditContract.View view) {
         this.view = view;

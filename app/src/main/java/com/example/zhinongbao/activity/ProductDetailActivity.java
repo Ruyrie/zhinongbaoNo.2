@@ -39,7 +39,24 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 
-/** 商品详情界面：图片、名称、介绍、价格、加入购物车/购买/购物车入口 */
+/**
+ * ============================================================
+ * 【商品详情 / Product Detail】View（Activity）
+ * 整体逻辑：onCreate 取 product_id 建 Presenter 并 start()；Presenter 回调
+ *   showProduct 后，本类按区块 bindXxx() 逐块绑定 UI 与点击事件；ownProduct
+ *   标志决定买家版/卖家版按钮。onResume 会刷新评价预览。
+ * 特色实现：分享功能会用 Canvas 现画一张「商品海报」Bitmap，经 FileProvider
+ *   以图片形式分享；图片解码用 inSampleSize 压缩防 OOM。
+ * 数据来源：本类不碰数据库，数据由 Presenter → ProductRepository 提供；
+ *   种子商品的多图来自内置 mipmap，用户商品来自 coverUri；小图标来自 assets/pic/。
+ * 配合的文件：接口 ProductDetailContract；业务 ProductDetailPresenter；
+ *   图片适配器 adapter/ProductImageAdapter；布局 activity_product_detail.xml；
+ *   跳转 ProductCommentsActivity / SellerStoreActivity / ChatActivity /
+ *   AddProductActivity / AddressManagerActivity / MyOrdersActivity；弹窗 utils/DialogUtils。
+ * 在 MVP 中的位置：View 层。
+ * 提示：在 IDE 里搜索「商品详情」可看本组相关文件。
+ * ============================================================
+ */
 public class ProductDetailActivity extends BaseMvpActivity<ProductDetailContract.Presenter>
         implements ProductDetailContract.View {
 

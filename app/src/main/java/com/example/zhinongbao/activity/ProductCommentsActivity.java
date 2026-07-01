@@ -15,13 +15,31 @@ import com.example.zhinongbao.mvp.productcomments.ProductCommentsContract;
 import com.example.zhinongbao.mvp.productcomments.ProductCommentsPresenter;
 import java.util.List;
 
+/**
+ * ============================================================
+ * 【商品评价列表 / Product Comments】View（界面/Activity）
+ * 整体逻辑：onCreate 用 intent 里的 product_id 创建 Presenter 并 start()；
+ *   Presenter 查好评价后回调 showComments 用 ProductCommentAdapter 渲染；
+ *   点「写评价」调 presenter.writeReview()（会校验是否购买过）；删除时弹确认框，
+ *   确认后调 presenter.deleteComment。onResume 时刷新，保证发完评价返回能看到。
+ * 数据来源：不直接碰数据库；经 Presenter 走 repository/ProductRepository，
+ *   Repository 内部通过 ContentProvider 访问 SQLite。
+ * 配合的文件：接口约定 mvp/productcomments/ProductCommentsContract；业务逻辑
+ *   ProductCommentsPresenter；列表适配器 adapter/ProductCommentAdapter；
+ *   行布局 res/layout/item_product_comment.xml；页面布局
+ *   res/layout/activity_product_comments.xml；确认弹窗 res/layout/dialog_confirm.xml；
+ *   模型 model/ProductComment；会跳转到写评价页 AddProductCommentActivity。
+ * 在 MVP 数据流中的位置：View 层。
+ * 提示：在 IDE 里搜索「商品评价」可看本组相关文件。
+ * ============================================================
+ */
 public class ProductCommentsActivity extends BaseMvpActivity<ProductCommentsContract.Presenter>
         implements ProductCommentsContract.View {
 
-    private int productId;
-    private RecyclerView rvComments;
-    private TextView tvEmptyHint;
-    private ProductCommentAdapter adapter;
+    private int productId;                     // 当前查看评价的商品 id
+    private RecyclerView rvComments;           // 评价列表
+    private TextView tvEmptyHint;              // 无评价时的空状态提示
+    private ProductCommentAdapter adapter;     // 评价列表适配器
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {

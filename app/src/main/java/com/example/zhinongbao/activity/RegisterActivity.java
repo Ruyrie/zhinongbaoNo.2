@@ -17,7 +17,20 @@ import com.example.zhinongbao.model.User;
 import com.example.zhinongbao.mvp.register.RegisterContract;
 import com.example.zhinongbao.mvp.register.RegisterPresenter;
 
-/** 注册界面（复用为添加账号界面） */
+/**
+ * ============================================================
+ * 【注册 / Register】View（Activity）
+ * 整体逻辑：onCreate 绑定控件、给「买家/卖家」单选项设置图标、支持密码显隐；
+ *   点「注册」→ presenter.register(..., isAddMode)；Presenter 处理后回调
+ *   goMain（普通模式登录进主页）/ closePage（添加模式关页面）/ showToast /
+ *   showAccountRegisteredDialog（账号已存在则引导去登录）。
+ * 数据来源：本类不碰数据库，注册逻辑由 Presenter → UserRepository 完成。
+ * 配合的文件：接口 RegisterContract；业务 RegisterPresenter；布局 activity_register.xml；
+ *   跳转 LoginActivity / MainActivity；模型 model/User。
+ * 在 MVP 中的位置：View 层。
+ * 提示：在 IDE 里搜索「注册」可看本组相关文件。
+ * ============================================================
+ */
 public class RegisterActivity extends BaseMvpActivity<RegisterContract.Presenter> implements RegisterContract.View {
 
     private EditText etUsername, etPassword, etPhone;

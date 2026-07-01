@@ -4,10 +4,24 @@ import android.content.Context;
 
 import com.example.zhinongbao.repository.ArticleRepository;
 
+/**
+ * ============================================================
+ * 【我的收藏 / My Favorites】Presenter（业务逻辑）
+ * 整体逻辑：refresh 从 Repository 取该用户点赞的文章回调 View；clearInvalidArticles
+ *   清理已删除文章并按清理数量给出提示；getXxx 系列供适配器查询点赞数/评论数/是否已赞；
+ *   toggleArticleLike 按当前状态点赞或取消点赞。
+ * 数据来源：走 repository/ArticleRepository，Repository 内部通过 ContentProvider
+ *   访问 SQLite；本类不直接操作数据库。
+ * 配合的文件：接口约定 mvp/myfavorites/MyFavoritesContract；View 实现 =
+ *   MyFavoritesActivity；列表适配器 adapter/ArticleAdapter；模型 = model/Article。
+ * 在 MVP 数据流中的位置：业务层。
+ * 提示：在 IDE 里搜索「我的收藏」可看本组相关文件。
+ * ============================================================
+ */
 public class MyFavoritesPresenter implements MyFavoritesContract.Presenter {
-    private final MyFavoritesContract.View view;
-    private final ArticleRepository repository;
-    private final String currentUser;
+    private final MyFavoritesContract.View view;   // 对应的界面
+    private final ArticleRepository repository;    // 文章数据访问
+    private final String currentUser;              // 当前登录用户
 
     public MyFavoritesPresenter(Context context, MyFavoritesContract.View view) {
         this.view = view;

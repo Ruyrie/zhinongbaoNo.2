@@ -13,6 +13,24 @@ import com.example.zhinongbao.model.Article;
 import com.example.zhinongbao.model.User;
 import java.util.List;
 
+/**
+ * ============================================================
+ * 【农友圈动态 / Agri Circle Post】Adapter（RecyclerView 适配器）
+ * 整体逻辑：onCreateViewHolder 用 item_agri_circle_post.xml 生成卡片；onBindViewHolder
+ *   把第 position 条动态填进控件并绑定点击。多图用 ViewPager2 + ProductImageAdapter 轮播，
+ *   右上角显示「当前/总数」指示器。已被作者删除的动态显示占位提示，仅保留取消点赞。
+ *   点赞/关注按钮只做即时视觉更新，真正写库通过 OnActionListener 回调交给外部处理。
+ * 数据来源：构造时传入的 List<Article>（由 Fragment/Activity 从 Presenter 拿到），
+ *   本类不查数据库；点赞数/评论数/是否已赞/是否已关注/用户角色等通过
+ *   CircleInteractionDelegate 现查（最终仍走 Presenter → Repository）。
+ * 权限/显示规则：只有卖家作者才显示「进店铺」；只有非自己且未关注才显示「关注」。
+ * 配合的文件：数据模型 model/Article、model/User；卡片布局 res/layout/item_agri_circle_post.xml；
+ *   图片轮播 adapter/ProductImageAdapter；头像工具 utils/ImageUtils；
+ *   使用方 AgriCircleFragment、MyCirclePostsActivity（各自实现两个回调接口）。
+ * 在 MVP 数据流中的位置：View 层的一部分（把 Presenter 提供的数据展示出来）。
+ * 提示：在 IDE 里搜索「农友圈动态」可看本组相关文件。
+ * ============================================================
+ */
 public class AgriCircleAdapter extends RecyclerView.Adapter<AgriCircleAdapter.ViewHolder> {
 
     public interface OnActionListener {

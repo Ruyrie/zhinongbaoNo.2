@@ -8,11 +8,25 @@ import com.example.zhinongbao.repository.OrderRepository;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * ============================================================
+ * 【我的订单 / My Orders】Presenter（业务逻辑）
+ * 整体逻辑：构造时拿到当前登录用户名并创建 OrderRepository；refresh 时按 filter
+ *   从 Repository 拉对应状态的订单交给 View；各操作方法先调 Repository 改数据库
+ *   状态，再 refresh 或提示；退款前先用 canRequestRefund 判断是否还在时限内。
+ * 数据来源：走 repository/OrderRepository，Repository 内部通过 ContentProvider
+ *   访问 SQLite；本类不直接操作数据库。
+ * 配合的文件：接口约定 mvp/myorders/MyOrdersContract；View 实现 = MyOrdersActivity；
+ *   数据访问 = repository/OrderRepository；模型 = model/Order。
+ * 在 MVP 数据流中的位置：中间的业务层，连接 View 与 Repository。
+ * 提示：在 IDE 里搜索「我的订单」可看本组相关文件。
+ * ============================================================
+ */
 public class MyOrdersPresenter implements MyOrdersContract.Presenter {
-    private final MyOrdersContract.View view;
-    private final OrderRepository repository;
-    private final String username;
-    private String filter;
+    private final MyOrdersContract.View view;      // 对应的界面
+    private final OrderRepository repository;      // 订单数据访问入口
+    private final String username;                 // 当前登录用户
+    private String filter;                          // 当前分类过滤条件
 
     public MyOrdersPresenter(Context context, MyOrdersContract.View view, String filter) {
         this.view = view;
@@ -99,6 +113,7 @@ public class MyOrdersPresenter implements MyOrdersContract.Presenter {
         refresh();
     }
 
+    // 按当前分类从 Repository 取订单：待评价单独查，其余在全部订单里按状态筛选
     private List<Order> loadOrders() {
         if ("reviewing".equals(filter)) {
             return repository.getPendingReviewOrders(username);

@@ -10,7 +10,18 @@ import com.example.zhinongbao.base.BaseMvpActivity;
 import com.example.zhinongbao.mvp.password.ChangePasswordContract;
 import com.example.zhinongbao.mvp.password.ChangePasswordPresenter;
 
-/** 修改密码界面 */
+/**
+ * ============================================================
+ * 【修改密码 / Change Password】View（Activity）
+ * 整体逻辑：onCreate 取 Intent 传入的 username，绑定输入框；点「保存」→
+ *   presenter.save(username,新密码,确认密码)；成功后回调 closePage 关页面。
+ * 数据来源：本类不碰数据库，改密逻辑由 Presenter → UserRepository 完成。
+ * 配合的文件：接口 ChangePasswordContract；业务 ChangePasswordPresenter；
+ *   布局 activity_change_password.xml；通常由 AccountManagerActivity 跳入。
+ * 在 MVP 中的位置：View 层。
+ * 提示：在 IDE 里搜索「修改密码」可看本组相关文件。
+ * ============================================================
+ */
 public class ChangePasswordActivity extends BaseMvpActivity<ChangePasswordContract.Presenter>
         implements ChangePasswordContract.View {
 

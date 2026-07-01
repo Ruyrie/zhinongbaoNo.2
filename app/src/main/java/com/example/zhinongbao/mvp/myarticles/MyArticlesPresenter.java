@@ -4,6 +4,21 @@ import android.content.Context;
 
 import com.example.zhinongbao.repository.ArticleRepository;
 
+/**
+ * ============================================================
+ * 【我的文章 / My Articles】Presenter（业务逻辑）
+ * 整体逻辑（关键步骤）：
+ *   1) 构造时创建 ArticleRepository、取当前登录用户名；targetAuthor 为空则默认看自己。
+ *   2) start()/refresh() 取该作者的文章回调 showArticles。
+ *   3) toggleArticleLike：未登录忽略，否则按状态切换赞/取消。
+ * 数据来源：本类不直接碰数据库，通过 ArticleRepository 访问（Repository 内部经
+ *   ContentProvider 访问 SQLite）。
+ * 配合的文件：接口 MyArticlesContract；View 实现 MyArticlesActivity；
+ *   数据访问 repository/ArticleRepository；模型 model/Article。
+ * 在 MVP 数据流中的位置：Presenter 层（View → Presenter → Repository → ContentProvider → SQLite → 回调 View）。
+ * 提示：在 IDE 里搜索「我的文章」可看本组相关文件。
+ * ============================================================
+ */
 public class MyArticlesPresenter implements MyArticlesContract.Presenter {
     private final MyArticlesContract.View view;
     private final ArticleRepository repository;

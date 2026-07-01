@@ -21,7 +21,19 @@ import com.example.zhinongbao.mvp.search.SearchPresenter;
 import java.util.ArrayList;
 import java.util.List;
 
-/** iOS 风格全屏搜索界面 */
+/**
+ * ============================================================
+ * 【头条搜索 / Search（文章）】View（Activity）
+ * 整体逻辑：onCreate 建 Presenter 并 start()；showAllArticles 收到全量文章后
+ *   存为 allArticles；输入框 TextWatcher 变化时对 allArticles 本地过滤刷新
+ *   results。点结果项进文章详情。搜的是文章，不是商品。
+ * 数据来源：文章由 Presenter → ArticleRepository 提供；本类不碰数据库。
+ * 配合的文件：接口 SearchContract；业务 SearchPresenter；适配器 adapter/ArticleAdapter；
+ *   布局 activity_search.xml；模型 model/Article。
+ * 在 MVP 中的位置：View 层。
+ * 提示：在 IDE 里搜索「头条搜索」可看本组相关文件。
+ * ============================================================
+ */
 public class SearchActivity extends BaseMvpActivity<SearchContract.Presenter>
         implements SearchContract.View {
 

@@ -14,6 +14,21 @@ import java.util.Date;
 import java.util.List;
 import java.util.Locale;
 
+/**
+ * ============================================================
+ * 【消息列表-会话 / Conversation】Adapter（RecyclerView 适配器）
+ * 整体逻辑：onCreateViewHolder 用 item_conversation.xml 生成行视图；
+ *   onBindViewHolder 把第 position 条会话填进控件，未读数为 0 时隐藏红点、超过 99 显示「99+」；
+ *   点击整行回调 OnItemClickListener（外部跳聊天页），长按回调 OnItemLongPressListener
+ *   （外部弹删除确认）。formatTime 把时间戳按「今天显示时分/昨天/更早显示月日」友好展示。
+ * 数据来源：构造时传入的 List<ConversationItem>（由 MessageFragment 从 Presenter 拿到），
+ *   本类不查数据库。
+ * 配合的文件：数据模型 model/ConversationItem；行布局 res/layout/item_conversation.xml；
+ *   使用方 MessageFragment（实现点击/长按回调）。
+ * MVP 数据流位置：本类属于 View 层，只负责把数据画到屏幕上。
+ * 提示：在 IDE 里搜索「消息」可看本组相关文件。
+ * ============================================================
+ */
 public class ConversationAdapter extends RecyclerView.Adapter<ConversationAdapter.ViewHolder> {
 
     public interface OnItemClickListener {

@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<!--
+=================================================================
+ 【农友圈文章详情 / Article Detail】WebView 正文模板（HTML5）
+ 占位符：{{TITLE}} 标题 / {{AVATAR}} 头像块 / {{AUTHOR_NAME}} 作者名 /
+   {{TIME}} 时间 / {{FOLLOW_BTN}} 关注按钮 / {{CONTENT}} 正文(含配图) /
+   {{READ_COUNT}} 阅读次数。
+ 技术点：HTML5 + CSS + JS；JS 的 toggleFollow() 通过 Android 桥回调原生。
+ 提示：在 IDE 里搜索「文章详情」可看本组相关文件
+   （ArticleDetailActivity / ArticleDetailContract / ArticleDetailPresenter）。
+=================================================================
+-->
+<html>
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <style>
+        body { font-family: sans-serif; padding: 16px; margin: 0; background: #ffffff; }
+        .title { font-size: 22px; font-weight: bold; color: #1A1A1A; line-height: 1.4; margin-bottom: 16px; }
+        .author-row { display: flex; align-items: center; margin-bottom: 16px; }
+        .avatar-container { width: 38px; height: 38px; border-radius: 19px; overflow: hidden; margin-right: 10px; background: #F04142; display: flex; justify-content: center; align-items: center; }
+        .avatar { width: 100%; height: 100%; object-fit: cover; }
+        .avatar-initial { color: white; font-size: 16px; font-weight: bold; }
+        .author-info { flex: 1; display: flex; flex-direction: column; justify-content: center; }
+        .author-name { font-size: 15px; font-weight: bold; color: #1F1F1F; }
+        .author-time { font-size: 12px; color: #AAAAAA; margin-top: 2px; }
+        .follow-btn { font-size: 13px; color: #2F80ED; padding: 5px 14px; border-radius: 15px; background: #F2F2F7; font-weight: bold; }
+        .follow-btn.following { color: #999999; }
+        .content { font-size: 16px; color: #333333; line-height: 1.8; }
+        .content img { max-width: 100%; height: auto; display: block; margin: 12px 0; border-radius: 6px; }
+        .read-count { font-size: 12px; color: #BBBBBB; margin-top: 24px; padding-bottom: 10px; }
+    </style>
+    <script>
+        // 点击「关注」按钮：通过 Android JS 桥回调原生 Presenter
+        function toggleFollow() { Android.toggleFollow(); }
+        // 原生回调回来，更新关注按钮的文案与样式
+        function updateFollowBtn(following) {
+            var btn = document.getElementById('followBtn');
+            if (following) { btn.className = 'follow-btn following'; btn.innerText = '已关注'; }
+            else { btn.className = 'follow-btn'; btn.innerText = '+ 关注'; }
+        }
+    </script>
+</head>
+<body>
+    <!-- 标题 -->
+    <div class="title">{{TITLE}}</div>
+
+    <!-- 作者行：头像 + 昵称/时间 + 关注按钮 -->
+    <div class="author-row">
+        <div class="avatar-container">{{AVATAR}}</div>
+        <div class="author-info">
+            <div class="author-name">{{AUTHOR_NAME}}</div>
+            <div class="author-time">{{TIME}}</div>
+        </div>
+        {{FOLLOW_BTN}}
+    </div>
+
+    <!-- 正文（含配图） -->
+    <div class="content">{{CONTENT}}</div>
+
+    <!-- 阅读次数 -->
+    <div class="read-count">阅读 {{READ_COUNT}} 次</div>
+</body>
+</html>

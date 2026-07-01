@@ -3,8 +3,6 @@ package com.example.zhinongbao.repository;
 /* ============================================================
  * 【收货地址 / Address】数据仓库（Repository，跟数据库打交道）
  * ============================================================
- * 这个文件是干什么的：
- *   收货地址的增删改查都在这里：读地址列表、保存（新增/修改）、设为默认、删除。
  *
  * 技术点：
  *   - 通过 ContentResolver 调用 ZhiNongBaoProvider 读写 addresses 表（不直接碰 SQLite）。

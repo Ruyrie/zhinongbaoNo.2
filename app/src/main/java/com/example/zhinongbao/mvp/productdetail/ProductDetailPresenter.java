@@ -9,13 +9,27 @@ import com.example.zhinongbao.repository.ProductRepository;
 
 import java.util.List;
 
+/**
+ * ============================================================
+ * 【商品详情 / Product Detail】Presenter（业务逻辑）
+ * 整体逻辑：start() 取商品(不存在则关页面)、记录一次浏览(足迹)、算出卖家与
+ *   是否本人商品，回调 showProduct + 评论预览；buyNow() 会先检查是否有默认
+ *   收货地址，没有则引导去添加。
+ * 数据来源：走 ProductRepository（内部经 ContentProvider 访问 SQLite）。
+ * 关键概念：无明确卖家时用默认店铺账号(ChatActivity.SHOP_USERNAME)兜底。
+ * 配合的文件：接口 = ProductDetailContract；View = ProductDetailActivity；
+ *   模型 = model/Product、model/ProductComment；联系卖家跳 ChatActivity。
+ * 在 MVP 中的位置：Presenter 层。
+ * 提示：在 IDE 里搜索「商品详情」可看本组相关文件。
+ * ============================================================
+ */
 public class ProductDetailPresenter implements ProductDetailContract.Presenter {
-    private final ProductDetailContract.View view;
-    private final ProductRepository repository;
-    private final int productId;
-    private Product product;
-    private String username;
-    private String seller;
+    private final ProductDetailContract.View view;   // 回调界面
+    private final ProductRepository repository;       // 商品数据访问入口
+    private final int productId;                      // 当前商品 id
+    private Product product;                          // 缓存商品对象
+    private String username;                           // 当前登录用户
+    private String seller;                             // 卖家账号（空则用默认店铺兜底）
 
     public ProductDetailPresenter(Context context, ProductDetailContract.View view, int productId) {
         this.view = view;

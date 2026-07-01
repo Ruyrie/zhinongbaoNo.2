@@ -9,6 +9,20 @@ import com.example.zhinongbao.repository.ProductRepository;
 
 import java.util.ArrayList;
 
+/**
+ * ============================================================
+ * 【卖家订单 / Seller Orders】Presenter（业务逻辑）
+ * 整体逻辑（关键步骤）：
+ *   1. 构造时创建 OrderRepository/ProductRepository，取当前登录卖家用户名与初始过滤/销售范围。
+ *   2. refresh()：按优先级选择数据源——有搜索词→搜索；有销售范围→按范围；否则按状态过滤或全部。
+ *   3. 三种操作按钮点击只负责让 View 弹对应对话框，真正提交由 shipOrder/updateOrderPrice/processRefund 完成。
+ *   4. onContactBuyer 打开与买家的聊天。
+ * 数据来源：OrderRepository（订单）与 ProductRepository（商品），内部经 ContentProvider 访问 SQLite；本类不直接碰数据库。
+ * 配合的文件：接口 = SellerOrdersContract；View = activity/SellerOrdersActivity；模型 = model/Order、model/Product。
+ * 在 MVP 数据流中的位置：View 与 Repository 之间的业务中枢。
+ * 提示：在 IDE 里搜索「卖家订单」可看本组相关文件。
+ * ============================================================
+ */
 public class SellerOrdersPresenter implements SellerOrdersContract.Presenter {
     private final SellerOrdersContract.View view;
     private final OrderRepository repository;
@@ -47,6 +61,7 @@ public class SellerOrdersPresenter implements SellerOrdersContract.Presenter {
 
     @Override
     public void refresh() {
+        // 按优先级选择数据源：搜索词 > 销售范围 > 全部/按状态
         if (seller == null) {
             view.showOrders(new ArrayList<>());
             return;

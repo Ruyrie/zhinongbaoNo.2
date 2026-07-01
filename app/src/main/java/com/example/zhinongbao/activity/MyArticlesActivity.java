@@ -15,7 +15,24 @@ import com.example.zhinongbao.mvp.myarticles.MyArticlesContract;
 import com.example.zhinongbao.mvp.myarticles.MyArticlesPresenter;
 import java.util.List;
 
-/** 我的文章界面：复用文章列表，仅显示当前账号发布的文章 */
+/**
+ * ============================================================
+ * 【我的文章 / My Articles】View（Activity）
+ * 整体逻辑（关键步骤）：
+ *   1) onCreate 读取 targetAuthor，初始化列表与「发文章」入口，创建 Presenter start()。
+ *   2) onResume 调 presenter.refresh() 拉最新数据。
+ *   3) showArticles 判断是不是看自己(viewingSelf)：据此设标题、显隐发文入口与空态文案，
+ *      再用 ArticleAdapter 渲染列表并注入点赞交互委托。
+ *   4) 点击某条调 openArticleDetail 进详情页。
+ * 数据来源：本类不直接碰数据库，全部经 Presenter 向 ArticleRepository 取数
+ *   （Repository 内部经 ContentProvider 访问 SQLite）。
+ * 配合的文件：接口 MyArticlesContract；业务 MyArticlesPresenter；
+ *   适配器 adapter/ArticleAdapter；布局 activity_article_list.xml、item_article.xml；
+ *   跳转页面 AddArticleActivity（发文）、ArticleDetailActivity（详情）；模型 model/Article。
+ * 在 MVP 数据流中的位置：View 层（View → Presenter → Repository → ContentProvider → SQLite → 回调 View）。
+ * 提示：在 IDE 里搜索「我的文章」可看本组相关文件。
+ * ============================================================
+ */
 public class MyArticlesActivity extends BaseMvpActivity<MyArticlesContract.Presenter>
         implements MyArticlesContract.View {
 

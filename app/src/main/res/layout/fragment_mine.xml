@@ -1,4 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!--
+    ============================================================
+    【我的 / Mine】布局（Fragment 界面）
+    整体结构：可滚动页面，顶部资料卡 + 统计行，中部订单五状态入口，
+      下方快捷功能（购物车/收藏/足迹）与「我的文章/收藏/设置」等列表。
+    配合的文件：由 MineFragment 通过 inflate 加载；数据由 MinePresenter 填充。
+    在 MVP 数据流中的位置：View 的界面资源，不含任何业务逻辑。
+    提示：在 IDE 里搜索「我的」可看本组相关文件。
+    ============================================================
+-->
 <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"

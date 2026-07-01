@@ -1,4 +1,16 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!--
+ ============================================================
+ 【聊天对话 / Chat】布局（Activity 界面布局）
+ 关键控件：ivChatBack 返回；tvChatTitle 标题；rvChatMessages 消息列表；
+   etChatInput 输入框；btnChatSend 发送；btnChatMore 更多；llChatMorePanel 更多面板；
+   btnChatCamera 拍照；btnChatAlbum 相册。
+ 配合的文件：加载它的界面 activity/ChatActivity；气泡行布局
+   item_chat_sent/received/recalled.xml；适配器 adapter/ChatAdapter。
+ MVP 数据流位置：本文件是 View 层的静态界面描述，数据由 Presenter 填入。
+ 提示：在 IDE 里搜索「聊天」可看本组相关文件。
+ ============================================================
+-->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"

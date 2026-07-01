@@ -35,6 +35,23 @@ import java.util.Date;
 import java.util.List;
 import java.util.Locale;
 
+/**
+ * ============================================================
+ * 【聊天对话-气泡 / Chat】Adapter（RecyclerView 适配器）
+ * 整体逻辑：getItemViewType 按「是否撤回」「发送者是不是自己」决定气泡类型，分别用
+ *   item_chat_sent/received/recalled.xml 三套布局；onBindViewHolder 填头像首字母、昵称、
+ *   文字或图片内容、时间；文字与图片都支持长按弹出仿微信深色菜单（撤回/删除），撤回项仅
+ *   本人且 2 分钟内可见；点击图片全屏预览并可「保存到相册」（saveImageToGallery 经
+ *   MediaStore 写入系统相册）。
+ * 数据来源：构造时传入的 List<ChatMessage>（由 ChatActivity 从 Presenter 拿到），
+ *   本类不查数据库；撤回/删除通过 MessageActionListener 回调交给 Presenter 处理。
+ * 关键概念：撤回时限复用 ChatPresenter.RECALL_WINDOW_MS（2 分钟）。
+ * 配合的文件：数据模型 model/ChatMessage；业务 mvp/chat/ChatPresenter（时限常量）；
+ *   气泡布局 item_chat_sent/received/recalled.xml；使用方 ChatActivity（实现回调）。
+ * MVP 数据流位置：本类属于 View 层，只负责画气泡并把操作回调上抛。
+ * 提示：在 IDE 里搜索「聊天」可看本组相关文件。
+ * ============================================================
+ */
 public class ChatAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
 
     private static final int TYPE_SENT = 0;

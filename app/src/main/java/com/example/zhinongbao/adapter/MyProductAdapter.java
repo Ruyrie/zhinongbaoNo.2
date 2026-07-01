@@ -11,18 +11,31 @@ import com.example.zhinongbao.R;
 import com.example.zhinongbao.model.Product;
 import java.util.List;
 
+/**
+ * ============================================================
+ * 【我的货品 / My Product】Adapter（RecyclerView 适配器）
+ * 整体逻辑：已下架商品名前加「已下架」标记并降低透明度；封面优先用内置示例图，
+ *   否则用 coverUri 第一张图，再否则用占位图；销量统计通过 ProductStatsDelegate 回调宿主取得。
+ * 数据来源：构造时传入的 List<Product>；统计数据由外部委托（Delegate）向 Presenter 取。
+ * 配合的文件：模型 model/Product；行布局 res/layout/item_my_product.xml；
+ *   宿主 activity/SellerMyProductsActivity（实现两个回调接口）。
+ * 提示：在 IDE 里搜索「我的货品」可看本组相关文件。
+ * ============================================================
+ */
 public class MyProductAdapter extends RecyclerView.Adapter<MyProductAdapter.ViewHolder> {
 
     private final List<Product> list;
     private final OnProductActionListener listener;
     private final ProductStatsDelegate statsDelegate;
 
+    // 编辑/删除操作回调，由宿主 Activity 实现
     public interface OnProductActionListener {
         void onEdit(Product product);
 
         void onDelete(Product product, int position);
     }
 
+    // 销量统计委托：适配器不直接查库，通过此接口向 Presenter 取数
     public interface ProductStatsDelegate {
         int getProductOrderCount(int productId);
         double getProductSalesRevenue(int productId);

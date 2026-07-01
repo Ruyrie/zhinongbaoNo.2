@@ -27,7 +27,26 @@ import com.example.zhinongbao.view.BlurBehindView;
 import java.io.IOException;
 import java.io.InputStream;
 
-/** 主界面：iOS 液态玻璃风格底部导航 */
+/**
+ * ============================================================
+ * 【主页面 / Main】View（底部导航宿主 Activity）
+ * 整体逻辑（关键步骤）：
+ *   1. onCreate 里 setContentView 加载 activity_main 布局，并 new MainPresenter 启动。
+ *   2. 绑定 5 个底部 tab（图标 + 文字 + 液态玻璃药丸），设置点击切换监听。
+ *   3. 根据当前角色（买家/卖家）刷新 tab 文字与图标：卖家看「我的店铺/农友圈」，
+ *      买家看「首页/农技学堂」。
+ *   4. selectTab 点击某个 tab 时，滑动液态药丸动画并 switchFragment 替换内容区。
+ *   5. onResume 时刷新消息红点未读数，并检测角色是否变化（变了就重建首页）。
+ *   6. 返回键做「双击返回桌面」处理。
+ * 数据来源：角色信息经 MainPresenter 走 UserRepository；未读消息数直接用
+ *   MessageRepository 查询。Repository 内部经 ContentProvider 访问 SQLite，本类不直接碰数据库。
+ * 配合的文件：接口约定 = mvp/main/MainContract；业务逻辑 = mvp/main/MainPresenter；
+ *   布局 = res/layout/activity_main.xml；承载的页面 = MallFragment / HeadlineFragment /
+ *   MineFragment / MessageFragment / PublishFragment / SellerMineFragment / AgriCircleFragment。
+ * 在 MVP 数据流中的位置：View（界面层），通过 Presenter 读取角色，不直接访问数据库。
+ * 提示：在 IDE 里搜索「主页面」可看本组相关文件。
+ * ============================================================
+ */
 public class MainActivity extends BaseMvpActivity<MainContract.Presenter> implements MainContract.View {
 
     private static final int ACTIVE_COLOR = 0xFF2F80ED;

@@ -9,15 +9,30 @@ import com.example.zhinongbao.repository.ProductRepository;
 import com.example.zhinongbao.repository.PurchaseRepository;
 import com.example.zhinongbao.repository.UserRepository;
 
+/**
+ * ============================================================
+ * 【订单详情 / Order Detail】Presenter（业务逻辑）
+ * 整体逻辑：start 时用 orderId 查订单；若是待支付且倒计时已过则自动置为已取消；
+ *   采购订单缺图时回源到买家发布的需求图片；再汇总实付金额、能否评价、能否退款、
+ *   店铺名/电话/头像等信息一次性回调 View 渲染。主/次按钮的具体行为在
+ *   onPrimaryAction / onSecondaryAction 里按订单状态分发。
+ * 数据来源：涉及多个 Repository（Order/Product/User/Purchase），均通过
+ *   ContentProvider 访问 SQLite；本类不直接操作数据库。
+ * 配合的文件：接口约定 mvp/orderdetail/OrderDetailContract；View 实现 =
+ *   OrderDetailActivity；模型 = model/Order、model/Product。
+ * 在 MVP 数据流中的位置：中间的业务层，连接 View 与多个 Repository。
+ * 提示：在 IDE 里搜索「订单详情」可看本组相关文件。
+ * ============================================================
+ */
 public class OrderDetailPresenter implements OrderDetailContract.Presenter {
-    private final OrderDetailContract.View view;
-    private final OrderRepository repository;
-    private final ProductRepository productRepository;
-    private final UserRepository userRepository;
-    private final PurchaseRepository purchaseRepository;
-    private final String orderId;
-    private final String username;
-    private Order order;
+    private final OrderDetailContract.View view;             // 对应的界面
+    private final OrderRepository repository;                // 订单数据访问
+    private final ProductRepository productRepository;       // 商品数据访问（店铺电话、加入购物车）
+    private final UserRepository userRepository;             // 用户数据访问（店铺名、头像）
+    private final PurchaseRepository purchaseRepository;     // 采购需求数据访问（回源需求图片）
+    private final String orderId;                            // 要展示的订单号
+    private final String username;                           // 当前登录用户
+    private Order order;                                     // 查到的订单对象
 
     public OrderDetailPresenter(Context context, OrderDetailContract.View view, String orderId) {
         this.view = view;

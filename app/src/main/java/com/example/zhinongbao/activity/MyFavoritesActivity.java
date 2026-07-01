@@ -14,12 +14,28 @@ import com.example.zhinongbao.mvp.myfavorites.MyFavoritesContract;
 import com.example.zhinongbao.mvp.myfavorites.MyFavoritesPresenter;
 import java.util.List;
 
-/** 我的收藏：展示当前用户点赞（收藏）的文章 */
+/**
+ * ============================================================
+ * 【我的收藏 / My Favorites】View（界面/Activity）
+ * 整体逻辑：onCreate 装好 RecyclerView，创建 Presenter 并 start()；Presenter
+ *   查好收藏文章后回调 showArticles 用 ArticleAdapter 渲染，适配器通过回调向
+ *   Presenter 询问点赞数/评论数/是否已赞并触发点赞切换；「清理失效」按钮弹确认框，
+ *   确认后调 presenter.clearInvalidArticles。onResume 时刷新保持同步。
+ * 数据来源：不直接碰数据库；经 Presenter 走 repository/ArticleRepository，
+ *   Repository 内部通过 ContentProvider 访问 SQLite。
+ * 配合的文件：接口约定 mvp/myfavorites/MyFavoritesContract；业务逻辑
+ *   MyFavoritesPresenter；列表适配器 adapter/ArticleAdapter；页面布局
+ *   res/layout/activity_my_favorites.xml；确认弹窗 res/layout/dialog_confirm.xml；
+ *   模型 model/Article；会跳转到文章详情 ArticleDetailActivity。
+ * 在 MVP 数据流中的位置：View 层。
+ * 提示：在 IDE 里搜索「我的收藏」可看本组相关文件。
+ * ============================================================
+ */
 public class MyFavoritesActivity extends BaseMvpActivity<MyFavoritesContract.Presenter>
         implements MyFavoritesContract.View {
 
-    private RecyclerView rv;
-    private ArticleAdapter adapter;
+    private RecyclerView rv;              // 收藏文章列表
+    private ArticleAdapter adapter;      // 文章列表适配器
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {

@@ -26,6 +26,24 @@ import java.util.Date;
 import java.util.List;
 import java.util.Locale;
 
+/**
+ * ============================================================
+ * 【我的足迹 / Footprint】View（浏览记录页 Activity）
+ * 整体逻辑（关键步骤）：
+ *   1. onCreate 加载 activity_footprint 布局，配置 GridLayoutManager（日期/店铺占整行，商品占 1 格）。
+ *   2. 顶部两个标签切换 storeMode，调 loadRows 让 Presenter 加载商品或店铺足迹。
+ *   3. showProductFootprints / showStoreFootprints 回调把数据按日期插入分组行（Row）。
+ *   4. 内部 FootprintAdapter 用代码动态构建三种行视图（日期标题/商品格/店铺卡）。
+ *   5. 点商品跳 ProductDetailActivity，点店铺跳 SellerStoreActivity。
+ * 数据来源：经 FootprintPresenter 走 ProductRepository；Repository 内部经
+ *   ContentProvider 访问 SQLite，本类不直接碰数据库。
+ * 配合的文件：接口约定 = mvp/footprint/FootprintContract；业务逻辑 =
+ *   mvp/footprint/FootprintPresenter；布局 = res/layout/activity_footprint.xml；
+ *   模型 = model/Product、model/StoreFootprint；跳转页面 = ProductDetailActivity / SellerStoreActivity。
+ * 在 MVP 数据流中的位置：View（界面层），通过 Presenter 取数据，不直接访问数据库。
+ * 提示：在 IDE 里搜索「我的足迹」可看本组相关文件。
+ * ============================================================
+ */
 public class FootprintActivity extends BaseMvpActivity<FootprintContract.Presenter> implements FootprintContract.View {
     private final List<Row> rows = new ArrayList<>();
     private FootprintAdapter adapter;

@@ -3,12 +3,6 @@ package com.example.zhinongbao.repository;
 /* ============================================================
  * 【消息 / 聊天 / Message】数据仓库（Repository，私信聊天数据）
  * ============================================================
- * 这个文件是干什么的：聊天功能的数据出入口：
- *   - sendMessage：发送一条消息。
- *   - getMessages：取两人之间的完整聊天记录（按时间正序）。
- *   - getConversations：取「消息列表」——每个聊天对象一行，含最后一条消息和未读数。
- *   - markMessagesRead：把某人发来的消息标记为已读。
- *   - getUnreadCount：统计未读条数。
  *
  * 技术点：
  *   - 一张 chat_messages 表存所有人的消息，靠 from_user/to_user 区分。

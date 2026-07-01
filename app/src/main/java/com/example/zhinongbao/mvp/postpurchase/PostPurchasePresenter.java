@@ -6,6 +6,21 @@ import android.text.TextUtils;
 import com.example.zhinongbao.model.PurchaseRequest;
 import com.example.zhinongbao.repository.PurchaseRepository;
 
+/**
+ * ============================================================
+ * 【发布采购需求 / PostPurchase】Presenter（业务逻辑）
+ * 整体逻辑：构造时创建 PurchaseRepository 并注册给 View；loadRequest 取待编辑需求，
+ *   不可修改则提示并关页，否则回填表单；submit/submitEdit 都走 submitInternal，
+ *   依次校验名称/数量/单位/单价非空、数字格式正确，再按有无 requestId 调 Repository
+ *   的更新或新增方法，成功则关闭页面。
+ * 数据来源：repository/PurchaseRepository；Repository 内部经 ContentProvider 访问 SQLite。
+ *   本类不直接碰数据库。
+ * 配合的文件：接口约定 PostPurchaseContract；View 实现 = PostPurchaseActivity；
+ *   数据模型 model/PurchaseRequest。
+ * MVP 数据流位置：本类是 Presenter，居中协调 View 与 Repository。
+ * 提示：在 IDE 里搜索「采购」可看本组相关文件。
+ * ============================================================
+ */
 public class PostPurchasePresenter implements PostPurchaseContract.Presenter {
     private final PostPurchaseContract.View view;
     private final PurchaseRepository repository;

@@ -32,8 +32,24 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 
+/**
+ * ============================================================
+ * 【商品搜索 / Product Search】View（Activity）
+ * 整体逻辑：onCreate 建 Presenter 并 start()；showInitialData 收到商品+采购需求+
+ *   当前用户+是否卖家模式后缓存；输入框 TextWatcher 触发过滤，切 Tab 切换展示；
+ *   店铺搜索调 presenter.searchStores()，结果由 showStoreResults 回调。
+ * 数据来源：商品/店铺来自 ProductRepository，采购需求来自 PurchaseRepository
+ *   （均由 Presenter 提供）；本类不碰数据库。
+ * 配合的文件：接口 ProductSearchContract；业务 ProductSearchPresenter；
+ *   适配器 adapter/ProductListAdapter、adapter/PurchaseRequestAdapter；
+ *   布局 activity_product_search.xml；模型 Product、PurchaseRequest、StoreSearchResult。
+ * 在 MVP 中的位置：View 层。
+ * 提示：在 IDE 里搜索「商品搜索」可看本组相关文件。
+ * ============================================================
+ */
 public class ProductSearchActivity extends BaseMvpActivity<ProductSearchContract.Presenter> implements ProductSearchContract.View {
 
+    // 三个搜索 Tab 的下标：商品 / 采购需求 / 店铺
     private static final int TAB_PRODUCTS = 0;
     private static final int TAB_PURCHASES = 1;
     private static final int TAB_STORES = 2;

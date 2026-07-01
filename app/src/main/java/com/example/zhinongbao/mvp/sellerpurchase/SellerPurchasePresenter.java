@@ -8,6 +8,18 @@ import com.example.zhinongbao.repository.PurchaseRepository;
 
 import java.util.List;
 
+/**
+ * ============================================================
+ * 【卖家采购管理 / Seller Purchase】Presenter（业务逻辑）
+ * 整体逻辑：switchTab() 按 Tab(采购大厅/我的报价/我的需求)拉取对应数据；
+ *   submitQuote() 校验价格并报价(成交锁定的需求禁止再报)；acceptQuote() 前
+ *   先检查默认收货地址，接受后生成订单并跳支付；另含拒绝报价、删需求等。
+ * 数据来源：走 PurchaseRepository（内部经 ContentProvider 访问 SQLite）。
+ * 配合的文件：接口 = SellerPurchaseContract；View = SellerPurchaseMgmtActivity。
+ * 在 MVP 中的位置：Presenter 层。
+ * 提示：在 IDE 里搜索「采购管理」可看本组相关文件。
+ * ============================================================
+ */
 public class SellerPurchasePresenter implements SellerPurchaseContract.Presenter {
     private final SellerPurchaseContract.View view;
     private final PurchaseRepository repository;

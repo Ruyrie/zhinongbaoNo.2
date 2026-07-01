@@ -16,12 +16,30 @@ import com.example.zhinongbao.utils.DialogUtils;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * ============================================================
+ * 【我的订单 / My Orders】View（界面/Activity）
+ * 整体逻辑：onCreate 里装好 RecyclerView 与 OrderAdapter，绑定分类标签点击；
+ *   把用户在列表上的每个操作（点单条、支付、取消、评价、确认收货、退款）
+ *   都转交给 Presenter 处理；Presenter 处理完再回调本类刷新列表或弹窗提示。
+ *   onResume 时重新拉取，保证从详情页返回后状态最新。
+ * 数据来源：不直接碰数据库；经 Presenter 走 repository/OrderRepository，
+ *   Repository 内部通过 ContentProvider 访问 SQLite。
+ * 配合的文件：接口约定 mvp/myorders/MyOrdersContract；业务逻辑 MyOrdersPresenter；
+ *   列表适配器 adapter/OrderAdapter；行布局 res/layout/item_order.xml；
+ *   页面布局 res/layout/activity_order_list.xml；模型 model/Order；
+ *   会跳转到订单详情 OrderDetailActivity、评价页 AddProductCommentActivity、
+ *   与商家聊天 ChatActivity。
+ * 在 MVP 数据流中的位置：处于 View 层，是「View→Presenter→Repository」链条的起点。
+ * 提示：在 IDE 里搜索「我的订单」可看本组相关文件。
+ * ============================================================
+ */
 public class MyOrdersActivity extends BaseMvpActivity<MyOrdersContract.Presenter> implements MyOrdersContract.View {
 
-    private final List<Order> orders = new ArrayList<>();
-    private OrderAdapter adapter;
-    private String filter = "all";
-    private TextView tabAll, tabPending, tabShipping, tabReceiving, tabReviewing;
+    private final List<Order> orders = new ArrayList<>(); // 当前展示的订单数据源，交给适配器渲染
+    private OrderAdapter adapter;                          // 订单列表适配器
+    private String filter = "all";                         // 当前分类：all/pending/shipping/receiving/reviewing 等
+    private TextView tabAll, tabPending, tabShipping, tabReceiving, tabReviewing; // 顶部分类标签
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {

@@ -28,6 +28,24 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 
+/**
+ * ============================================================
+ * 【发布采购需求 / PostPurchase】View（Activity 界面）
+ * 整体逻辑：onCreate 绑定各输入框，配置图片选择（拍照/相册，最多 9 张），并在传入
+ *   request_id 时把按钮文案改为「保存」并加载原需求回填；bindAmountInputs 监听数量与
+ *   单价，实时格式化价格（千分位）并计算「预计总价」；submit 收集表单交给 Presenter，
+ *   由 Presenter 校验后写库，成功则关闭本页。
+ * 数据来源：PostPurchasePresenter 经 repository/PurchaseRepository 读写；
+ *   Repository 内部经 ContentProvider 访问 SQLite。本类不直接碰数据库。
+ * 配合的文件：接口约定 PostPurchaseContract；业务 PostPurchasePresenter；
+ *   图片选择适配器 adapter/ImagePickerAdapter；数据模型 model/PurchaseRequest；
+ *   布局 res/layout/activity_post_purchase.xml；工具 utils/ImageUtils；
+ *   来源页面 PurchaseMarketActivity（发布/编辑入口）。
+ * MVP 数据流位置：本类是 View；数据流为 View 到 Presenter 到 Repository 到
+ *   ContentProvider 到 SQLite，再回调本类刷新界面。
+ * 提示：在 IDE 里搜索「采购」可看本组相关文件。
+ * ============================================================
+ */
 public class PostPurchaseActivity extends BaseMvpActivity<PostPurchaseContract.Presenter>
         implements PostPurchaseContract.View {
 

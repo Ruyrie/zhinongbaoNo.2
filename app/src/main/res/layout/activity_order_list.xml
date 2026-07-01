@@ -1,4 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!--
+    ============================================================
+    【我的订单 / Order List】布局（页面布局）
+    对应界面：activity/MyOrdersActivity 用 setContentView 加载本布局。
+    关键控件：tvBack 返回、tvOrderListTitle 标题、tabOrderAll 等分类标签、
+      rvOrders 订单列表（每行用 item_order.xml，由 OrderAdapter 渲染）。
+    在 MVP 数据流中的位置：View 层的静态界面描述。
+    提示：在 IDE 里搜索「我的订单」可看本组相关文件。
+    ============================================================
+-->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"

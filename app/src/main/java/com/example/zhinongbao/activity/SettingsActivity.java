@@ -14,6 +14,23 @@ import com.example.zhinongbao.mvp.settings.SettingsPresenter;
 import java.io.IOException;
 import java.io.InputStream;
 
+/**
+ * ============================================================
+ * 【设置 / Settings】View（设置页 Activity）
+ * 整体逻辑（关键步骤）：
+ *   1. onCreate 加载 activity_settings 布局，绑定返回按钮与各入口的跳转点击。
+ *   2. new SettingsPresenter 注入业务逻辑。
+ *   3. 点「退出登录」弹自定义确认对话框（dialog_confirm），确认后调 presenter.logout。
+ *   4. Presenter 退出成功后回调 goLogin，清空任务栈跳回登录页。
+ * 数据来源：退出登录经 SettingsPresenter 走 UserRepository；Repository 内部经
+ *   ContentProvider 访问 SQLite，本类不直接碰数据库。
+ * 配合的文件：接口约定 = mvp/settings/SettingsContract；业务逻辑 = mvp/settings/SettingsPresenter；
+ *   布局 = res/layout/activity_settings.xml；跳转页面 = AccountManagerActivity /
+ *   AddressManagerActivity / AddArticleActivity / AddProductActivity / AboutUsActivity / LoginActivity。
+ * 在 MVP 数据流中的位置：View（界面层），通过 Presenter 处理退出，不直接访问数据库。
+ * 提示：在 IDE 里搜索「设置」可看本组相关文件。
+ * ============================================================
+ */
 public class SettingsActivity extends BaseMvpActivity<SettingsContract.Presenter> implements SettingsContract.View {
 
     @Override

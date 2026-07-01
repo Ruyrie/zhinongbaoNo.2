@@ -14,6 +14,18 @@ import com.example.zhinongbao.model.Order;
 import com.example.zhinongbao.model.Product;
 import java.util.List;
 
+/**
+ * ============================================================
+ * 【卖家订单 / Seller Order】Adapter（RecyclerView 适配器）
+ * 整体逻辑：按 status 切换状态文字与颜色，并决定按钮——
+ *   待付款→修改价格/联系买家；待发货→去发货；已发货→联系买家；待处理售后→处理售后。
+ *   封面图：采购订单优先展示买家上传的需求图片，其次内置示例图，再次商品封面，最后占位图。
+ * 数据来源：构造时传入的 List<Order>；商品信息通过 ProductResolver 回调宿主向 Presenter 取。
+ * 配合的文件：模型 model/Order、model/Product；行布局 res/layout/item_seller_order.xml；
+ *   宿主 activity/SellerOrdersActivity（实现操作回调）。
+ * 提示：在 IDE 里搜索「卖家订单」可看本组相关文件。
+ * ============================================================
+ */
 public class SellerOrderAdapter extends RecyclerView.Adapter<SellerOrderAdapter.VH> {
 
     private final List<Order> list;
@@ -33,6 +45,7 @@ public class SellerOrderAdapter extends RecyclerView.Adapter<SellerOrderAdapter.
         void onOrderClick(Order o);
     }
 
+    // 商品解析委托：适配器不直接查库，通过此接口向 Presenter 取商品
     public interface ProductResolver {
         Product getProductById(int productId);
     }

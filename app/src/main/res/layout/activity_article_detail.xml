@@ -1,4 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!--
+============================================================
+【文章详情 / Article Detail】布局（Activity）
+技术点：正文用 WebView 显示 HTML5 网页；其余均为原生控件。
+  这是「原生外壳 + WebView 正文」的混合布局。
+配合的文件：ArticleDetailActivity 通过 findViewById 绑定这些控件；
+  正文网页模板 assets/article_detail.html；评论项布局 item_comment.xml。
+提示：在 IDE 里搜索「文章详情」可看本组相关文件。
+============================================================
+-->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
@@ -263,6 +273,21 @@
                 android:layout_marginTop="2dp"
                 android:text="@string/default_count" />
         </LinearLayout>
+
+        <!-- 发送按钮：输入评论时显示，替代点赞/评论图标 -->
+        <TextView
+            android:id="@+id/btnSendComment"
+            android:layout_width="wrap_content"
+            android:layout_height="36dp"
+            android:layout_marginStart="4dp"
+            android:paddingHorizontal="18dp"
+            android:gravity="center"
+            android:text="@string/action_send"
+            android:textColor="@color/white"
+            android:textSize="14sp"
+            android:textStyle="bold"
+            android:background="@drawable/bg_auth_button"
+            android:visibility="gone" />
 
     </LinearLayout>
 
