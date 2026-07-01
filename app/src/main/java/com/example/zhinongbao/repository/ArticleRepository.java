@@ -172,15 +172,17 @@ public class ArticleRepository {
                 "id=?", new String[] { String.valueOf(articleId) });
     }
 
-    // 删除文章/动态：连同它的评论、各类点赞、收藏一并删除（避免留下孤儿数据）
+    // 删除文章/动态：删除文章本体、它的评论、以及作者自己产生的关联数据。
+    // 注意：故意「不」删除别人对本动态的农友圈点赞记录（circle_likes）——
+    //   这些记录属于其他用户，保留后他们的「农友圈点赞」列表才会显示「该动态已被删除」占位，
+    //   再由其手动点「清理失效」移除（见 getLikedCirclePosts / clearInvalidCircleLikes）。
+    //   若在此一并删掉点赞记录，动态会直接从对方收藏列表消失、占位提示也不再出现（本次修复的 bug）。
     public void deleteArticle(int articleId) {
         resolver.delete(ZhiNongBaoProvider.CONTENT_URI_ARTICLES,
                 "id=?", new String[] { String.valueOf(articleId) });
         resolver.delete(ZhiNongBaoProvider.CONTENT_URI_COMMENTS,
                 "article_id=?", new String[] { String.valueOf(articleId) });
         resolver.delete(ZhiNongBaoProvider.CONTENT_URI_ARTICLE_LIKES,
-                "article_id=?", new String[] { String.valueOf(articleId) });
-        resolver.delete(ZhiNongBaoProvider.CONTENT_URI_CIRCLE_LIKES,
                 "article_id=?", new String[] { String.valueOf(articleId) });
         resolver.delete(ZhiNongBaoProvider.CONTENT_URI_CIRCLE_FAVORITES,
                 "article_id=?", new String[] { String.valueOf(articleId) });
@@ -591,26 +593,39 @@ public class ArticleRepository {
         return total;
     }
 
-    // 取「给我文章点过赞的人」用户名列表（去重）。SQL 用子查询找出我作为作者的文章。
+    // 取「给我内容点过赞的人」用户名列表（去重）。SQL 用子查询找出我作为作者的内容。
+    // 注意：我的内容含「资讯文章」与「农友圈动态」两类，点赞分存两张表（article_likes / circle_likes），
+    //   两张都要查——否则若获赞全部来自农友圈动态，这里会返回空列表，
+    //   与 getTotalLikesReceived 统计出的获赞数对不上（获赞页有数字却空白，本次修复的 bug）。
     public List<String> getUsersWhoLikedArticlesBy(String username) {
         List<String> users = new ArrayList<>();
         if (username == null || username.isEmpty()) {
             return users;
         }
+        String selection = "article_id IN (SELECT id FROM articles WHERE author=?)";
+        String[] args = new String[] { username };
+        // 1) 给我「资讯文章」点赞的人
+        collectLikers(ZhiNongBaoProvider.CONTENT_URI_ARTICLE_LIKES, selection, args, users);
+        // 2) 给我「农友圈动态」点赞的人
+        collectLikers(ZhiNongBaoProvider.CONTENT_URI_CIRCLE_LIKES, selection, args, users);
+        return users;
+    }
+
+    // 查某点赞表中符合条件的点赞者用户名，按时间倒序、去重后追加到 users
+    private void collectLikers(android.net.Uri likesUri, String selection, String[] args, List<String> users) {
         try (Cursor cursor = resolver.query(
-                ZhiNongBaoProvider.CONTENT_URI_ARTICLE_LIKES,
+                likesUri,
                 new String[] { "username" },
-                "article_id IN (SELECT id FROM articles WHERE author=?)",
-                new String[] { username },
+                selection,
+                args,
                 "id DESC")) {
             while (cursor != null && cursor.moveToNext()) {
                 String user = cursor.getString(0);
-                if (!users.contains(user)) {
+                if (user != null && !users.contains(user)) {
                     users.add(user);
                 }
             }
         }
-        return users;
     }
 
     // 取某用户头像（农友圈/详情页显示作者头像用）

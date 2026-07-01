@@ -81,6 +81,7 @@ public class AgriCircleAdapter extends RecyclerView.Adapter<AgriCircleAdapter.Vi
             h.tvTime.setText("");
             h.tvContent.setText("抱歉，该动态已被作者删除。");
             h.layoutImages.setVisibility(View.GONE);
+            h.flDeletedOverlay.setVisibility(View.VISIBLE); // 与文章一致的「已删除」遮罩
             h.btnEnterStore.setVisibility(View.GONE);
             h.btnFollow.setVisibility(View.GONE);
             h.tvReadCount.setText("");
@@ -93,6 +94,9 @@ public class AgriCircleAdapter extends RecyclerView.Adapter<AgriCircleAdapter.Vi
             h.btnLike.setOnClickListener(v -> listener.onLikeClick(a, h.getAdapterPosition()));
             return;
         }
+
+        // 正常动态：隐藏「已删除」遮罩（复用 ViewHolder 时必须显式还原）
+        h.flDeletedOverlay.setVisibility(View.GONE);
 
         // 昵称 & 时间
         String nick = (a.authorNickname != null && !a.authorNickname.isEmpty())
@@ -184,6 +188,7 @@ public class AgriCircleAdapter extends RecyclerView.Adapter<AgriCircleAdapter.Vi
     static class ViewHolder extends RecyclerView.ViewHolder {
         ImageView ivAvatar, ivLikeIcon;
         View layoutImages;
+        View flDeletedOverlay;
         androidx.viewpager2.widget.ViewPager2 vpImages;
         TextView tvAvatarInitial, tvNickname, tvTime, tvContent;
         TextView tvLikeCount, tvCommentCount, tvReadCount, tvImageIndicator;
@@ -196,6 +201,7 @@ public class AgriCircleAdapter extends RecyclerView.Adapter<AgriCircleAdapter.Vi
             ivAvatar       = v.findViewById(R.id.ivPostAvatar);
             ivLikeIcon     = v.findViewById(R.id.ivLikeIcon);
             layoutImages   = v.findViewById(R.id.layoutPostImages);
+            flDeletedOverlay = v.findViewById(R.id.flDeletedOverlay);
             vpImages       = v.findViewById(R.id.vpPostImages);
             tvImageIndicator = v.findViewById(R.id.tvPostImageIndicator);
             tvAvatarInitial= v.findViewById(R.id.tvPostAvatarInitial);
