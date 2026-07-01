@@ -9,7 +9,12 @@ import com.example.zhinongbao.repository.UserRepository;
  * 【注册 / Register】Presenter（业务逻辑）
  * 整体逻辑（register 的校验顺序）：
  *   1) 用户名/密码非空；2) 用户名字符合法(字母数字及 -@_.)；3) 密码≥6 位；
- *   4) 账号是否已存在；5) 若填了手机号，校验格式并检查是否被占用；
+ *   4) 账号是否已存在；5) 若填了手机号，校验格式并检查是否被占用   ^从字符串开头开始
+ *  1第一位必须是1
+ * [3-9]第二位必须是3～9
+ * \d{9}后面必须还有9位数字
+ * $到字符串结尾；
+ * 拒绝11个相同数字
  *   6) 写入数据库；7) 注册成功后：添加模式只关页面，普通模式记录登录并进主页。
  * 数据来源：全部走 UserRepository（内部通过 ContentProvider 访问 SQLite）。
  * 配合的文件：接口 = RegisterContract；View = RegisterActivity；

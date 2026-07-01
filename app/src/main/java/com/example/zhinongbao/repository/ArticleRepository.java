@@ -116,6 +116,19 @@ public class ArticleRepository {
         addArticle(title, content, imageUri, "农友圈");
     }
 
+    // 编辑一条农友圈动态：更新标题（取正文前 30 字）、正文与配图。
+    // 农友圈动态无独立封面，图片都存在 cover_uri（逗号分隔的配图串）；imageUri 传 null 表示清空图片。
+    // 说明：只改内容，不动作者/时间/阅读量/点赞等；调用方（Presenter）已确保仅作者本人可改。
+    public void updateCirclePost(int articleId, String content, String imageUri) {
+        String title = content.length() > 30 ? content.substring(0, 30) + "..." : content;
+        ContentValues values = new ContentValues();
+        values.put("title", title);
+        values.put("content", content);
+        values.put("cover_uri", imageUri);
+        resolver.update(ZhiNongBaoProvider.CONTENT_URI_ARTICLES, values,
+                "id=?", new String[] { String.valueOf(articleId) });
+    }
+
     // 按 id 查单篇文章/动态
     public Article getArticleById(int articleId) {
         try (Cursor cursor = resolver.query(

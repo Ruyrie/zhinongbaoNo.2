@@ -52,6 +52,19 @@
             android:text="" />
 
         <TextView
+            android:id="@+id/tvEditBtn"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/action_edit"
+            android:textSize="15sp"
+            android:textColor="#007AFF"
+            android:textStyle="bold"
+            android:paddingHorizontal="16dp"
+            android:paddingVertical="8dp"
+            android:background="?attr/selectableItemBackground"
+            android:visibility="gone" />
+
+        <TextView
             android:id="@+id/tvDeleteBtn"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"

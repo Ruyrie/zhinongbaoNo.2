@@ -49,6 +49,7 @@ public class ArticleDetailActivity extends BaseMvpActivity<ArticleDetailContract
     private String currentUser;
     private List<Comment> comments;
     private CommentAdapter commentAdapter;
+    private boolean pendingEditRefresh; // 去编辑页时置 true，返回后触发一次整体刷新以显示修改后的内容
 
     // Views
     private TextView tvLikeCount, tvCommentCount, tvCommentCountBar;
@@ -108,6 +109,21 @@ public class ArticleDetailActivity extends BaseMvpActivity<ArticleDetailContract
                     presenter.deleteArticle();
                 });
                 dialog.show();
+            });
+        }
+
+        // 编辑入口：仅「自己发布的农友圈动态」显示——用户可随时进入编辑页修改自己的动态。
+        // （头条文章不在此提供编辑；农友圈动态用 AddCirclePostActivity 的编辑模式复用发布页表单。）
+        TextView tvEdit = findViewById(R.id.tvEditBtn);
+        boolean ownCirclePost = currentUser != null && article.author.equals(currentUser)
+                && "农友圈".equals(article.category);
+        if (ownCirclePost) {
+            tvEdit.setVisibility(View.VISIBLE);
+            tvEdit.setOnClickListener(v -> {
+                android.content.Intent i = new android.content.Intent(this, AddCirclePostActivity.class);
+                i.putExtra("edit_post_id", article.id);
+                pendingEditRefresh = true; // 从编辑页返回后重新拉取并渲染，保证看到最新内容
+                startActivity(i);
             });
         }
 
@@ -393,6 +409,12 @@ public class ArticleDetailActivity extends BaseMvpActivity<ArticleDetailContract
     @Override
     protected void onResume() {
         super.onResume();
+        // 从编辑页返回：整体刷新（重新渲染正文/图片 + 评论 + 点赞），保证看到修改后的内容
+        if (pendingEditRefresh && presenter != null) {
+            pendingEditRefresh = false;
+            presenter.refresh();
+            return;
+        }
         if (ivLikeBtn != null) {
             refreshLikeUI();
         }

@@ -25,13 +25,16 @@ import java.util.List;
  * ============================================================
  * 【发农友圈动态 / Add Circle Post】View（Activity）
  * 整体逻辑（关键步骤）：
- *   1) onCreate 初始化输入框、图片横向列表(ImagePickerAdapter)、取消/发布按钮。
+ *   1) onCreate 初始化输入框、图片横向列表(ImagePickerAdapter)、取消/发布按钮；
+ *      读取 intent 里的 edit_post_id 判断是「发布新动态」还是「编辑已有动态」。
  *   2) 点「加号」弹选图对话框：拍照走 takePicture（先用 FileProvider 建临时文件），
  *      相册走 pickImages（多选）；选中的图 addImage 加入列表并更新数量提示。
- *   3) submit 校验文字非空，把多张图 URI 用逗号拼成一个字符串，交给
- *      presenter.submit(content, imgUri)。
- * 数据来源：本类不直接碰数据库，写入由 Presenter 调 ArticleRepository.addCirclePost
- *   完成（Repository 内部经 ContentProvider 写 SQLite）。
+ *   3) 编辑模式：presenter.loadPost 取回原动态，showExistingPost 把正文与图片回填到表单；
+ *      标题改「编辑动态」、按钮改「保存」。
+ *   4) submit 校验文字非空，把多张图 URI 用逗号拼成一个字符串：新建走 presenter.submit，
+ *      编辑走 presenter.submitEdit(editPostId, content, imgUri)。
+ * 数据来源：本类不直接碰数据库，写入/更新由 Presenter 调 ArticleRepository.addCirclePost /
+ *   updateCirclePost 完成（Repository 内部经 ContentProvider 写 SQLite）。
  * 配合的文件：接口 AddCirclePostContract；业务 AddCirclePostPresenter；
  *   选图适配器 adapter/ImagePickerAdapter；选图工具 utils/ImageUtils；
  *   布局 activity_add_circle_post.xml；发布成功后返回农友圈列表。
@@ -48,6 +51,7 @@ public class AddCirclePostActivity extends BaseMvpActivity<AddCirclePostContract
     private Uri selectedImageUri;
     private Uri currentCameraUri;
     private final List<Uri> selectedImageUris = new ArrayList<>();
+    private int editPostId = -1;   // >0 表示「编辑已有动态」，否则为「发布新动态」
 
     private final ActivityResultLauncher<String> pickImage =
             registerForActivityResult(new ActivityResultContracts.GetContent(), uri -> {
@@ -117,6 +121,14 @@ public class AddCirclePostActivity extends BaseMvpActivity<AddCirclePostContract
         findViewById(R.id.tvCirclePostCancel).setOnClickListener(v -> finish());
         findViewById(R.id.tvCirclePostSubmit).setOnClickListener(v -> submit());
         findViewById(R.id.llAddImage).setOnClickListener(v -> pickImageSource());
+
+        // 编辑模式：改标题/按钮文案，并让 Presenter 取回原动态回填表单
+        editPostId = getIntent().getIntExtra("edit_post_id", -1);
+        if (editPostId > 0) {
+            ((TextView) findViewById(R.id.tvCirclePostTitle)).setText("编辑动态");
+            ((TextView) findViewById(R.id.tvCirclePostSubmit)).setText("保存");
+            presenter.loadPost(editPostId);
+        }
     }
 
     private void pickImageSource() {
@@ -175,7 +187,32 @@ public class AddCirclePostActivity extends BaseMvpActivity<AddCirclePostContract
         } else if (selectedImageUri != null) {
             imgUri = selectedImageUri.toString();
         }
-        presenter.submit(content, imgUri);
+        if (editPostId > 0) {
+            presenter.submitEdit(editPostId, content, imgUri); // 编辑模式：保存修改
+        } else {
+            presenter.submit(content, imgUri);                 // 新建模式：发布新动态
+        }
+    }
+
+    // 编辑模式回填：把原动态的正文与图片填回输入框和图片列表
+    @Override
+    public void showExistingPost(String content, String imageUris) {
+        if (content != null) {
+            etContent.setText(content);
+            etContent.setSelection(etContent.getText().length()); // 光标移到末尾
+        }
+        selectedImageUris.clear();
+        if (imageUris != null && !imageUris.isEmpty()) {
+            for (String uri : imageUris.split(",")) {
+                String trimmed = uri.trim();
+                if (!trimmed.isEmpty()) {
+                    selectedImageUris.add(Uri.parse(trimmed));
+                }
+            }
+        }
+        selectedImageUri = selectedImageUris.isEmpty() ? null : selectedImageUris.get(0);
+        imageAdapter.notifyDataSetChanged();
+        updateImageHint();
     }
 
     @Override
